@@ -1,0 +1,35 @@
+.spinner {
+  display: inline-block;
+  border-style: solid;
+  border-color: currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: hop-spin 0.75s linear infinite;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.status-dot--connected {
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 16%, transparent);
+  animation: hop-ring 2.4s var(--ease-out) infinite;
+}
+
+.status-dot--connecting {
+  background: var(--warning);
+  animation: hop-pulse 1.2s var(--ease-in-out) infinite;
+}
+
+.status-dot--error {
+  background: var(--danger);
+}
+
+.status-dot--idle {
+  background: var(--text-3);
+}

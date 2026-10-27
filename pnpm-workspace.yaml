@@ -1,0 +1,20 @@
+# pnpm 11 把项目级配置放在这里（.npmrc 里的同名项已不再生效）。
+
+packages:
+  - '.'
+
+# 允许这些依赖在安装时执行构建脚本（electron 需要下载二进制，esbuild 需要落地可执行文件）。
+onlyBuiltDependencies:
+  - electron
+  - electron-winstaller
+  - esbuild
+  - ssh2
+  - cpu-features
+
+# 使用真实目录 + 扁平 hoist，而不是 isolated 的符号链接布局：
+# electron-builder 打包、esbuild 与 ssh2 的可选原生依赖探测，都按路径直接查找包，
+# 扁平布局在这些环节更可预测，也便于排查 node_modules 内容。
+nodeLinker: hoisted
+
+# 执行 `pnpm <script>` 前不自动补装依赖：CI 或受限终端里那个预检会尝试重装并中断脚本。
+verifyDepsBeforeRun: false

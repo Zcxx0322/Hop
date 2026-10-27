@@ -1,0 +1,21 @@
+node_modules
+.pnpm-store
+dist
+dist-ssr
+release
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.tsbuildinfo
+.cache
+.tmp
+.edge-profile
+
+# `build/` holds the committed app icons (icon.ico / icon.png / icon.svg + build/icons/*)
+# used by electron-builder and the window; do not ignore it.

@@ -1,0 +1,438 @@
+/* ==========================================================================
+   欢迎 / 空态
+   ========================================================================== */
+
+.welcome {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+  padding: 36px 28px 42px;
+  overflow-y: auto;
+  background:
+    radial-gradient(120% 90% at 50% -20%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 60%),
+    var(--surface);
+}
+
+.welcome::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(color-mix(in srgb, var(--text) 12%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 42%, #000 10%, transparent 78%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 42%, #000 10%, transparent 78%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.welcome__glow {
+  position: absolute;
+  top: -260px;
+  left: 50%;
+  width: 640px;
+  height: 520px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, var(--accent-soft), transparent 68%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.welcome__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+/* ---------- 标题区 ---------- */
+.welcome__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 16px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  color: var(--text-3);
+  animation: hop-fade-in 420ms var(--ease-out) both;
+}
+
+.welcome__eyebrow-line {
+  width: 22px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-border));
+}
+
+.welcome__title {
+  font-size: clamp(27px, 3.6vw, 36px);
+  font-weight: 600;
+  line-height: 1.16;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  animation: hop-rise 480ms var(--ease-out) 40ms both;
+}
+
+.welcome__accent {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.welcome__lede {
+  max-width: 452px;
+  margin-top: 13px;
+  font-size: var(--text-md);
+  line-height: 1.75;
+  color: var(--text-2);
+  animation: hop-rise 480ms var(--ease-out) 90ms both;
+}
+
+/* ---------- 动作 ---------- */
+.welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 24px;
+  animation: hop-rise 480ms var(--ease-out) 140ms both;
+}
+
+.welcome__cta,
+.welcome__ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 13px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.welcome__cta {
+  position: relative;
+  color: var(--accent-ink);
+  background: var(--gradient-accent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 26%, transparent) inset,
+    0 6px 22px -8px color-mix(in srgb, var(--accent) 65%, transparent);
+  padding-right: 9px;
+}
+
+.welcome__cta:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 30%, transparent) inset,
+    0 10px 28px -8px color-mix(in srgb, var(--accent) 72%, transparent);
+}
+
+.welcome__cta:active {
+  transform: translateY(0);
+}
+
+.welcome__cta .kbd {
+  border-color: color-mix(in srgb, #000 18%, transparent);
+  background: color-mix(in srgb, #000 14%, transparent);
+  color: inherit;
+  box-shadow: none;
+}
+
+.welcome__ghost {
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.welcome__ghost:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.welcome__ghost .kbd {
+  opacity: 0.8;
+}
+
+/* ---------- 终端预览 ---------- */
+.welcome__preview {
+  width: 100%;
+  margin-top: 30px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  background: var(--term-bg);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 6%, transparent) inset,
+    var(--shadow-lg);
+  overflow: hidden;
+  text-align: left;
+  animation: hop-rise 520ms var(--ease-out) 200ms both;
+  transition: border-color var(--dur) var(--ease-out);
+}
+
+.welcome__preview:hover {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+}
+
+.welcome__preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  height: 34px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel) 68%, var(--term-bg));
+}
+
+.welcome__lights {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.welcome__lights i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+.welcome__lights i:first-child {
+  background: color-mix(in srgb, var(--danger) 62%, transparent);
+}
+
+.welcome__lights i:nth-child(2) {
+  background: color-mix(in srgb, var(--warning) 62%, transparent);
+}
+
+.welcome__lights i:nth-child(3) {
+  background: color-mix(in srgb, var(--success) 62%, transparent);
+}
+
+.welcome__preview-title {
+  font-size: 10px;
+  color: var(--text-3);
+}
+
+.welcome__preview-badge {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.welcome__preview-body {
+  padding: 13px 16px 15px;
+  font-size: 11.5px;
+  line-height: 1.85;
+  color: var(--term-fg);
+}
+
+.welcome__line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  animation: hop-fade-in 380ms var(--ease-out) both;
+}
+
+.welcome__line--dim {
+  color: var(--text-3);
+}
+
+.welcome__line--ok {
+  color: var(--success);
+}
+
+.welcome__line--mono {
+  color: color-mix(in srgb, var(--term-fg) 74%, transparent);
+}
+
+.welcome__prompt {
+  color: var(--accent);
+  margin-right: 4px;
+}
+
+.welcome__caret-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.welcome__caret {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--accent);
+  animation: welcome-caret 1.15s steps(2, start) infinite;
+}
+
+@keyframes welcome-caret {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.12;
+  }
+}
+
+/* ---------- 最近使用 ---------- */
+.welcome__recent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  margin-top: 22px;
+  width: 100%;
+  animation: hop-rise 480ms var(--ease-out) 300ms both;
+}
+
+.welcome__recent-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.welcome__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 7px;
+}
+
+.welcome__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 9px 5px 6px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.welcome__chip:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.welcome__chip-avatar {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  flex: none;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--host-color);
+  background: color-mix(in srgb, var(--host-color) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--host-color) 26%, transparent);
+}
+
+.welcome__chip-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 132px;
+}
+
+.welcome__chip-name {
+  font-size: var(--text-xs);
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.welcome__chip-addr {
+  font-size: 9.5px;
+  color: var(--text-3);
+  line-height: 1.3;
+}
+
+.welcome__chip-arrow {
+  color: var(--text-3);
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.welcome__chip:hover .welcome__chip-arrow {
+  opacity: 1;
+  transform: translate(1px, -1px);
+}
+
+/* ---------- 底部提示 ---------- */
+.welcome__hints {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+  font-size: 10.5px;
+  color: var(--text-3);
+  animation: hop-fade-in 480ms var(--ease-out) 380ms both;
+}
+
+.welcome__hints span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.welcome__hint-sep {
+  width: 1px;
+  height: 10px;
+  background: var(--border-strong);
+}
+
+@media (max-width: 640px) {
+  .welcome {
+    padding: 26px 16px 30px;
+  }
+
+  .welcome__preview-body {
+    font-size: 10.5px;
+    padding: 12px;
+  }
+
+  .welcome__hints {
+    gap: 7px;
+  }
+
+  .welcome__hints > span:nth-child(n + 5) {
+    display: none;
+  }
+}
+
+@media (max-height: 780px) {
+  .welcome__preview {
+    margin-top: 22px;
+  }
+
+  .welcome__recent,
+  .welcome__hints {
+    margin-top: 16px;
+  }
+}

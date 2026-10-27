@@ -1,0 +1,83 @@
+/**
+ * Hop 领域模型。
+ * 这里的类型即前后端共享契约，与 docs/API-CONTRACT.md 一一对应。
+ */
+
+export type AuthMethod = 'password' | 'key' | 'agent';
+
+export interface Host {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  username: string;
+  authMethod: AuthMethod;
+  privateKeyPath?: string;
+  tags: string[];
+  color?: string;
+  note?: string;
+  favorite?: boolean;
+  lastConnectedAt?: number | null;
+  createdAt: number;
+  updatedAt: number;
+  /** 只读：后端是否保存了登录密码（明文永不回传） */
+  hasPassword?: boolean;
+  /** 只读：私钥指纹，用于在列表/详情里做二次确认 */
+  keyFingerprint?: string;
+}
+
+/**
+ * 新建/更新主机时提交的数据。
+ * password / passphrase 只在写操作时上行，读取接口永远不会返回。
+ */
+export type HostDraft = Omit<
+  Host,
+  'id' | 'createdAt' | 'updatedAt' | 'lastConnectedAt' | 'hasPassword' | 'keyFingerprint'
+> & {
+  password?: string;
+  passphrase?: string;
+};
+
+export type SessionStatus = 'connecting' | 'connected' | 'reconnecting' | 'closed' | 'error';
+
+export interface Session {
+  id: string;
+  hostId: string;
+  title: string;
+  address: string;
+  status: SessionStatus;
+  detail?: string;
+  createdAt: number;
+}
+
+export type ThemeMode = 'dark' | 'light' | 'system';
+
+export type AccentKey = 'aurora' | 'teal' | 'amber' | 'rose';
+
+export type FontKey = 'jetbrains' | 'cascadia' | 'menlo' | 'system';
+
+export type CursorStyle = 'block' | 'bar' | 'underline';
+
+export interface Settings {
+  theme: ThemeMode;
+  accent: AccentKey;
+  fontSize: number;
+  fontFamily: FontKey;
+  cursorStyle: CursorStyle;
+  cursorBlink: boolean;
+  scrollback: number;
+  confirmOnClose: boolean;
+  sidebarCollapsed: boolean;
+  defaultUsername: string;
+  defaultPort: number;
+  keepAliveSeconds: number;
+  connectTimeoutMs: number;
+}
+
+export type ToastTone = 'success' | 'error' | 'info';
+
+export interface Toast {
+  id: string;
+  tone: ToastTone;
+  message: string;
+}

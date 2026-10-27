@@ -1,0 +1,46 @@
+appId: com.hop.ssh
+productName: Hop
+copyright: Copyright © 2026 Hop
+
+directories:
+  output: release
+  buildResources: build
+
+# Everything the packaged app needs: the esbuild output, the Vite renderer
+# bundle, and the window icon used by `window.ts` (the .exe icon comes from
+# `win.icon` below). ssh2/ws are inlined into dist/main/index.cjs, so no
+# node_modules are shipped.
+files:
+  - dist/**/*
+  - build/icons/icon-{16,32,48,64,128,256,512}.png
+  - package.json
+  - '!node_modules/**/*'
+  - '!**/*.map'
+  - '!**/*.ts'
+
+asar: true
+# ssh2 is pure JavaScript; nothing needs to live outside the asar.
+npmRebuild: false
+buildDependenciesFromSource: false
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/icon.ico
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: Hop
+  deleteAppDataOnUninstall: false
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+
+publish: null

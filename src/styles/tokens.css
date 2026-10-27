@@ -1,0 +1,174 @@
+/* ==========================================================================
+   Hop 设计令牌
+   - 颜色全部走 CSS 变量，主题（dark/light）与强调色（data-accent）运行时切换
+   - 动效统一使用 --ease-out / --ease-spring，保持全站手感一致
+   ========================================================================== */
+
+:root {
+  /* ---- 排版 ---- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', 'Cascadia Code', 'Cascadia Mono', Consolas,
+    'Liberation Mono', Menlo, monospace;
+  --text-xs: 11px;
+  --text-sm: 12.5px;
+  --text-md: 13.5px;
+  --text-lg: 15px;
+  --text-xl: 19px;
+  --text-2xl: 26px;
+  --text-3xl: 34px;
+
+  /* ---- 间距 ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ---- 圆角 ---- */
+  --radius-xs: 5px;
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+
+  /* ---- 动效 ---- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 110ms;
+  --dur: 180ms;
+  --dur-slow: 320ms;
+
+  /* ---- 层级 ---- */
+  --z-sidebar: 20;
+  --z-overlay: 60;
+  --z-dialog: 70;
+  --z-toast: 90;
+
+  /* ---- 布局尺寸 ---- */
+  --sidebar-w: 264px;
+  --sidebar-w-collapsed: 68px;
+  --tabbar-h: 46px;
+  --statusbar-h: 28px;
+}
+
+/* ============================ 深色（默认） ============================ */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #090c12;
+  --bg-glow-a: rgba(124, 140, 248, 0.13);
+  --bg-glow-b: rgba(67, 217, 184, 0.08);
+  --surface: #0e141f;
+  --surface-2: #131a27;
+  --surface-3: #19212f;
+  --panel: #0b1017;
+  --panel-inset: #080b11;
+
+  --text: #e8edf8;
+  --text-2: #98a5bd;
+  --text-3: #657086;
+
+  --border: rgba(150, 170, 205, 0.1);
+  --border-strong: rgba(150, 170, 205, 0.19);
+  --border-focus: rgba(124, 140, 248, 0.55);
+
+  --hover: rgba(255, 255, 255, 0.045);
+  --active: rgba(255, 255, 255, 0.075);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 14px 34px -16px rgba(0, 0, 0, 0.8);
+  --shadow-lg: 0 28px 70px -28px rgba(0, 0, 0, 0.9);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  --success: #3ddcaf;
+  --warning: #f2b45c;
+  --danger: #fb7185;
+  --info: #7c8cf8;
+
+  --term-bg: #080b11;
+  --term-fg: #d8e0ef;
+  --term-selection: rgba(124, 140, 248, 0.28);
+  --term-cursor: #7c8cf8;
+}
+
+/* ============================ 浅色 ============================ */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #f4f6fb;
+  --bg-glow-a: rgba(124, 140, 248, 0.12);
+  --bg-glow-b: rgba(67, 217, 184, 0.1);
+  --surface: #ffffff;
+  --surface-2: #f3f5fa;
+  --surface-3: #e9edf6;
+  --panel: #ffffff;
+  --panel-inset: #fbfcfe;
+
+  --text: #111a2c;
+  --text-2: #586480;
+  --text-3: #7f8aa0;
+
+  --border: rgba(23, 37, 66, 0.09);
+  --border-strong: rgba(23, 37, 66, 0.16);
+  --border-focus: rgba(90, 108, 240, 0.5);
+
+  --hover: rgba(16, 28, 54, 0.04);
+  --active: rgba(16, 28, 54, 0.07);
+
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 14px 34px -18px rgba(16, 24, 40, 0.24);
+  --shadow-lg: 0 28px 70px -30px rgba(16, 24, 40, 0.3);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+  --success: #0f9d76;
+  --warning: #b87503;
+  --danger: #dc2660;
+  --info: #5867e8;
+
+  --term-bg: #fbfcfe;
+  --term-fg: #1b2740;
+  --term-selection: rgba(88, 103, 232, 0.18);
+  --term-cursor: #5867e8;
+}
+
+/* ============================ 强调色 ============================ */
+[data-accent='aurora'] {
+  --accent: #7c8cf8;
+  --accent-2: #43d9b8;
+  --accent-ink: #08101f;
+}
+[data-accent='teal'] {
+  --accent: #2fcfb4;
+  --accent-2: #7ce8d3;
+  --accent-ink: #04120f;
+}
+[data-accent='amber'] {
+  --accent: #f0b45c;
+  --accent-2: #f8d49a;
+  --accent-ink: #1c1203;
+}
+[data-accent='rose'] {
+  --accent: #f4718f;
+  --accent-2: #f9a8bd;
+  --accent-ink: #20070f;
+}
+
+:root {
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-soft-2: color-mix(in srgb, var(--accent) 22%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 38%, transparent);
+  --accent-text: color-mix(in srgb, var(--accent) 82%, var(--text));
+  --accent-glow: 0 8px 24px -10px color-mix(in srgb, var(--accent) 65%, transparent);
+  --gradient-accent: linear-gradient(
+    135deg,
+    var(--accent) 0%,
+    color-mix(in srgb, var(--accent) 55%, var(--accent-2)) 55%,
+    var(--accent-2) 100%
+  );
+}

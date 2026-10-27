@@ -1,0 +1,24 @@
+/* ==========================================================================
+   应用级布局细节
+   ========================================================================== */
+
+/* 空态没有标签栏，工作区只保留一行；用更高的特异性压过 shell.css 的两行定义，
+   否则 .terminal-stack 会被塞进 46px 的标签栏行，欢迎页只剩一条窄缝。 */
+.workspace.workspace--empty {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* 所有会话面板的定位上下文：绝对定位堆叠，非活动面板隐藏 */
+.terminal-stack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--term-bg);
+}
+
+.workspace--empty .terminal-stack {
+  background: var(--surface);
+}

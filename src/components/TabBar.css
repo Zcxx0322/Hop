@@ -1,0 +1,206 @@
+/* ==========================================================================
+   标签页
+   ========================================================================== */
+
+.tabbar {
+  display: flex;
+  align-items: stretch;
+  height: var(--tabbar-h);
+  flex: none;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.tabbar__scroll {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tabbar__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: none;
+  max-width: 208px;
+  min-width: 132px;
+  padding: 0 6px 0 12px;
+  border-right: 1px solid var(--border);
+  -webkit-app-region: no-drag;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.tab:hover {
+  background: color-mix(in srgb, var(--text) 3.5%, transparent);
+}
+
+.tab.is-active {
+  background: var(--surface);
+}
+
+.tab.is-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-accent);
+}
+
+.tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--surface);
+}
+
+.tab__main {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  text-align: left;
+  font-size: var(--text-sm);
+  color: var(--text-3);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.tab:hover .tab__main,
+.tab.is-active .tab__main {
+  color: var(--text);
+}
+
+.tab.is-active .tab__main {
+  font-weight: 500;
+}
+
+.tab__status {
+  display: grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+.tab__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+
+.tab__dot--connected {
+  background: var(--success);
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--success) 16%, transparent);
+}
+
+.tab__dot--closed {
+  background: var(--text-3);
+  opacity: 0.55;
+}
+
+.tab__dot--error {
+  background: var(--danger);
+  box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--danger) 16%, transparent);
+}
+
+.tab__title {
+  flex: 1;
+  min-width: 0;
+}
+
+.tab__close {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  flex: none;
+  margin-left: 2px;
+  border-radius: var(--radius-xs);
+  color: var(--text-3);
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.tab:hover .tab__close,
+.tab.is-active .tab__close,
+.tab__close:focus-visible {
+  opacity: 1;
+}
+
+.tab__close:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.tab.is-error .tab__title {
+  color: var(--danger);
+}
+
+/* ---------- 右侧操作 ---------- */
+.tabbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 0 10px;
+  border-left: 1px solid var(--border);
+  -webkit-app-region: no-drag;
+}
+
+.tabbar__hint {
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 0.02em;
+}
+
+.tabbar__new {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.tabbar__new:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+@media (max-width: 720px) {
+  .tabbar__hint {
+    display: none;
+  }
+
+  .tab {
+    min-width: 112px;
+  }
+}
