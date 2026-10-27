@@ -72,12 +72,26 @@ pnpm test:e2e                      # 自带假 SSH 服务器，无需真实主�
 ### 打包与分发
 
 ```bash
-pnpm dist:win                       # 完整安装包：release/Hop-0.1.0-x64.exe (NSIS)
+pnpm dist:win                       # 一次出三个产物（见下表）
 node node_modules/electron-builder/cli.js --win --dir --config electron-builder.yml
                                     # 仅目录版：release/win-unpacked/Hop.exe（免安装，可直接双击）
 ```
 
+| 产物 | 用途 |
+| --- | --- |
+| `release/Hop-0.1.0-x64.exe` | NSIS 安装包：开始菜单 / 桌面快捷方式、卸载项 |
+| `release/Hop-0.1.0-x64.zip` | 免安装压缩包：解压到任意目录直接双击 `Hop.exe`，**不经过安装器** |
+| `release/win-unpacked/` | 免安装目录（zip 的多出来的那份源目录） |
+
 目录版已验证：`release/win-unpacked/Hop.exe` 从 `app.asar` 加载主进程与渲染层、启动网关、写入 `profiles.json` / `secrets.dat` 全部正常（13 项进程内自检通过）。主进程与 preload 是自包含单文件，安装包内不含 `node_modules`。
+
+> **安装器写入失败怎么办**：安装包未做代码签名，部分安全软件会拦截 NSIS 往自定义目录
+> （例如 `D:\xxx\Hop`）写入 `uninstallerIcon.ico`，弹出「不能打开要写入的文件」。
+> 这属于安全软件/系统策略行为，不是安装包损坏。按顺序尝试：
+> ① 用 `Hop-0.1.0-x64.zip` 解压即用（最省事，功能完全一致）；
+> ② 把安装包加入安全软件信任区或临时关闭其「文件保护 / 主动防御」后重装；
+> ③ 安装目录改回向导默认位置（`%LOCALAPPDATA%\Programs\Hop`）；
+> ④ 为安装包做代码签名（`win.signtoolOptions` / `CSC_LINK`），从根上消除拦截。
 
 > **受限环境提示**：在没有交互桌面的 CI/沙箱里，Chromium 的沙箱与命名管道可能不可用，需要
 > `--no-sandbox --disable-gpu --single-process --user-data-dir=<可写目录>`；正常桌面环境直接双击不需要任何参数。

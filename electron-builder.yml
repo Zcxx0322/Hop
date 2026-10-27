@@ -28,6 +28,12 @@ win:
     - target: nsis
       arch:
         - x64
+    # Portable archive: doubles as the fallback when the NSIS install cannot write
+    # into the target directory (custom drive / locked folder / restrictive AV).
+    # Unzip anywhere and double-click Hop.exe.
+    - target: zip
+      arch:
+        - x64
   icon: build/icon.ico
   artifactName: ${productName}-${version}-${arch}.${ext}
 
