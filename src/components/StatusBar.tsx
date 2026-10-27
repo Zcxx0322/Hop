@@ -56,7 +56,7 @@ export function StatusBar() {
           <Kbd>K</Kbd>
           <span>命令面板</span>
         </button>
-        <span className="statusbar__version mono">v0.1.0</span>
+        <span className="statusbar__version mono">v{__APP_VERSION__}</span>
       </div>
     </footer>
   );

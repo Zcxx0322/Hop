@@ -91,7 +91,7 @@ pnpm build
   ├─ esbuild  src/preload/index.ts→ dist/preload/index.cjs  (external: electron)
   └─ vite     index.html          → dist/renderer/**
 pnpm dist:win
-  └─ electron-builder → release/Hop-0.1.0-x64.exe (NSIS)
+  └─ electron-builder → release/Hop-0.0.1-x64.exe (NSIS)
 ```
 
 - **esbuild 用 CLI 而不是 JS API**：本机受限沙箱下 `child_process` 的 pipe 句柄受限，esbuild 的 JS API 会 `EPERM`；CLI + `stdio: 'inherit'` 稳定。主进程构建因此还顺手拿到了跨平台一致的行为。
@@ -135,7 +135,7 @@ setNoDelay(true)   median 16 ms   min 9.8 / max 25   ← 剩余部分是 2×RTT
 | 产物 | 状态 |
 | --- | --- |
 | `release/win-unpacked/Hop.exe`（目录版，359 MB，Electron 45 + app.asar 1.7 MB） | ✅ 生成并运行自检通过（13 项：网关绑定、`/health`、CRUD、`profiles.json`、`secrets.dat`、`file://` 渲染层加载） |
-| `release/Hop-0.1.0-x64.exe`（NSIS 安装包，约 122 MB） | ✅ 已产出：`electron-builder` 首次运行会 `exec` 外部 `7za`/NSIS 工具链并下载工具包，在受限沙箱里会 `spawn EPERM`，普通终端或放开外部进程的环境正常 |
+| `release/Hop-0.0.1-x64.exe`（NSIS 安装包，约 122 MB） | ✅ 已产出：`electron-builder` 首次运行会 `exec` 外部 `7za`/NSIS 工具链并下载工具包，在受限沙箱里会 `spawn EPERM`，普通终端或放开外部进程的环境正常 |
 
 > Windows 上还需要注意：Electron 的 `@electron/get` 会把 Electron 压缩包缓存到 `%LOCALAPPDATA%\electron`，受限环境可用 `LOCALAPPDATA`（或 `electron_config_cache`）指向可写目录，`electron-builder` 自身缓存用 `ELECTRON_BUILDER_CACHE`。
 

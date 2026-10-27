@@ -416,7 +416,7 @@ export class MockShell {
         return;
 
       case 'hop':
-        this.line(`Hop v0.1.0 · 会话 ${this.host.username}@${this.profile.hostname}`);
+        this.line(`Hop v${__APP_VERSION__} · 会话 ${this.host.username}@${this.profile.hostname}`);
         this.line(`  ${dim('运行模式')} 演示（MockTransport）`);
         this.line(`  ${dim('后端协议')} docs/API-CONTRACT.md`);
         return;

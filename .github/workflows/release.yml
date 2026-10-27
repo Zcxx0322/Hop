@@ -1,0 +1,57 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows-installer:
+    name: Build Windows installer
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build bundles
+        run: pnpm build
+
+      - name: Package NSIS installer
+        run: pnpm exec electron-builder --win nsis --config electron-builder.yml
+
+      - name: List artifacts
+        shell: pwsh
+        run: Get-ChildItem release -Filter *.exe | Select-Object Name, Length
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Hop ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release/Hop-*-x64.exe
+          body: |
+            Hop ${{ github.ref_name }} — Windows 安装包在下方 Assets 里，文件名形如 `Hop-<version>-x64.exe`
+            （`<version>` 即 tag 去掉前缀 `v`，与 `package.json` 的 version 一致）。
+
+            安装包未签名；SmartScreen 拦截时点「更多信息 → 仍要运行」。
+
+            本机构建方式：`pnpm install && pnpm dist:win`。

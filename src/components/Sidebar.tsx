@@ -76,7 +76,7 @@ export function Sidebar() {
             <span className={`sidebar__mode${isMock() ? ' is-mock' : ''}`}>
               {isMock() ? '演示模式' : '已连接后端'}
             </span>
-            <span className="mono">v0.1.0</span>
+            <span className="mono">v{__APP_VERSION__}</span>
           </div>
         </footer>
       </div>
