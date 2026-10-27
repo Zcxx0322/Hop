@@ -175,9 +175,15 @@ export class SshSession {
 
       conn.on('handshake', () => {
         if (role === 'target') this.setStatus('authenticating');
+        /*
+         * 交互式 SSH 的按键是逐字节的小包：Nagle 会把它攒到上一个包被 ACK，
+         * 叠加对端的延迟 ACK 后，每次按键会凭空多出 30~60 ms。关掉它。
+         */
+        noDelay(conn);
       });
 
       conn.on('ready', () => {
+        noDelay(conn);
         const banner = (conn as unknown as { _remoteVer?: string })._remoteVer;
         if (banner) this.serverBanner = `SSH-2.0-${banner}`;
         done(() => resolve(conn));
@@ -518,5 +524,14 @@ export class SshSession {
     } catch (err) {
       log.error('failed to deliver closed event', { err: String(err) });
     }
+  }
+}
+
+/** 关掉 Nagle：SSH 交互是逐按键的小包，攒包会让手感变钝。 */
+function noDelay(conn: Client): void {
+  try {
+    (conn as unknown as { setNoDelay?: (value: boolean) => void }).setNoDelay?.(true);
+  } catch {
+    /* 个别实现不支持，忽略即可 */
   }
 }

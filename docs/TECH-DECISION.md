@@ -109,13 +109,24 @@ pnpm dist:win
 | 去掉 `smoothScrollDuration` | 光滑滚动会让每次输出都走一趟动画帧，快速输出时明显掉帧 |
 | 输出合并自适应 | 交互式小 chunk（< 4 KB）1 ms 内 flush，大段输出仍按 6 ms / 32 KiB 合并，避免高频小帧 |
 | 主题切换改用 `useLayoutEffect` | 父组件的 layout effect 先于子组件被动 effect，终端不会读到上一套配色的 CSS 变量 |
+| **SSH socket 关闭 Nagle** | `client.setNoDelay(true)`：逐按键的小包原本会被 Nagle 攒着等上一个包被 ACK，叠加对端延迟 ACK，每次按键凭空多出 30~50 ms；`ws` 服务端默认已开，ssh2 不会自动开 |
 
 实测（真实 gateway + ssh2 + 本地假 SSH 服务器，20 次单字符回显，WebSocket 往返）：
 
 ```
 优化前 median 10.27 ms（6 ms 固定合并窗口）
-优化后 median  5.25 ms   min 4.57 / p90 5.51 / max 5.93
+渲染优化后 median 5.25 ms   min 4.57 / p90 5.51 / max 5.93
 ```
+
+真实主机（192.168.10.31，ping 6~8 ms）上逐字符回显往返：
+
+```
+Nagle 打开（默认） median 61 ms   min 56 / max 90
+setNoDelay(true)   median 16 ms   min 9.8 / max 25   ← 剩余部分是 2×RTT
+```
+
+拆分验证：同一条链路下，客户端从按键到发出 WebSocket 帧 < 1 ms，网关到 ssh2 回显 ≈ 5 ms（本地假服务端），
+说明首版「卡」的主要成分是对端延迟 + Nagle 攒包，而不是渲染帧率。
 
 打包后的 Electron 进程内 `webgl2` 可用（WebglAddon 实际生效）。
 
