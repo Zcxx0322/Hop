@@ -111,6 +111,21 @@ const api = {
   answerHostKey: (requestId: string, accept: boolean, persist = accept) =>
     invoke<boolean>(CH.hostKeyAnswer, { requestId, accept, persist }),
 
+  /** 无边框窗口的自绘标题栏控制。 */
+  window: {
+    minimize: () => invoke<boolean>(CH.windowMinimize),
+    toggleMaximize: () => invoke<boolean>(CH.windowToggleMaximize),
+    close: () => invoke<boolean>(CH.windowClose),
+    isMaximized: () => invoke<boolean>(CH.windowIsMaximized),
+    onMaximizeChange: (listener: (maximized: boolean) => void): Unsubscribe => {
+      const handler = (_event: unknown, value: boolean) => listener(value);
+      ipcRenderer.on(CH.evWindowMaximize, handler);
+      return () => {
+        ipcRenderer.removeListener(CH.evWindowMaximize, handler);
+      };
+    },
+  },
+
   events: { onData, onStatus, onClosed, onHostKey },
 };
 

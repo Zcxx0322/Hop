@@ -25,11 +25,17 @@ export const CH = {
   knownHostsForget: 'hop:knownhosts:forget',
   hostKeyAnswer: 'hop:hostkey:answer',
 
+  windowMinimize: 'hop:window:minimize',
+  windowToggleMaximize: 'hop:window:toggle-maximize',
+  windowClose: 'hop:window:close',
+  windowIsMaximized: 'hop:window:is-maximized',
+
   /* pushed events (webContents.send) */
   evData: 'hop:session:data',
   evStatus: 'hop:session:status',
   evClosed: 'hop:session:closed',
   evHostKey: 'hop:hostkey:challenge',
+  evWindowMaximize: 'hop:window:maximize-changed',
 } as const;
 
 export type ChannelName = (typeof CH)[keyof typeof CH];

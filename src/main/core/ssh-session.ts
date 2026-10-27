@@ -389,9 +389,18 @@ export class SshSession {
       this.flush();
       return;
     }
-    if (!this.flushTimer) {
-      this.flushTimer = setTimeout(() => this.flush(), FLUSH_MS);
+    if (this.flushTimer) {
+      // 已经排了一次 flush：攒够一大块就别等定时器了。
+      if (this.queuedBytes >= 4096) this.flush();
+      return;
     }
+    /*
+     * 交互式回显（按键、补全提示）每个 chunk 只有几个字节：1 ms 内送出，
+     * 把「按键 → 回显」压到一帧以内；大段输出（ls / cat）仍按 6 ms 合并，
+     * 避免高频小帧拖慢渲染。
+     */
+    const delay = this.queuedBytes < 4096 ? 1 : FLUSH_MS;
+    this.flushTimer = setTimeout(() => this.flush(), delay);
   }
 
   private flush(): void {

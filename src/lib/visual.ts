@@ -2,12 +2,12 @@ import type { Host } from '../types';
 
 /** 主机色标可选值，新增主机时按顺序展示。 */
 export const HOST_COLORS = [
-  '#7c8cf8',
-  '#43d9b8',
+  '#2ee66b',
+  '#26c281',
   '#f2b45c',
   '#f4718f',
-  '#a78bfa',
-  '#22d3ee',
+  '#63d2c0',
+  '#4aa8ff',
 ];
 
 function hash(input: string): number {

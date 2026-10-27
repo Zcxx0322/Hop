@@ -1,13 +1,14 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
+import { CH } from '../shared/channels';
 import { createLogger } from './core/logger';
 
 const log = createLogger('window');
 
 let mainWindow: BrowserWindow | null = null;
 
-const BACKGROUND = '#0b0d13';
+const BACKGROUND = '#000000';
 
 /**
  * 256 px master from `build/icons/`. Packaged Windows builds take their icon
@@ -24,27 +25,52 @@ export interface WindowOptions {
   devServerUrl?: string;
   /** Renderer entry for the packaged app. */
   rendererEntry: string;
-  /** Opt-in frameless look; the renderer must provide a drag region. */
-  customTitleBar?: boolean;
+}
+
+/** Window-chrome IPC is registered once per process, not per window. */
+let windowIpcReady = false;
+
+function registerWindowIpc(): void {
+  if (windowIpcReady) return;
+  windowIpcReady = true;
+
+  ipcMain.handle(CH.windowMinimize, () => {
+    getMainWindow()?.minimize();
+    return { ok: true, data: true } as const;
+  });
+  ipcMain.handle(CH.windowToggleMaximize, () => {
+    const win = getMainWindow();
+    if (!win) return { ok: true, data: false } as const;
+    if (win.isMaximized()) win.unmaximize();
+    else win.maximize();
+    return { ok: true, data: win.isMaximized() } as const;
+  });
+  ipcMain.handle(CH.windowClose, () => {
+    getMainWindow()?.close();
+    return { ok: true, data: true } as const;
+  });
+  ipcMain.handle(CH.windowIsMaximized, () => ({
+    ok: true,
+    data: Boolean(getMainWindow()?.isMaximized()),
+  }));
 }
 
 export function createMainWindow(options: WindowOptions): BrowserWindow {
+  registerWindowIpc();
+
   const win = new BrowserWindow({
     width: 1380,
     height: 880,
     minWidth: 960,
-    minHeight: 600,
+    minHeight: 560,
     backgroundColor: BACKGROUND,
     show: false,
+    frame: false,
+    titleBarStyle: 'hidden',
+    roundedCorners: true,
     autoHideMenuBar: true,
     title: 'Hop',
     ...(windowIcon() ? { icon: windowIcon() as string } : {}),
-    ...(options.customTitleBar
-      ? {
-          titleBarStyle: 'hidden' as const,
-          titleBarOverlay: { color: '#00000000', symbolColor: '#c8ccd8', height: 36 },
-        }
-      : {}),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.cjs'),
       contextIsolation: true,
@@ -56,6 +82,13 @@ export function createMainWindow(options: WindowOptions): BrowserWindow {
   });
 
   mainWindow = win;
+
+  const pushMaximized = () => {
+    if (win.isDestroyed()) return;
+    win.webContents.send(CH.evWindowMaximize, win.isMaximized());
+  };
+  win.on('maximize', pushMaximized);
+  win.on('unmaximize', pushMaximized);
 
   win.once('ready-to-show', () => {
     win.show();

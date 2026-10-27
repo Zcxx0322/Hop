@@ -93,33 +93,6 @@ export function SettingsPanel() {
             />
           </div>
 
-          <div className="settings-row settings-row--stack">
-            <div className="settings-row__text">
-              <span className="settings-row__label">强调色</span>
-              <span className="settings-row__desc">用于按钮、选中态与终端光标</span>
-            </div>
-            <div className="settings-accents" role="group" aria-label="强调色">
-              {ACCENTS.map((accent) => (
-                <button
-                  key={accent.key}
-                  type="button"
-                  className={`settings-accent${settings.accent === accent.key ? ' is-active' : ''}`}
-                  aria-pressed={settings.accent === accent.key}
-                  onClick={() => actions.updateSettings({ accent: accent.key })}
-                >
-                  <span
-                    className="settings-accent__dot"
-                    style={{
-                      background: `linear-gradient(135deg, ${accent.swatch}, ${accent.swatch2})`,
-                    }}
-                    aria-hidden="true"
-                  />
-                  <span className="settings-accent__label">{accent.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="settings-row">
             <div className="settings-row__text">
               <span className="settings-row__label">折叠侧栏</span>

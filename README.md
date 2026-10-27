@@ -13,19 +13,20 @@
 | ![终端](docs/screenshots/terminal.png) | ![多会话标签](docs/screenshots/tabs.png) |
 | **命令面板** | **新建连接** |
 | ![命令面板](docs/screenshots/command-palette.png) | ![新建连接](docs/screenshots/host-form.png) |
-
-<p align="center">
-  <img src="docs/screenshots/settings.png" alt="偏好设置：主题、强调色、终端字体与光标，改动即时生效" width="880" />
-</p>
+| **浅色主题（纯白 + 墨绿）** | **偏好设置** |
+| ![浅色终端](docs/screenshots/terminal-light.png) | ![偏好设置](docs/screenshots/settings.png) |
+| **无边框窗口 · 纯黑 + 荧光绿** | **无边框窗口 · 纯白 + 墨绿** |
+| ![深色窗口](docs/screenshots/frameless-dark.png) | ![浅色窗口](docs/screenshots/frameless-light.png) |
 
 
 | 能力 | 说明 |
 | --- | --- |
 | 🖥️ 主机库 | 搜索、收藏、标签过滤、最近连接排序、右键快捷菜单 |
 | 🗂️ 多会话标签 | 同一主机复用标签，连接状态点、快捷键切换、中键/⌘W 关闭 |
-| ⌨️ 真终端 | xterm.js + 自适应尺寸 + 主题跟随 + 断线重连 |
+| ⌨️ 真终端 | xterm.js + WebGL 渲染 + 自适应尺寸 + 主题跟随 + 断线重连 |
 | ⌘ 命令面板 | 一个输入框覆盖「连接 / 新建 / 切换 / 设置」，支持 `host:`、`edit:` 前缀 |
-| 🎛️ 偏好设置 | 深浅色、四种强调色、字号、字体、光标形态、滚动缓冲、关闭确认 |
+| 🎨 两套主题 | 纯黑 + 荧光绿 / 纯白 + 墨绿，终端配色随主题一起切换 |
+| 🪟 无边框窗口 | 自绘标题栏（品牌 / 标签 / 最小化·最大化·关闭），双击标题栏最大化 |
 | 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
 
 ## 快速开始
@@ -189,7 +190,8 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 ## 设计说明
 
 - **设计令牌驱动**：`src/styles/tokens.css` 定义全部颜色、字号、间距、圆角与缓动；换肤只改 `data-theme` / `data-accent`。
-- **四种强调色**：极光（默认，靛蓝→薄荷渐变）、青瓷、琥珀、玫瑰；派生 `--accent-soft`、`--accent-border` 供悬浮/聚焦态使用。
+- **两套配色**：`--ink` 纯黑 + 荧光绿（#3ddc84）与纯白 + 墨绿（#12a150），只有一组强调色，界面与终端同步切换。
+- **无边框窗口**：`frame: false` + 自绘 40px 标题栏，`-webkit-app-region: drag` 拖动、双击最大化，窗口控制走 IPC（`hop:window:*`）。
 - **有节制的动效**：180 ms 主节奏、`cubic-bezier(0.16, 1, 0.3, 1)`；尊重 `prefers-reduced-motion`。
 - **响应式**：≥981 px 双栏；<980 px 侧栏变抽屉；<640 px 收紧标签高度。
 - **可访问性**：语义化标签 + `role="tablist"` 键盘左右切换、对话框焦点陷阱与 `aria-modal`、可见焦点环、`aria-live` 通知、图标按钮均带 `aria-label`。

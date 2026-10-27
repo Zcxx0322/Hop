@@ -1,0 +1,112 @@
+/* ==========================================================================
+   自绘标题栏（无系统边框）
+   ========================================================================== */
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--titlebar-h);
+  padding-left: 12px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+  user-select: none;
+  z-index: var(--z-titlebar);
+}
+
+.titlebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding-right: 6px;
+}
+
+.titlebar__name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.titlebar__ghost {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.titlebar__ghost:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.titlebar__tabs {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+/* 空白处可拖动窗口，但标签与按钮必须能点 */
+.titlebar__tabs button,
+.titlebar__tabs .tab {
+  -webkit-app-region: no-drag;
+}
+
+.titlebar__hint {
+  display: flex;
+  align-items: center;
+  padding-left: 4px;
+  font-size: var(--text-sm);
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+}
+
+.titlebar__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  padding-right: 6px;
+}
+
+/* ---------- 窗口控制按钮 ---------- */
+.wincontrols {
+  display: flex;
+  align-items: stretch;
+  flex: none;
+  height: 100%;
+}
+
+.wincontrols__btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 100%;
+  color: var(--text-2);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.wincontrols__btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.wincontrols__btn--close:hover {
+  background: #e81123;
+  color: #ffffff;
+}

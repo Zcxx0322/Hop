@@ -4,7 +4,7 @@ const STORAGE_KEY = 'hop.settings.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
-  accent: 'aurora',
+  accent: 'green',
   fontSize: 13,
   fontFamily: 'jetbrains',
   cursorStyle: 'bar',
@@ -23,12 +23,7 @@ export const ACCENTS: Array<{
   label: string;
   swatch: string;
   swatch2: string;
-}> = [
-  { key: 'aurora', label: '极光', swatch: '#7c8cf8', swatch2: '#43d9b8' },
-  { key: 'teal', label: '青瓷', swatch: '#2fcfb4', swatch2: '#7ce8d3' },
-  { key: 'amber', label: '琥珀', swatch: '#f0b45c', swatch2: '#f8d49a' },
-  { key: 'rose', label: '玫瑰', swatch: '#f4718f', swatch2: '#f9a8bd' },
-];
+}> = [{ key: 'green', label: '翠绿', swatch: '#2ee66b', swatch2: '#7bf5a3' }];
 
 export const FONT_STACKS: Record<FontKey, { label: string; stack: string }> = {
   jetbrains: {

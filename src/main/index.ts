@@ -1,4 +1,5 @@
 import { app, session, type Session } from 'electron';
+import fs from 'node:fs';
 import path from 'node:path';
 import { CH } from '../shared/channels';
 import type { HopError, HostKeyChallenge, SessionSnapshot } from '../shared/contract';
@@ -16,6 +17,29 @@ const devServerUrl = isDev ? process.env.HOP_DEV_SERVER_URL : undefined;
 
 app.setName('Hop');
 app.setAppUserModelId('com.hop.ssh');
+
+/**
+ * Portable installs (a `data` folder next to Hop.exe, VS Code convention) keep every
+ * profile file beside the binary; otherwise data lives in %APPDATA%\Hop.
+ * Must run before the single-instance lock, which is keyed on the userData path.
+ */
+function resolvePortableUserData(): string | null {
+  const override = process.env.HOP_USER_DATA;
+  if (override) return override;
+  if (!app.isPackaged) return null;
+  const sibling = path.join(path.dirname(app.getPath('exe')), 'data');
+  return fs.existsSync(sibling) ? sibling : null;
+}
+
+const portableData = resolvePortableUserData();
+if (portableData) {
+  try {
+    fs.mkdirSync(portableData, { recursive: true });
+    app.setPath('userData', portableData);
+  } catch {
+    // Fall back to %APPDATA%\Hop when the portable folder is not writable.
+  }
+}
 
 // Single instance: a second launch focuses the existing window.
 if (!app.requestSingleInstanceLock()) {
@@ -104,7 +128,6 @@ async function bootstrap(): Promise<void> {
   createMainWindow({
     devServerUrl,
     rendererEntry: path.join(__dirname, '../renderer/index.html'),
-    customTitleBar: process.env.HOP_CUSTOM_TITLEBAR === '1',
   });
 
   app.on('activate', () => {
@@ -112,7 +135,6 @@ async function bootstrap(): Promise<void> {
       createMainWindow({
         devServerUrl,
         rendererEntry: path.join(__dirname, '../renderer/index.html'),
-        customTitleBar: process.env.HOP_CUSTOM_TITLEBAR === '1',
       });
     }
   });

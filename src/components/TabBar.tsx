@@ -77,15 +77,6 @@ export function TabBar({ sessions, activeSessionId }: TabBarProps) {
 
       <div className="tabbar__actions">
         <span className="tabbar__hint mono">{state.sessions.length} 个会话</span>
-        <button
-          type="button"
-          className="tabbar__new"
-          aria-label="新建连接"
-          title="新建连接"
-          onClick={() => actions.openHostForm(null)}
-        >
-          <Icon name="plus" size={14} />
-        </button>
       </div>
     </div>
   );

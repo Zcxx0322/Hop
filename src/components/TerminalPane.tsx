@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
+import { WebglAddon } from '@xterm/addon-webgl';
 import '@xterm/xterm/css/xterm.css';
 import type { Host, Session } from '../types';
 import { createTransport } from '../api/createTransport';
@@ -30,33 +31,55 @@ function readVar(styles: CSSStyleDeclaration, name: string, fallback: string): s
   return styles.getPropertyValue(name).trim() || fallback;
 }
 
-function readTerminalTheme() {
+const ANSI_DARK = {
+  black: '#1a1f1b',
+  red: '#ff5f57',
+  green: '#2ee66b',
+  yellow: '#e5b454',
+  blue: '#4aa8ff',
+  magenta: '#c792ea',
+  cyan: '#33d6d6',
+  white: '#cfd8d3',
+  brightBlack: '#5f6a62',
+  brightRed: '#ff8a84',
+  brightGreen: '#7bf5a3',
+  brightYellow: '#f2cf87',
+  brightBlue: '#7cc4ff',
+  brightMagenta: '#dcb6f5',
+  brightCyan: '#71ecec',
+  brightWhite: '#f2f7f3',
+} as const;
+
+const ANSI_LIGHT = {
+  black: '#16201b',
+  red: '#c62828',
+  green: '#0f9d58',
+  yellow: '#9a6b06',
+  blue: '#1a6fd4',
+  magenta: '#8e44ad',
+  cyan: '#0e7c86',
+  white: '#5b6662',
+  brightBlack: '#7d877f',
+  brightRed: '#e03a34',
+  brightGreen: '#12a150',
+  brightYellow: '#b8860b',
+  brightBlue: '#3d8ee8',
+  brightMagenta: '#a95fc4',
+  brightCyan: '#1298a3',
+  brightWhite: '#0c120e',
+} as const;
+
+function readTerminalTheme(light: boolean) {
   const styles = getComputedStyle(document.documentElement);
-  const background = readVar(styles, '--term-bg', '#080b11');
-  const accent = readVar(styles, '--accent', '#7c8cf8');
+  const background = readVar(styles, '--term-bg', light ? '#ffffff' : '#000000');
   return {
     background,
-    foreground: readVar(styles, '--term-fg', '#d8e0ef'),
-    cursor: accent,
+    foreground: readVar(styles, '--term-fg', light ? '#16201b' : '#cfd8d3'),
+    cursor: readVar(styles, '--term-cursor', light ? '#12a150' : '#2ee66b'),
     cursorAccent: background,
-    selectionBackground: readVar(styles, '--term-selection', 'rgba(124, 140, 248, 0.28)'),
-    selectionInactiveBackground: readVar(styles, '--term-selection', 'rgba(124, 140, 248, 0.16)'),
-    black: '#0b1017',
-    red: '#fb7185',
-    green: '#3ddcaf',
-    yellow: '#f2b45c',
-    blue: '#7c8cf8',
-    magenta: '#c084fc',
-    cyan: '#43d9b8',
-    white: '#d8e0ef',
-    brightBlack: '#5d6a80',
-    brightRed: '#fda4af',
-    brightGreen: '#7ef0cf',
-    brightYellow: '#fbd38d',
-    brightBlue: '#a5b0ff',
-    brightMagenta: '#d8b4fe',
-    brightCyan: '#8ff5e4',
-    brightWhite: '#f4f7ff',
+    selectionBackground: readVar(styles, '--term-selection', light ? 'rgba(18,161,80,.18)' : 'rgba(46,230,107,.24)'),
+    selectionInactiveBackground: light ? 'rgba(18,161,80,.12)' : 'rgba(46,230,107,.14)',
+    ...(light ? ANSI_LIGHT : ANSI_DARK),
   };
 }
 
@@ -66,6 +89,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
+  const webglRef = useRef<WebglAddon | null>(null);
   const transportRef = useRef<TerminalTransport | null>(null);
   const [attempt, setAttempt] = useState(0);
   const { updateSession } = actions;
@@ -96,9 +120,8 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       cursorStyle: settings.cursorStyle,
       cursorBlink: settings.cursorBlink,
       scrollback: settings.scrollback,
-      smoothScrollDuration: 90,
       macOptionIsMeta: true,
-      theme: readTerminalTheme(),
+      theme: readTerminalTheme(resolvedTheme === 'light'),
       allowTransparency: false,
     });
     const fit = new FitAddon();
@@ -107,8 +130,27 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     terminalRef.current = term;
     fitRef.current = fit;
 
+    /*
+     * WebGL 渲染器：连续输入 / 大段输出时帧率明显高于 DOM 渲染器。
+     * 显卡或驱动不可用时安静回退到默认渲染器。
+     */
+    try {
+      const webgl = new WebglAddon();
+      webgl.onContextLoss(() => {
+        try {
+          webgl.dispose();
+        } catch {
+          /* 上下文已丢失 */
+        }
+      });
+      term.loadAddon(webgl);
+      webglRef.current = webgl;
+    } catch {
+      webglRef.current = null;
+    }
+
     term.writeln(
-      `\x1b[38;2;124;140;248m●\x1b[0m \x1b[1mHop\x1b[0m \x1b[2m·\x1b[0m 正在准备会话 ${session.title}`,
+      `\x1b[38;2;46;230;107m●\x1b[0m \x1b[1mHop\x1b[0m \x1b[2m·\x1b[0m 正在准备会话 ${session.title}`,
     );
     term.writeln('');
 
@@ -146,6 +188,12 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       cancelAnimationFrame(frame);
       observer.disconnect();
       dataDisposable.dispose();
+      try {
+        webglRef.current?.dispose();
+      } catch {
+        /* 已失效 */
+      }
+      webglRef.current = null;
       terminalRef.current = null;
       fitRef.current = null;
       term.dispose();
@@ -209,7 +257,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     term.options.cursorStyle = settings.cursorStyle;
     term.options.cursorBlink = settings.cursorBlink;
     term.options.scrollback = settings.scrollback;
-    term.options.theme = readTerminalTheme();
+    term.options.theme = readTerminalTheme(resolvedTheme === 'light');
     try {
       fitRef.current?.fit();
     } catch {

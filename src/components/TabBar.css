@@ -1,15 +1,13 @@
 /* ==========================================================================
-   标签页
+   标签页（嵌入标题栏）
    ========================================================================== */
 
 .tabbar {
   display: flex;
   align-items: stretch;
-  height: var(--tabbar-h);
-  flex: none;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--text) 4%, transparent);
+  height: 100%;
+  flex: 1;
+  min-width: 0;
   -webkit-app-region: drag;
   user-select: none;
 }
@@ -33,49 +31,41 @@
   display: flex;
   align-items: center;
   flex: none;
-  max-width: 208px;
-  min-width: 132px;
-  padding: 0 6px 0 12px;
-  border-right: 1px solid var(--border);
+  max-width: 200px;
+  min-width: 118px;
+  padding: 0 4px 0 10px;
+  border-radius: var(--radius-sm);
   -webkit-app-region: no-drag;
   transition: background var(--dur-fast) var(--ease-out);
 }
 
 .tab:hover {
-  background: color-mix(in srgb, var(--text) 3.5%, transparent);
+  background: var(--hover);
 }
 
 .tab.is-active {
-  background: var(--surface);
-}
-
-.tab.is-active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--gradient-accent);
+  background: var(--surface-2);
 }
 
 .tab.is-active::after {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 1px;
-  background: var(--surface);
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
 }
 
 .tab__main {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   flex: 1;
   min-width: 0;
   height: 100%;
+  padding-bottom: 4px;
   text-align: left;
   font-size: var(--text-sm);
   color: var(--text-3);
@@ -100,8 +90,8 @@
 }
 
 .tab__dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--text-3);
 }
@@ -129,10 +119,10 @@
 .tab__close {
   display: grid;
   place-items: center;
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   flex: none;
-  margin-left: 2px;
+  margin-bottom: 4px;
   border-radius: var(--radius-xs);
   color: var(--text-3);
   opacity: 0;
@@ -157,50 +147,23 @@
   color: var(--danger);
 }
 
-/* ---------- 右侧操作 ---------- */
+/* ---------- 右侧计数 ---------- */
 .tabbar__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex: none;
-  padding: 0 10px;
-  border-left: 1px solid var(--border);
+  padding: 0 8px;
   -webkit-app-region: no-drag;
 }
 
 .tabbar__hint {
-  font-size: 10px;
+  font-size: 10.5px;
   color: var(--text-3);
   letter-spacing: 0.02em;
 }
 
-.tabbar__new {
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  transition:
-    background var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out);
-}
-
-.tabbar__new:hover {
-  background: var(--surface-2);
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-
-@media (max-width: 720px) {
+@media (max-width: 820px) {
   .tabbar__hint {
     display: none;
-  }
-
-  .tab {
-    min-width: 112px;
   }
 }

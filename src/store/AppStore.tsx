@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
@@ -223,13 +224,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     state.settings.theme === 'system' ? systemTheme : state.settings.theme;
 
   /* ---------- 主题落到 <html> 上，CSS 变量随之切换 ---------- */
-  useEffect(() => {
+  /* 用 layout effect：子组件的被动 effect（如终端主题）必须读到已切换的 CSS 变量 */
+  useLayoutEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = resolvedTheme;
     root.dataset.accent = state.settings.accent;
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', resolvedTheme === 'dark' ? '#090c12' : '#f4f6fb');
+      ?.setAttribute('content', resolvedTheme === 'dark' ? '#000000' : '#ffffff');
   }, [resolvedTheme, state.settings.accent]);
 
   /* ---------- 偏好持久化 ---------- */

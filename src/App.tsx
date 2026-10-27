@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useApp } from './store/AppStore';
+import { TitleBar } from './components/TitleBar';
 import { Sidebar } from './components/Sidebar';
-import { TabBar } from './components/TabBar';
 import { TerminalPane } from './components/TerminalPane';
 import { Welcome } from './components/Welcome';
 import { StatusBar } from './components/StatusBar';
@@ -35,17 +35,18 @@ export default function App() {
         return;
       }
 
+      /* 设置面板是应用级入口：终端聚焦时也要能用（shell 里 Ctrl+, 无特殊语义） */
+      if (mod && event.key === ',') {
+        event.preventDefault();
+        actions.setSettingsOpen(true);
+        return;
+      }
+
       if (typing) return;
 
       if (mod && event.key.toLowerCase() === 'n') {
         event.preventDefault();
         actions.openHostForm(null);
-        return;
-      }
-
-      if (mod && event.key === ',') {
-        event.preventDefault();
-        actions.setSettingsOpen(true);
         return;
       }
 
@@ -79,14 +80,14 @@ export default function App() {
       data-collapsed={settings.sidebarCollapsed}
       data-nav-open={ui.navOpen}
     >
+      <TitleBar />
+
       <Sidebar />
 
       <main
         className={`workspace${hasSessions ? '' : ' workspace--empty'}`}
         aria-label="终端工作区"
       >
-        {hasSessions && <TabBar sessions={sessions} activeSessionId={activeSessionId} />}
-
         <div className="terminal-stack">
           {hasSessions ? (
             sessions.map((session) => (

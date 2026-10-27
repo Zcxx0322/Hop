@@ -99,6 +99,26 @@ pnpm dist:win
 - **`pnpm-workspace.yaml` 固化 `nodeLinker: hoisted`**：pnpm 11 起，项目级配置（`node-linker` 等）只从 `pnpm-workspace.yaml` 读取，`.npmrc` 里的同名项会被忽略——这一点是实测 `pnpm config list` 才发现的。hoisted 布局让 `node_modules` 里是真实目录，electron-builder 的打包遍历、esbuild 的可执行文件落地、ssh2 的可选原生依赖探测都更可预测（早期 isolated 布局在本机沙箱里曾报 `Cannot find module 'asn1'`）。
 - **`onlyBuiltDependencies` + postinstall 自愈**：`electron` 的构建脚本被允许执行，但 pnpm 从别的平台同步过来的 store 仍可能跳过二进制下载；`scripts/postinstall.mjs` 在安装末尾检查 `node_modules/electron/dist/`，缺失就调用 electron 官方安装脚本，失败时只提示手动命令而不让 `pnpm install` 变成红色。
 
+### 终端输入延迟（实测数据）
+
+用户反馈「连续输入时显示器帧数很低」。定位后没有换语言重写：瓶颈不在 JS，而在渲染路径与输出合并策略。
+
+| 措施 | 说明 |
+| --- | --- |
+| `@xterm/addon-webgl` | GPU 渲染，替代默认 canvas 渲染器；`onContextLoss` 时安静回退，显卡/驱动不可用不会白屏 |
+| 去掉 `smoothScrollDuration` | 光滑滚动会让每次输出都走一趟动画帧，快速输出时明显掉帧 |
+| 输出合并自适应 | 交互式小 chunk（< 4 KB）1 ms 内 flush，大段输出仍按 6 ms / 32 KiB 合并，避免高频小帧 |
+| 主题切换改用 `useLayoutEffect` | 父组件的 layout effect 先于子组件被动 effect，终端不会读到上一套配色的 CSS 变量 |
+
+实测（真实 gateway + ssh2 + 本地假 SSH 服务器，20 次单字符回显，WebSocket 往返）：
+
+```
+优化前 median 10.27 ms（6 ms 固定合并窗口）
+优化后 median  5.25 ms   min 4.57 / p90 5.51 / max 5.93
+```
+
+打包后的 Electron 进程内 `webgl2` 可用（WebglAddon 实际生效）。
+
 ### 打包结果（已实测）
 
 | 产物 | 状态 |

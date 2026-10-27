@@ -1,18 +1,16 @@
 /* ==========================================================================
-   应用外壳：侧栏 + 工作区 + 状态栏
+   应用外壳：标题栏 + 侧栏 + 工作区 + 状态栏
+   - 无系统边框：整个顶部标题栏就是窗口拖拽区（-webkit-app-region: drag）
    ========================================================================== */
 
 .app-shell {
   position: relative;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) var(--statusbar-h);
+  grid-template-rows: var(--titlebar-h) minmax(0, 1fr) var(--statusbar-h);
   height: 100dvh;
   overflow: hidden;
-  background:
-    radial-gradient(900px 520px at -8% -10%, var(--bg-glow-a), transparent 62%),
-    radial-gradient(760px 460px at 108% 4%, var(--bg-glow-b), transparent 58%),
-    var(--bg);
+  background: var(--bg);
   transition: grid-template-columns var(--dur-slow) var(--ease-out);
 }
 
@@ -20,17 +18,36 @@
   grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr);
 }
 
+/* 子项显式落位，避免组件自身的 grid-row 与新版式打架 */
+.app-shell > .titlebar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.app-shell > .sidebar {
+  grid-column: 1;
+  grid-row: 2;
+  border-right: 1px solid var(--border);
+  border-top: none;
+}
+
+.app-shell > .workspace {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.app-shell > .statusbar {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
 .workspace {
   position: relative;
   display: grid;
-  grid-template-rows: var(--tabbar-h) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
-  background: var(--panel);
-  border-top-left-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  border-right: none;
-  border-bottom: none;
+  background: var(--term-bg);
   overflow: hidden;
 }
 
@@ -45,8 +62,24 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .workspace {
-    border-radius: 0;
+  .app-shell > .sidebar {
+    grid-column: 1;
+    position: fixed;
+    top: var(--titlebar-h);
+    bottom: var(--statusbar-h);
+    left: 0;
+    width: var(--sidebar-w);
+    z-index: var(--z-sidebar);
+    transform: translateX(-100%);
+    transition: transform var(--dur) var(--ease-out);
+  }
+
+  .app-shell[data-nav-open='true'] > .sidebar {
+    transform: translateX(0);
+  }
+
+  .app-shell > .workspace {
+    grid-column: 1;
     border: none;
   }
 
@@ -55,14 +88,7 @@
     position: fixed;
     inset: 0;
     z-index: calc(var(--z-sidebar) - 1);
-    background: rgba(4, 7, 12, 0.55);
-    backdrop-filter: blur(2px);
+    background: rgba(0, 0, 0, 0.5);
     animation: hop-fade-in var(--dur) var(--ease-out);
-  }
-}
-
-@media (max-width: 640px) {
-  :root {
-    --tabbar-h: 44px;
   }
 }

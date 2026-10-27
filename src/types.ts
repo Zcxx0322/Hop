@@ -52,7 +52,7 @@ export interface Session {
 
 export type ThemeMode = 'dark' | 'light' | 'system';
 
-export type AccentKey = 'aurora' | 'teal' | 'amber' | 'rose';
+export type AccentKey = 'green';
 
 export type FontKey = 'jetbrains' | 'cascadia' | 'menlo' | 'system';
 

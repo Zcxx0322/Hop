@@ -1,7 +1,8 @@
 /* ==========================================================================
    Hop 设计令牌
-   - 颜色全部走 CSS 变量，主题（dark/light）与强调色（data-accent）运行时切换
-   - 动效统一使用 --ease-out / --ease-spring，保持全站手感一致
+   - 两套主题：纯黑 + 绿（dark）/ 纯白 + 绿（light）
+   - 颜色全部走 CSS 变量；强调色固定为绿，不再提供多色切换
+   - 动效统一使用 --ease-out，保持全站手感一致
    ========================================================================== */
 
 :root {
@@ -29,146 +30,134 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* ---- 圆角 ---- */
-  --radius-xs: 5px;
-  --radius-sm: 7px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* ---- 圆角（克制、偏方正） ---- */
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
   --radius-pill: 999px;
 
   /* ---- 动效 ---- */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --dur-fast: 110ms;
-  --dur: 180ms;
-  --dur-slow: 320ms;
+  --dur-fast: 100ms;
+  --dur: 160ms;
+  --dur-slow: 280ms;
 
   /* ---- 层级 ---- */
   --z-sidebar: 20;
+  --z-titlebar: 40;
   --z-overlay: 60;
   --z-dialog: 70;
   --z-toast: 90;
 
   /* ---- 布局尺寸 ---- */
-  --sidebar-w: 264px;
-  --sidebar-w-collapsed: 68px;
-  --tabbar-h: 46px;
-  --statusbar-h: 28px;
+  --titlebar-h: 40px;
+  --sidebar-w: 248px;
+  --sidebar-w-collapsed: 64px;
+  --statusbar-h: 26px;
 }
 
-/* ============================ 深色（默认） ============================ */
+/* ============================ 纯黑 + 绿 ============================ */
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --bg: #090c12;
-  --bg-glow-a: rgba(124, 140, 248, 0.13);
-  --bg-glow-b: rgba(67, 217, 184, 0.08);
-  --surface: #0e141f;
-  --surface-2: #131a27;
-  --surface-3: #19212f;
-  --panel: #0b1017;
-  --panel-inset: #080b11;
+  --bg: #000000;
+  --bg-glow-a: rgba(46, 230, 107, 0);
+  --bg-glow-b: rgba(46, 230, 107, 0);
+  --surface: #0a0c0a;
+  --surface-2: #101310;
+  --surface-3: #171b17;
+  --panel: #000000;
+  --panel-inset: #050705;
 
-  --text: #e8edf8;
-  --text-2: #98a5bd;
-  --text-3: #657086;
+  --text: #e6ede8;
+  --text-2: #97a29b;
+  --text-3: #5f6a62;
 
-  --border: rgba(150, 170, 205, 0.1);
-  --border-strong: rgba(150, 170, 205, 0.19);
-  --border-focus: rgba(124, 140, 248, 0.55);
+  --border: rgba(255, 255, 255, 0.075);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-focus: rgba(46, 230, 107, 0.55);
 
   --hover: rgba(255, 255, 255, 0.045);
   --active: rgba(255, 255, 255, 0.075);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 14px 34px -16px rgba(0, 0, 0, 0.8);
-  --shadow-lg: 0 28px 70px -28px rgba(0, 0, 0, 0.9);
-  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 12px 28px -14px rgba(0, 0, 0, 0.9);
+  --shadow-lg: 0 24px 60px -24px rgba(0, 0, 0, 0.95);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.035);
 
-  --success: #3ddcaf;
-  --warning: #f2b45c;
-  --danger: #fb7185;
-  --info: #7c8cf8;
+  --success: #2ee66b;
+  --warning: #e5b454;
+  --danger: #ff5f57;
+  --info: #4aa8ff;
 
-  --term-bg: #080b11;
-  --term-fg: #d8e0ef;
-  --term-selection: rgba(124, 140, 248, 0.28);
-  --term-cursor: #7c8cf8;
+  --accent: #2ee66b;
+  --accent-2: #7bf5a3;
+  --accent-ink: #04150a;
+
+  --term-bg: #000000;
+  --term-fg: #cfd8d3;
+  --term-selection: rgba(46, 230, 107, 0.24);
+  --term-cursor: #2ee66b;
 }
 
-/* ============================ 浅色 ============================ */
+/* ============================ 纯白 + 绿 ============================ */
 [data-theme='light'] {
   color-scheme: light;
 
-  --bg: #f4f6fb;
-  --bg-glow-a: rgba(124, 140, 248, 0.12);
-  --bg-glow-b: rgba(67, 217, 184, 0.1);
+  --bg: #ffffff;
+  --bg-glow-a: rgba(18, 161, 80, 0);
+  --bg-glow-b: rgba(18, 161, 80, 0);
   --surface: #ffffff;
-  --surface-2: #f3f5fa;
-  --surface-3: #e9edf6;
+  --surface-2: #f4f7f4;
+  --surface-3: #e9eee9;
   --panel: #ffffff;
-  --panel-inset: #fbfcfe;
+  --panel-inset: #fbfdfb;
 
-  --text: #111a2c;
-  --text-2: #586480;
-  --text-3: #7f8aa0;
+  --text: #0c120e;
+  --text-2: #55605a;
+  --text-3: #7d877f;
 
-  --border: rgba(23, 37, 66, 0.09);
-  --border-strong: rgba(23, 37, 66, 0.16);
-  --border-focus: rgba(90, 108, 240, 0.5);
+  --border: rgba(12, 30, 18, 0.1);
+  --border-strong: rgba(12, 30, 18, 0.18);
+  --border-focus: rgba(18, 161, 80, 0.5);
 
-  --hover: rgba(16, 28, 54, 0.04);
-  --active: rgba(16, 28, 54, 0.07);
+  --hover: rgba(12, 30, 18, 0.045);
+  --active: rgba(12, 30, 18, 0.075);
 
-  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-  --shadow-md: 0 14px 34px -18px rgba(16, 24, 40, 0.24);
-  --shadow-lg: 0 28px 70px -30px rgba(16, 24, 40, 0.3);
+  --shadow-sm: 0 1px 2px rgba(12, 24, 16, 0.07);
+  --shadow-md: 0 12px 28px -16px rgba(12, 24, 16, 0.22);
+  --shadow-lg: 0 24px 60px -26px rgba(12, 24, 16, 0.28);
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 
-  --success: #0f9d76;
-  --warning: #b87503;
-  --danger: #dc2660;
-  --info: #5867e8;
+  --success: #0f9d58;
+  --warning: #a8700a;
+  --danger: #d93a34;
+  --info: #1f6fd0;
 
-  --term-bg: #fbfcfe;
-  --term-fg: #1b2740;
-  --term-selection: rgba(88, 103, 232, 0.18);
-  --term-cursor: #5867e8;
-}
+  --accent: #12a150;
+  --accent-2: #37c471;
+  --accent-ink: #ffffff;
 
-/* ============================ 强调色 ============================ */
-[data-accent='aurora'] {
-  --accent: #7c8cf8;
-  --accent-2: #43d9b8;
-  --accent-ink: #08101f;
-}
-[data-accent='teal'] {
-  --accent: #2fcfb4;
-  --accent-2: #7ce8d3;
-  --accent-ink: #04120f;
-}
-[data-accent='amber'] {
-  --accent: #f0b45c;
-  --accent-2: #f8d49a;
-  --accent-ink: #1c1203;
-}
-[data-accent='rose'] {
-  --accent: #f4718f;
-  --accent-2: #f9a8bd;
-  --accent-ink: #20070f;
+  --term-bg: #ffffff;
+  --term-fg: #16201b;
+  --term-selection: rgba(18, 161, 80, 0.18);
+  --term-cursor: #12a150;
 }
 
+/* 强调色派生（固定绿色） */
 :root {
   --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
   --accent-soft-2: color-mix(in srgb, var(--accent) 22%, transparent);
-  --accent-border: color-mix(in srgb, var(--accent) 38%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 42%, transparent);
   --accent-text: color-mix(in srgb, var(--accent) 82%, var(--text));
-  --accent-glow: 0 8px 24px -10px color-mix(in srgb, var(--accent) 65%, transparent);
+  --accent-glow: 0 8px 24px -10px color-mix(in srgb, var(--accent) 55%, transparent);
   --gradient-accent: linear-gradient(
     135deg,
-    var(--accent) 0%,
-    color-mix(in srgb, var(--accent) 55%, var(--accent-2)) 55%,
-    var(--accent-2) 100%
+    color-mix(in srgb, var(--accent) 88%, #000) 0%,
+    var(--accent) 60%,
+    color-mix(in srgb, var(--accent) 70%, var(--accent-2)) 100%
   );
 }

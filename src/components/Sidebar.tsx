@@ -2,7 +2,6 @@ import { useMemo, type CSSProperties } from 'react';
 import { isMock } from '../api/config';
 import { hostAccent, hostInitials } from '../lib/visual';
 import { useApp } from '../store/AppStore';
-import { IconButton } from './ui/Button';
 import { Icon } from './ui/Icon';
 import { Kbd } from './ui/Kbd';
 import { LogoMark } from './ui/Logo';
@@ -36,20 +35,6 @@ export function Sidebar() {
     <aside className="sidebar" aria-label="主机与工作区">
       {/* ---------------- 完整侧栏 ---------------- */}
       <div className="sidebar__full">
-        <header className="sidebar__brand">
-          <LogoMark size={28} />
-          <div className="sidebar__brand-text">
-            <span className="sidebar__brand-name">Hop</span>
-            <span className="sidebar__brand-sub">SSH Workspace</span>
-          </div>
-          <IconButton
-            icon="panel-left"
-            label="收起侧栏"
-            size="sm"
-            onClick={actions.toggleSidebar}
-          />
-        </header>
-
         <button
           type="button"
           className="sidebar__search"
