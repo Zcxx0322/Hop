@@ -3,13 +3,18 @@
 packages:
   - '.'
 
-# 允许这些依赖在安装时执行构建脚本（electron 需要下载二进制，esbuild 需要落地可执行文件）。
-onlyBuiltDependencies:
-  - electron
-  - electron-winstaller
-  - esbuild
-  - ssh2
-  - cpu-features
+# 哪些依赖允许在安装时执行构建脚本。
+# pnpm 11 起 `onlyBuiltDependencies` 已被 `allowBuilds` 取代（旧键会被静默忽略），
+# 并且 `strictDepBuilds` 默认开启：任何“未表态”的构建脚本都会让 `pnpm install` 直接失败。
+allowBuilds:
+  electron: true          # 需要下载 Electron 二进制
+  esbuild: true           # 需要落地平台可执行文件
+  ssh2: false             # 纯 JS，cpu-features 只是可选加速
+  cpu-features: false     # 可选原生依赖，跳过可避免 node-gyp
+  electron-winstaller: false # 只打包 NSIS，用不到 Squirrel
+
+# CI 里出现新的未表态依赖时不要直接失败，让构建继续（但上面的决定仍然生效）。
+strictDepBuilds: false
 
 # 使用真实目录 + 扁平 hoist，而不是 isolated 的符号链接布局：
 # electron-builder 打包、esbuild 与 ssh2 的可选原生依赖探测，都按路径直接查找包，
