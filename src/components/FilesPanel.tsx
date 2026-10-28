@@ -62,6 +62,9 @@ export function FilesPanel() {
   const [renaming, setRenaming] = useState<{ from: string; value: string } | null>(null);
   const [creating, setCreating] = useState<string | null>(null);
   const requestId = useRef(0);
+  /* 上传结束要自动刷新当前目录，这里用 ref 读取最新的路径与上一轮记录 */
+  const pathRef = useRef('~');
+  const transfersRef = useRef<Transfer[]>([]);
 
   const load = useCallback(
     async (target: string) => {
@@ -98,11 +101,24 @@ export function FilesPanel() {
     if (!hostId) return;
     let disposed = false;
     let timer = 0;
+    const openedAt = Date.now();
 
     const tick = async () => {
       try {
         const rows = await listTransfers(hostId);
-        if (!disposed) setTransfers(rows);
+        if (disposed) return;
+        const previous = transfersRef.current;
+        const justUploaded = rows.some(
+          (row) =>
+            row.direction === 'upload' &&
+            row.status !== 'active' &&
+            row.startedAt >= openedAt - 1000 &&
+            !previous.some((old) => old.id === row.id && old.status === row.status),
+        );
+        setTransfers(rows);
+        transfersRef.current = rows;
+        /* 上传落地后立刻重列目录，避免用户还要手动刷新才看见文件 */
+        if (justUploaded) void load(pathRef.current);
       } catch {
         /* 轮询失败不打断主界面，下一轮会自然恢复 */
       }
@@ -114,7 +130,11 @@ export function FilesPanel() {
       disposed = true;
       window.clearTimeout(timer);
     };
-  }, [hostId]);
+  }, [hostId, load]);
+
+  useEffect(() => {
+    pathRef.current = path;
+  }, [path]);
 
   const entries = useMemo(() => {
     const rows = listing?.entries ?? [];
