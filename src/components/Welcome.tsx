@@ -11,7 +11,7 @@ const DEMO_LINES = [
   { text: 'hop connect demo-prod-web', tone: 'prompt' },
   { text: '正在协商 ssh-ed25519 密钥 … 完成', tone: 'dim' },
   { text: '已连接 10.0.4.21 · Ubuntu 24.04 LTS', tone: 'ok' },
-  { text: 'zcx@prod-web:~$ uptime', tone: 'prompt' },
+  { text: 'root@prod-web:~$ uptime', tone: 'prompt' },
   { text: ' 22:16:04 up 41 days,  3:12,  2 users,  load average: 0.18, 0.24, 0.31', tone: 'mono' },
 ] as const;
 

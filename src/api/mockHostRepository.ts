@@ -22,7 +22,7 @@ function seedHosts(): Host[] {
       name: '生产 Web 网关',
       host: '10.0.4.21',
       port: 22,
-      username: 'zcx',
+      username: 'root',
       authMethod: 'key',
       privateKeyPath: '~/.ssh/id_ed25519',
       tags: ['生产', 'nginx'],

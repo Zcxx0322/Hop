@@ -12,6 +12,7 @@ import { formatAddress } from '../lib/visual';
 import { copyText, readClipboardText, toPlainText } from '../lib/clipboard';
 import { Icon } from './ui/Icon';
 import { StatusDot } from './ui/Spinner';
+import { ConnectFX } from './ConnectFX';
 import './TerminalPane.css';
 
 interface TerminalPaneProps {
@@ -441,6 +442,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
         <div className="terminal-pane__xterm">
           <div ref={containerRef} className="terminal-pane__fit" />
         </div>
+        <ConnectFX session={session} host={host} />
         {!host && session.status !== 'connected' && (
           <div className="terminal-pane__overlay">
             <p>主机已被删除，无法建立连接。</p>

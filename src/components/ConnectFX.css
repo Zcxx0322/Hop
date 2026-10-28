@@ -1,0 +1,262 @@
+/* 连接特效：连接/重连时盖住终端，连上后闪光淡出 */
+.connectfx {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 3px;
+  padding: 24px;
+  color: var(--term-fg);
+  background:
+    radial-gradient(58% 52% at 50% 40%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 72%),
+    var(--term-bg);
+  animation: connectfx-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.connectfx--done {
+  pointer-events: none;
+  animation: connectfx-out 620ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ---------- 光stage：三层扩张光环 + 中心图标 ---------- */
+.connectfx__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 6px;
+}
+
+.connectfx__ring {
+  position: absolute;
+  inset: 22px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 50%;
+  opacity: 0;
+  animation: connectfx-ring 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+}
+
+.connectfx__ring:nth-child(2) {
+  animation-delay: 0.8s;
+}
+
+.connectfx__ring:nth-child(3) {
+  animation-delay: 1.6s;
+}
+
+.connectfx__core {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 50%;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--term-bg));
+  box-shadow:
+    0 0 0 6px color-mix(in srgb, var(--accent) 7%, transparent),
+    0 0 26px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+  transition:
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 320ms ease;
+}
+
+.connectfx--done .connectfx__core {
+  transform: scale(1.12);
+  box-shadow:
+    0 0 0 10px color-mix(in srgb, var(--accent) 10%, transparent),
+    0 0 34px -4px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.connectfx--done .connectfx__ring {
+  animation: none;
+  opacity: 0;
+}
+
+.connectfx--done .connectfx__ring:nth-child(1) {
+  animation: connectfx-burst 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ---------- 文案 ---------- */
+.connectfx__host {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.connectfx__addr {
+  margin: 0;
+  font-size: 11.5px;
+  color: color-mix(in srgb, var(--term-fg) 55%, transparent);
+}
+
+.connectfx__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--term-fg) 66%, transparent);
+}
+
+.connectfx--done .connectfx__step {
+  color: var(--accent);
+}
+
+.connectfx__dots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.connectfx__dots i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  animation: connectfx-dot 1.2s ease-in-out infinite;
+}
+
+.connectfx__dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.connectfx__dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ---------- 细进度条 ---------- */
+.connectfx__bar {
+  position: relative;
+  width: 176px;
+  height: 3px;
+  margin-top: 12px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--term-fg) 12%, transparent);
+}
+
+.connectfx__bar span {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: connectfx-slide 1.25s ease-in-out infinite;
+}
+
+.connectfx--done .connectfx__bar span {
+  width: 100%;
+  background: var(--accent);
+  animation: none;
+  transition: width 380ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.connectfx--error .connectfx__core {
+  color: #ff6b61;
+  border-color: color-mix(in srgb, #ff6b61 55%, transparent);
+  background: color-mix(in srgb, #ff6b61 12%, var(--term-bg));
+  box-shadow: 0 0 0 6px color-mix(in srgb, #ff6b61 8%, transparent);
+}
+
+.connectfx--error .connectfx__ring {
+  border-color: color-mix(in srgb, #ff6b61 40%, transparent);
+  animation-duration: 1.6s;
+}
+
+.connectfx--error .connectfx__bar span {
+  width: 100%;
+  background: color-mix(in srgb, #ff6b61 70%, transparent);
+  animation: none;
+}
+
+@keyframes connectfx-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes connectfx-out {
+  0% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes connectfx-ring {
+  0% {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(2.35);
+    opacity: 0;
+  }
+}
+
+@keyframes connectfx-burst {
+  0% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(2.9);
+    opacity: 0;
+  }
+}
+
+@keyframes connectfx-slide {
+  0% {
+    transform: translateX(-110%);
+  }
+  100% {
+    transform: translateX(340%);
+  }
+}
+
+@keyframes connectfx-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .connectfx,
+  .connectfx--done {
+    animation-duration: 1ms;
+  }
+
+  .connectfx__ring,
+  .connectfx__dots i,
+  .connectfx__bar span {
+    animation: none;
+  }
+
+  .connectfx__ring {
+    opacity: 0.35;
+    transform: scale(1.5);
+  }
+}

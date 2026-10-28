@@ -170,7 +170,7 @@ export function SettingsPanel() {
               style={{ fontFamily: fontStack, fontSize: settings.fontSize }}
               aria-hidden="true"
             >
-              <span className="settings-terminal-preview__prompt">zcx@prod-web</span>
+              <span className="settings-terminal-preview__prompt">root@prod-web</span>
               <span className="settings-terminal-preview__path">:~$</span> uptime
               <span
                 className={`settings-terminal-preview__cursor settings-terminal-preview__cursor--${settings.cursorStyle}${
