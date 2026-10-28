@@ -15,9 +15,11 @@ export interface ModalProps {
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   variant?: 'center' | 'drawer';
   dismissible?: boolean;
+  /** 追加到对话框根节点的类名，便于个别面板调整内部布局 */
+  panelClassName?: string;
 }
 
 /**
@@ -34,6 +36,7 @@ export function Modal({
   size = 'md',
   variant = 'center',
   dismissible = true,
+  panelClassName: extraClass,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -112,7 +115,7 @@ export function Modal({
       />
       <div
         ref={panelRef}
-        className={`modal modal--${size} modal--${variant}`}
+        className={`modal modal--${size} modal--${variant}${extraClass ? ` ${extraClass}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

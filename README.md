@@ -17,16 +17,20 @@
 | ![浅色终端](docs/screenshots/terminal-light.png) | ![偏好设置](docs/screenshots/settings.png) |
 | **无边框窗口 · 纯黑 + 荧光绿** | **无边框窗口 · 纯白 + 墨绿** |
 | ![深色窗口](docs/screenshots/frameless-dark.png) | ![浅色窗口](docs/screenshots/frameless-light.png) |
+| **文件传输（SFTP）** | **主机状态监控** |
+| ![文件传输](docs/screenshots/files.png) | ![主机监控](docs/screenshots/monitor.png) |
 
 
 | 能力 | 说明 |
 | --- | --- |
 | 🖥️ 主机库 | 搜索、收藏、标签过滤、最近连接排序、右键快捷菜单 |
-| 🗂️ 多会话标签 | 同一主机复用标签，连接状态点、快捷键切换、中键/⌘W 关闭 |
+| 🗂️ 多会话标签 | 同一主机可开多个会话（标签带序号）、连接状态点、快捷键切换、中键/⌘W 关闭 |
 | ⌨️ 真终端 | xterm.js + WebGL 渲染 + 自适应尺寸 + 主题跟随 + 断线重连；SSH socket 关闭 Nagle，逐键回显不做多余攒包 |
 | ⌘ 命令面板 | 一个输入框覆盖「连接 / 新建 / 切换 / 设置」，支持 `host:`、`edit:` 前缀 |
 | 🎨 两套主题 | 纯黑 + 荧光绿 / 纯白 + 墨绿，终端配色随主题一起切换 |
 | 🪟 无边框窗口 | 自绘标题栏（品牌 / 标签 / 最小化·最大化·关闭），双击标题栏最大化 |
+| 📁 文件传输 | SFTP 浏览远端目录、新建/重命名/删除、上传下载带进度与失败原因 |
+| 📈 主机状态 | CPU / 内存 / 交换 / 磁盘 / 网络速率与累计，单条远端命令采样，3 秒刷新 |
 | 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
 
 ## 快速开始
@@ -108,10 +112,13 @@ src/
 │   ├── mockHostRepository.ts
 │   ├── transport.ts      # TerminalTransport 接口
 │   ├── wsTransport.ts
+│   ├── http.ts           # 网关 REST 封装（ApiError）
+│   ├── workspace.ts      # 文件传输 + 主机监控的 REST 客户端
 │   └── mockTransport.ts + mockShell.ts
 ├── components/
 │   ├── Sidebar · HostList · TabBar · TerminalPane · Welcome · StatusBar
-│   ├── CommandPalette · HostFormDialog · SettingsPanel · ConfirmDialog
+│   ├── FilesPanel · MonitorPanel · CommandPalette · HostFormDialog
+│   ├── SettingsPanel · ConfirmDialog
 │   └── ui/               # Button · Field · Modal · Kbd · Icon · Logo · Spinner · Toasts
 ├── hooks/useSystemTheme.ts
 ├── lib/                  # utils · visual（颜色/缩写/相对时间）· host（Host↔Draft）
@@ -132,6 +139,9 @@ src/main/                 # Electron 主进程（后端）
 ├── core/
 │   ├── ssh-session.ts    # 单条 SSH 连接：跳板、主机密钥质询、PTY、批量输出
 │   ├── session-manager.ts# 会话表（≤24）、几何钳制、事件钩子
+│   ├── remote.ts         # 供子系统复用的临时连接（withRemote / execOnce）
+│   ├── sftp-service.ts   # 文件浏览与上传下载、传输记录、~ 解析
+│   ├── monitor-service.ts# /proc 采样、CPU/网速差分、连接池
 │   ├── profile-store.ts  # 连接配置读写与校验（剥离机密）
 │   ├── secret-store.ts   # safeStorage / DPAPI 加密的密码与口令
 │   ├── known-hosts.ts    # 主机指纹 pin
@@ -182,6 +192,8 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 | `⌘/Ctrl + ,` | 偏好设置 |
 | `⌘/Ctrl + B` | 折叠 / 展开侧栏 |
 | `⌘/Ctrl + 1…9` | 切换到第 n 个会话 |
+| `⌘/Ctrl + Shift + F` | 打开 / 关闭文件传输面板 |
+| `⌘/Ctrl + Shift + M` | 打开 / 关闭主机状态面板 |
 | `⌘/Ctrl + W` | 关闭当前标签（可在设置中开启二次确认） |
 | `Esc` | 关闭浮层 / 移动端抽屉 |
 

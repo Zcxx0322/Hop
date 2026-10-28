@@ -92,15 +92,35 @@ export function CommandPalette() {
 
     const activeSession = state.sessions.find((session) => session.id === state.activeSessionId);
     if (activeSession) {
-      actionItems.push({
-        id: 'action-close-tab',
-        group: '操作',
-        label: `关闭标签页「${activeSession.title}」`,
-        hint: '断开当前会话',
-        icon: 'x',
-        kbd: `${modKey} W`,
-        run: () => actions.requestCloseSession(activeSession.id),
-      });
+      actionItems.push(
+        {
+          id: 'action-files',
+          group: '操作',
+          label: '文件传输',
+          hint: `浏览 ${activeSession.title} 的远程文件`,
+          icon: 'folder',
+          kbd: `${modKey} ⇧ F`,
+          run: () => actions.openFiles(activeSession.hostId),
+        },
+        {
+          id: 'action-monitor',
+          group: '操作',
+          label: '主机状态',
+          hint: 'CPU、内存、磁盘与网络',
+          icon: 'cpu',
+          kbd: `${modKey} ⇧ M`,
+          run: () => actions.openMonitor(activeSession.hostId),
+        },
+        {
+          id: 'action-close-tab',
+          group: '操作',
+          label: `关闭标签页「${activeSession.title}」`,
+          hint: '断开当前会话',
+          icon: 'x',
+          kbd: `${modKey} W`,
+          run: () => actions.requestCloseSession(activeSession.id),
+        },
+      );
     }
 
     return [...sessionItems, ...hostItems, ...actionItems];

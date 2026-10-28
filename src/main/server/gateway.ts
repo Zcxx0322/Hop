@@ -15,6 +15,8 @@ import type { KnownHostsStore } from '../core/known-hosts';
 import { createLogger } from '../core/logger';
 import type { ProfileStore } from '../core/profile-store';
 import { SessionManager } from '../core/session-manager';
+import type { SftpService } from '../core/sftp-service';
+import type { MonitorService } from '../core/monitor-service';
 
 const log = createLogger('gateway');
 
@@ -72,6 +74,10 @@ export interface GatewayDeps {
   appVersion: string;
   /** 0 disables the gateway. */
   preferredPort?: number;
+  /** SFTP 文件浏览/传输；缺省时不注册 /hosts/:id/files* */
+  sftp?: SftpService;
+  /** 主机资源采样；缺省时不注册 /hosts/:id/monitor */
+  monitor?: MonitorService;
 }
 
 export interface GatewayHandle {
@@ -474,6 +480,87 @@ export async function startGateway(deps: GatewayDeps): Promise<GatewayHandle | n
       const id = url.searchParams.get('id');
       if (id) deps.knownHosts.forget(id);
       res.writeHead(204).end();
+      return;
+    }
+
+    /* ---- 文件传输（SFTP） ------------------------------------------ */
+    const filesRoute = /^\/hosts\/([^/]+)\/files(\/(upload|download|mkdir|rename))?$/.exec(path);
+    if (filesRoute && deps.sftp) {
+      const id = decodeURIComponent(filesRoute[1]);
+      const action = filesRoute[3];
+      if (!deps.profiles.get(id)) {
+        throw new BadRequest('该连接已不存在', 404, 'PROFILE_NOT_FOUND');
+      }
+
+      if (!action && method === 'GET') {
+        const dir = url.searchParams.get('path') ?? '~';
+        sendJson(res, 200, await deps.sftp.list(id, dir));
+        return;
+      }
+
+      if (!action && method === 'DELETE') {
+        const target = url.searchParams.get('path');
+        if (!target) throw new BadRequest('缺少 path 参数');
+        sendJson(res, 200, await deps.sftp.remove(id, target));
+        return;
+      }
+
+      if (action === 'upload' && method === 'POST') {
+        const body = await readJson(req);
+        const dir = typeof body.dir === 'string' ? body.dir : '~';
+        sendJson(res, 200, { transfer: await deps.sftp.upload(id, dir) });
+        return;
+      }
+
+      if (action === 'download' && method === 'POST') {
+        const body = await readJson(req);
+        if (typeof body.path !== 'string') throw new BadRequest('缺少 path');
+        sendJson(res, 200, { transfer: await deps.sftp.download(id, body.path) });
+        return;
+      }
+
+      if (action === 'mkdir' && method === 'POST') {
+        const body = await readJson(req);
+        if (typeof body.dir !== 'string' || typeof body.name !== 'string') {
+          throw new BadRequest('缺少 dir 或 name');
+        }
+        sendJson(res, 200, await deps.sftp.createDirectory(id, body.dir, body.name));
+        return;
+      }
+
+      if (action === 'rename' && method === 'POST') {
+        const body = await readJson(req);
+        if (typeof body.from !== 'string' || typeof body.name !== 'string') {
+          throw new BadRequest('缺少 from 或 name');
+        }
+        sendJson(res, 200, await deps.sftp.rename(id, body.from, body.name));
+        return;
+      }
+
+      throw new BadRequest(`未知接口 ${method} ${path}`, 404, 'UNSUPPORTED');
+    }
+
+    if (path === '/transfers' && method === 'GET' && deps.sftp) {
+      const hostId = url.searchParams.get('hostId') ?? undefined;
+      sendJson(res, 200, deps.sftp.listTransfers(hostId));
+      return;
+    }
+
+    if (path === '/transfers' && method === 'DELETE' && deps.sftp) {
+      deps.sftp.clearFinished();
+      res.writeHead(204).end();
+      return;
+    }
+
+    /* ---- 主机监控 -------------------------------------------------- */
+    const monitorRoute = /^\/hosts\/([^/]+)\/monitor$/.exec(path);
+    if (monitorRoute && deps.monitor) {
+      const id = decodeURIComponent(monitorRoute[1]);
+      if (method !== 'GET') throw new BadRequest(`未知接口 ${method} ${path}`, 404, 'UNSUPPORTED');
+      if (!deps.profiles.get(id)) {
+        throw new BadRequest('该连接已不存在', 404, 'PROFILE_NOT_FOUND');
+      }
+      sendJson(res, 200, await deps.monitor.sample(id));
       return;
     }
 

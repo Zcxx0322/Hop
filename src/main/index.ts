@@ -8,6 +8,8 @@ import { flushLogger, initLogger, createLogger } from './core/logger';
 import { ProfileStore } from './core/profile-store';
 import { SecretStore } from './core/secret-store';
 import { SessionManager } from './core/session-manager';
+import { SftpService } from './core/sftp-service';
+import { MonitorService } from './core/monitor-service';
 import { registerIpc } from './ipc/register';
 import { startGateway, type GatewayHandle } from './server/gateway';
 import { broadcast, createMainWindow, focusMainWindow, getMainWindow } from './window';
@@ -100,6 +102,10 @@ async function bootstrap(): Promise<void> {
 
   registerIpc({ profiles, knownHosts, sessions, secureStorage: secrets.isSecure });
 
+  // 文件传输与资源监控共用同一份凭证/known_hosts，各自开短连接。
+  const sftp = new SftpService({ profiles, knownHosts });
+  const monitor = new MonitorService({ profiles, knownHosts });
+
   // The renderer talks REST + WebSocket over loopback (see docs/API-CONTRACT.md).
   // Both transports share the same stores, so credentials and known hosts are
   // identical no matter which one the UI uses.
@@ -110,6 +116,8 @@ async function bootstrap(): Promise<void> {
       secureStorage: secrets.isSecure,
       appVersion: app.getVersion(),
       preferredPort: gatewayPort(),
+      sftp,
+      monitor,
     });
     if (gateway) log.info('gateway ready', { origin: gateway.origin });
   } catch (err) {

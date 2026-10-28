@@ -25,6 +25,10 @@ interface UiState {
   hostForm: { hostId: string | null } | null;
   pendingCloseSessionId: string | null;
   pendingDeleteHostId: string | null;
+  /** 打开文件面板的主机；null 表示关闭 */
+  filesHostId: string | null;
+  /** 打开监控面板的主机；null 表示关闭 */
+  monitorHostId: string | null;
 }
 
 export interface AppState {
@@ -67,6 +71,8 @@ function createInitialState(): AppState {
       hostForm: null,
       pendingCloseSessionId: null,
       pendingDeleteHostId: null,
+      filesHostId: null,
+      monitorHostId: null,
     },
   };
 }
@@ -225,6 +231,11 @@ export interface AppActions {
   toggleSidebar: () => void;
   openHostForm: (hostId?: string | null) => void;
   closeHostForm: () => void;
+  /** 文件面板 / 监控面板：hostId 为 null 表示关闭 */
+  openFiles: (hostId: string) => void;
+  closeFiles: () => void;
+  openMonitor: (hostId: string) => void;
+  closeMonitor: () => void;
   toast: (tone: Toast['tone'], message: string) => void;
   dismissToast: (id: string) => void;
 }
@@ -453,6 +464,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ui/patch', patch: { hostForm: null } });
   }, []);
 
+  /* 文件 / 监控面板互斥，避免两个抽屉叠在一起 */
+  const openFiles = useCallback((hostId: string) => {
+    dispatch({ type: 'ui/patch', patch: { filesHostId: hostId, monitorHostId: null } });
+  }, []);
+
+  const closeFiles = useCallback(() => {
+    dispatch({ type: 'ui/patch', patch: { filesHostId: null } });
+  }, []);
+
+  const openMonitor = useCallback((hostId: string) => {
+    dispatch({ type: 'ui/patch', patch: { monitorHostId: hostId, filesHostId: null } });
+  }, []);
+
+  const closeMonitor = useCallback(() => {
+    dispatch({ type: 'ui/patch', patch: { monitorHostId: null } });
+  }, []);
+
   const actions = useMemo<AppActions>(
     () => ({
       refreshHosts,
@@ -476,6 +504,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSidebar,
       openHostForm,
       closeHostForm,
+      openFiles,
+      closeFiles,
+      openMonitor,
+      closeMonitor,
       toast,
       dismissToast,
     }),
@@ -501,6 +533,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSidebar,
       openHostForm,
       closeHostForm,
+      openFiles,
+      closeFiles,
+      openMonitor,
+      closeMonitor,
       toast,
       dismissToast,
     ],

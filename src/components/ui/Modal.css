@@ -50,6 +50,13 @@
 .modal--center.modal--lg {
   width: min(760px, 100%);
 }
+.modal--center.modal--xl {
+  width: min(920px, 100%);
+}
+/* 文件传输 / 主机状态这类表格型抽屉需要更宽的横向空间 */
+.modal--drawer.modal--xl {
+  width: min(680px, 100%);
+}
 
 .modal--drawer {
   width: min(430px, 100%);

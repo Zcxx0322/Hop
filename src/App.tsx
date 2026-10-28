@@ -8,6 +8,8 @@ import { StatusBar } from './components/StatusBar';
 import { CommandPalette } from './components/CommandPalette';
 import { HostFormDialog } from './components/HostFormDialog';
 import { SettingsPanel } from './components/SettingsPanel';
+import { FilesPanel } from './components/FilesPanel';
+import { MonitorPanel } from './components/MonitorPanel';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toasts } from './components/ui/Toasts';
 import './App.css';
@@ -66,6 +68,26 @@ export default function App() {
         return;
       }
 
+      /* 文件传输 / 主机状态：作用于当前会话对应的主机，终端聚焦时也可用 */
+      if (
+        mod &&
+        event.shiftKey &&
+        (event.key.toLowerCase() === 'f' || event.key.toLowerCase() === 'm')
+      ) {
+        const active = sessions.find((session) => session.id === activeSessionId) ?? null;
+        if (!active) return;
+        event.preventDefault();
+        if (event.key.toLowerCase() === 'f') {
+          if (ui.filesHostId === active.hostId) actions.closeFiles();
+          else actions.openFiles(active.hostId);
+        } else if (ui.monitorHostId === active.hostId) {
+          actions.closeMonitor();
+        } else {
+          actions.openMonitor(active.hostId);
+        }
+        return;
+      }
+
       if (typing) return;
 
       if (mod && event.key.toLowerCase() === 'b') {
@@ -90,7 +112,17 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [actions, sessions, activeSessionId, ui.paletteOpen, ui.hostForm, ui.settingsOpen, ui.navOpen]);
+  }, [
+    actions,
+    sessions,
+    activeSessionId,
+    ui.paletteOpen,
+    ui.hostForm,
+    ui.settingsOpen,
+    ui.navOpen,
+    ui.filesHostId,
+    ui.monitorHostId,
+  ]);
 
   return (
     <div
@@ -134,6 +166,8 @@ export default function App() {
       <CommandPalette />
       <HostFormDialog />
       <SettingsPanel />
+      <FilesPanel />
+      <MonitorPanel />
       <ConfirmDialog />
       <Toasts toasts={state.toasts} onDismiss={actions.dismissToast} />
     </div>
