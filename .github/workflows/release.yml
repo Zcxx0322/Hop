@@ -42,6 +42,13 @@ jobs:
         shell: pwsh
         run: Get-ChildItem release -Filter *.exe | Select-Object Name, Length
 
+      - name: Build portable zip
+        shell: pwsh
+        run: |
+          $ver = "${{ github.ref_name }}".TrimStart('v')
+          Compress-Archive -Path release/win-unpacked/* -DestinationPath "release/Hop-$ver-portable.zip" -CompressionLevel Optimal
+          Get-ChildItem release -Filter *.zip | Select-Object Name, Length
+
       - name: Generate Chinese release notes
         run: node scripts/release-notes.mjs
 
@@ -51,4 +58,6 @@ jobs:
           name: Hop ${{ github.ref_name }}
           body_path: release-notes.md
           generate_release_notes: false
-          files: release/Hop-*-x64.exe
+          files: |
+            release/Hop-*-x64.exe
+            release/Hop-*-portable.zip
