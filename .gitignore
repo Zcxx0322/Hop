@@ -20,3 +20,5 @@ Thumbs.db
 
 # `build/` holds the committed app icons (icon.ico / icon.png / icon.svg + build/icons/*)
 # used by electron-builder and the window; do not ignore it.
+release3
+release4
