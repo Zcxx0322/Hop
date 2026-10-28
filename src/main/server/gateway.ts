@@ -484,7 +484,7 @@ export async function startGateway(deps: GatewayDeps): Promise<GatewayHandle | n
     }
 
     /* ---- 文件传输（SFTP） ------------------------------------------ */
-    const filesRoute = /^\/hosts\/([^/]+)\/files(\/(upload|download|mkdir|rename))?$/.exec(path);
+    const filesRoute = /^\/hosts\/([^/]+)\/files(\/(upload|download|mkdir|rename|open))?$/.exec(path);
     if (filesRoute && deps.sftp) {
       const id = decodeURIComponent(filesRoute[1]);
       const action = filesRoute[3];
@@ -534,6 +534,13 @@ export async function startGateway(deps: GatewayDeps): Promise<GatewayHandle | n
           throw new BadRequest('缺少 from 或 name');
         }
         sendJson(res, 200, await deps.sftp.rename(id, body.from, body.name));
+        return;
+      }
+
+      if (action === 'open' && method === 'POST') {
+        const body = await readJson(req);
+        if (typeof body.path !== 'string') throw new BadRequest('缺少 path');
+        sendJson(res, 200, await deps.sftp.openFile(id, body.path));
         return;
       }
 

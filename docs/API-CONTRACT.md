@@ -115,7 +115,8 @@ IPC 通道（`docs/IPC-CONTRACT.md`）与本文档是两套独立契约，UI 当
 
 ## 3. 文件传输与主机监控（REST）
 
-两者都用「每次请求现开一条 SSH 连接」的方式工作，不占用终端会话连接。
+两者共用一条按主机缓存的**短连接**（空闲 45 s 关闭，同一主机的并发请求共用一个握手），不占用终端会话连接：
+握手完成后关闭 Nagle，SFTP 子系统通道按连接复用——目录列表从 437 ms 降到 ~100 ms（同城 RTT 17 ms）。
 
 ### 3.1 目录与文件操作
 
@@ -192,11 +193,24 @@ IPC 通道（`docs/IPC-CONTRACT.md`）与本文档是两套独立契约，UI 当
   "txBytes": 13869902457,
   "rxRate": 1549.7,
   "txRate": 9674.0,
-  "unsupported": false
+  "unsupported": false,
+  "kernel": "6.8.0-124-generic (Linux)",
+  "arch": "x86_64",
+  "timezone": "CST",
+  "hostname": "VM-0-9-ubuntu",
+  "user": "root",
+  "users": 1,
+  "cpuModel": "AMD EPYC 7K62 48-Core Processor",
+  "disks": [{ "mount": "/", "total": 42156257280, "used": 17630646272, "percent": 41.8 }],
+  "serviceStartSec": 10150034.57,
+  "addresses": [{ "name": "eth0", "address": "10.1.0.9" }, { "name": "docker0", "address": "172.17.0.1" }],
+  "dns": ["127.0.0.53"],
+  "gateway": "10.1.0.1",
+  "processes": [{ "pid": 3479551, "name": "DreadHungerServ", "cpu": 7.8, "mem": 15.3 }]
 }
 ```
 
-- 采样只用**一条**远端命令：`/proc/stat`、`/proc/meminfo`、`/proc/loadavg`、`/proc/uptime`、`/proc/net/dev`、`df -kP /`、`nproc`、`/etc/os-release`，缺哪个文件就跳过错哪个字段。
+- 采样只用**一条**远端命令（分节输出，缺哪个文件的节就跳过对应字段）：`/proc/stat`、`/proc/meminfo`、`/proc/loadavg`、`/proc/uptime`、`/proc/net/dev`、`df -kP`、`nproc`、`/etc/os-release`、`uname -mrs`、`/etc/timezone`、`hostname`、`who`、`/proc/cpuinfo`、`/etc/resolv.conf`、`ip route`、`ps -eo pid,comm,pcpu,pmem --sort=-pcpu | head -6`。
 - 命令内部取两次快照（间隔 0.35 s），因此**首次请求就能**给出 CPU 占用与网络速率，而不是先返回 `null`。
 - 监控连接按 host 池化，空闲 25 s 自动断开；面板每 3 s 刷新一次。
 - 远端没有 `/proc`（BSD/macOS/Windows）时 `unsupported: true`，前端只显示连接状态与提示。

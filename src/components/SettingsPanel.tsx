@@ -22,9 +22,13 @@ const CURSOR_OPTIONS: Array<{ value: CursorStyle; label: string }> = [
 ];
 
 const PASTE_MODE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: 'both', label: 'Ctrl+V' },
-  { value: 'shortcut', label: '仅快捷键' },
-  { value: 'context', label: '右键菜单' },
+  { value: 'ctrl-v', label: 'Ctrl+V' },
+  { value: 'right-click', label: '右键直接粘贴' },
+];
+
+const COPY_SHORTCUT_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'ctrl-c', label: 'Ctrl+C' },
+  { value: 'ctrl-shift-c', label: 'Ctrl+Shift+C' },
 ];
 
 const KEEPALIVE_OPTIONS = [
@@ -230,7 +234,7 @@ export function SettingsPanel() {
           <div className="settings-row">
             <div className="settings-row__text">
               <span className="settings-row__label">选中即复制</span>
-              <span className="settings-row__desc">在终端里选中文本时自动写入剪贴板</span>
+              <span className="settings-row__desc">在终端里选中文本时自动写入剪贴板（纯文本）</span>
             </div>
             <Switch
               label="选中即复制"
@@ -241,8 +245,41 @@ export function SettingsPanel() {
 
           <div className="settings-row">
             <div className="settings-row__text">
+              <span className="settings-row__label">复制快捷键</span>
+              <span className="settings-row__desc">
+                Ctrl+C 只在有选中内容时复制，否则照常发送中断
+              </span>
+            </div>
+            <Segmented
+              label="复制快捷键"
+              value={settings.copyShortcut}
+              options={COPY_SHORTCUT_OPTIONS}
+              onChange={(value) =>
+                actions.updateSettings({ copyShortcut: value as Settings['copyShortcut'] })
+              }
+            />
+          </div>
+
+          <div className="settings-row">
+            <div className="settings-row__text">
+              <span className="settings-row__label">复制成功提示</span>
+              <span className="settings-row__desc">复制后弹一个轻提示，方便确认已进剪贴板</span>
+            </div>
+            <Switch
+              label="复制成功提示"
+              checked={settings.copyToast}
+              onChange={(checked) => actions.updateSettings({ copyToast: checked })}
+            />
+          </div>
+
+          <div className="settings-row">
+            <div className="settings-row__text">
               <span className="settings-row__label">粘贴方式</span>
-              <span className="settings-row__desc">Ctrl+V 直接粘贴，或只用快捷键 / 右键菜单</span>
+              <span className="settings-row__desc">
+                {settings.pasteMode === 'ctrl-v'
+                  ? 'Ctrl+V（或 Ctrl+Shift+V / Shift+Insert）直接粘贴'
+                  : '在终端里点右键直接粘贴'}
+              </span>
             </div>
             <Segmented
               label="粘贴方式"
@@ -255,7 +292,7 @@ export function SettingsPanel() {
           </div>
 
           <p className="settings-hint">
-            复制始终可用：<kbd>Ctrl+Shift+C</kbd> 或右键菜单；粘贴快捷键为 <kbd>Ctrl+Shift+V</kbd>。
+            复制始终输出纯文本；<kbd>Ctrl+Shift+C</kbd> 在任何设置下都能复制。
           </p>
         </section>
 

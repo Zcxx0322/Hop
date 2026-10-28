@@ -9,7 +9,7 @@ import type { TerminalTransport } from '../api/transport';
 import { useApp } from '../store/AppStore';
 import { FONT_STACKS } from '../store/settings';
 import { formatAddress } from '../lib/visual';
-import { copyText, readClipboardText } from '../lib/clipboard';
+import { copyText, readClipboardText, toPlainText } from '../lib/clipboard';
 import { Icon } from './ui/Icon';
 import { StatusDot } from './ui/Spinner';
 import './TerminalPane.css';
@@ -98,23 +98,29 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
   /* 复制/粘贴策略在终端创建后仍要随设置变化，用 ref 读最新值 */
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const { updateSession } = actions;
 
-  const copySelection = useCallback(() => {
-    const term = terminalRef.current;
-    const selection = term?.getSelection() ?? '';
-    if (!selection) {
-      actions.toast('info', '先在终端里选中要复制的文本');
-      return;
-    }
-    void copyText(selection).then((ok) =>
-      ok
-        ? actions.toast('success', '已复制选中内容')
-        : actions.toast('error', '剪贴板不可用，复制失败'),
-    );
-  }, [actions]);
+  const copySelection = useCallback(
+    (options?: { silent?: boolean; onlyIfSelected?: boolean }) => {
+      const term = terminalRef.current;
+      const raw = term?.getSelection() ?? '';
+      const selection = toPlainText(raw);
+      if (!selection) {
+        if (options?.onlyIfSelected) return false;
+        actions.toast('info', '先在终端里选中要复制的文本');
+        return false;
+      }
+      void copyText(selection).then((ok) => {
+        if (!options?.silent) {
+          if (ok) actions.toast('success', '已复制到剪贴板');
+          else actions.toast('error', '剪贴板不可用，复制失败');
+        }
+      });
+      return true;
+    },
+    [actions],
+  );
 
   const pasteClipboard = useCallback(async () => {
     const term = terminalRef.current;
@@ -189,34 +195,44 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       transportRef.current?.sendInput(data);
     });
 
-    /* 选中即复制：终端里拖选一下就能直接粘贴到别处 */
+    /* 选中即复制：终端里拖选一下就能直接粘贴到别处；静默复制，不出提示 */
     const selectionDisposable = term.onSelectionChange(() => {
       if (!settingsRef.current.copyOnSelect) return;
-      const selected = term.getSelection();
-      if (selected) void copyText(selected);
+      copySelection({ silent: true, onlyIfSelected: true });
     });
 
     term.attachCustomKeyEventHandler((event) => {
       if (event.type !== 'keydown') return true;
       const mod = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
-      const mode = settingsRef.current.pasteMode;
+      const { pasteMode, copyShortcut } = settingsRef.current;
+
+      /* Ctrl+C：有选中时复制，没有选中时保持 shell 的中断语义 */
+      if (copyShortcut === 'ctrl-c' && mod && !event.shiftKey && key === 'c') {
+        if (term.hasSelection()) {
+          event.preventDefault();
+          event.stopPropagation();
+          copySelection({ silent: !settingsRef.current.copyToast });
+          return false;
+        }
+        return true;
+      }
 
       if (mod && event.shiftKey && key === 'c') {
         /* 阻止浏览器原生复制，避免与手动写入剪贴板重复 */
         event.preventDefault();
         event.stopPropagation();
-        copySelection();
+        copySelection({ silent: !settingsRef.current.copyToast });
         return false;
       }
-      if (mode !== 'context' && mod && event.shiftKey && key === 'v') {
+
+      if (pasteMode === 'ctrl-v' && mod && key === 'v') {
         event.preventDefault();
         event.stopPropagation();
         void pasteClipboard();
         return false;
       }
-      /* “智能粘贴”：Ctrl+V 在 both 模式下按剪贴板内容粘贴，其余情况交给 shell */
-      if (mode === 'both' && mod && !event.shiftKey && key === 'v') {
+      if (pasteMode === 'ctrl-v' && event.shiftKey && key === 'insert') {
         event.preventDefault();
         event.stopPropagation();
         void pasteClipboard();
@@ -331,21 +347,6 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     return () => cancelAnimationFrame(frame);
   }, [active]);
 
-  /* ---------- 右键菜单：点击别处或按 Esc 关闭 ---------- */
-  useEffect(() => {
-    if (!menu) return;
-    const dismiss = () => setMenu(null);
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenu(null);
-    };
-    window.addEventListener('pointerdown', dismiss);
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('pointerdown', dismiss);
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [menu]);
-
   const reconnect = () => {
     transportRef.current?.dispose();
     transportRef.current = null;
@@ -403,7 +404,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
           >
             <Icon name="monitor" size={13} />
           </button>
-          <button type="button" className="terminal-pane__tool" onClick={copySelection} title="复制选中内容 (Ctrl+Shift+C)" aria-label="复制选中内容">
+          <button type="button" className="terminal-pane__tool" onClick={() => copySelection()} title="复制选中内容 (Ctrl+Shift+C)" aria-label="复制选中内容">
             <Icon name="copy" size={13} />
           </button>
           <button
@@ -431,56 +432,15 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       <div
         className="terminal-pane__screen"
         onContextMenu={(event) => {
-          /* 右键菜单：只有“仅快捷键”模式才交给系统 */
-          if (settings.pasteMode === 'shortcut') return;
+          /* 右键直接粘贴；其余模式交回系统 */
+          if (settings.pasteMode !== 'right-click') return;
           event.preventDefault();
-          const rect = event.currentTarget.getBoundingClientRect();
-          setMenu({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+          void pasteClipboard();
         }}
       >
         <div className="terminal-pane__xterm">
           <div ref={containerRef} className="terminal-pane__fit" />
         </div>
-        {menu && (
-          <div
-            className="terminal-pane__menu"
-            style={{ left: menu.x, top: menu.y }}
-            role="menu"
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              role="menuitem"
-              disabled={!terminalRef.current?.hasSelection()}
-              onClick={() => {
-                copySelection();
-                setMenu(null);
-              }}
-            >
-              复制 <kbd>Ctrl+Shift+C</kbd>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                void pasteClipboard();
-                setMenu(null);
-              }}
-            >
-              粘贴 <kbd>Ctrl+Shift+V</kbd>
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                terminalRef.current?.selectAll();
-                setMenu(null);
-              }}
-            >
-              全选
-            </button>
-          </div>
-        )}
         {!host && session.status !== 'connected' && (
           <div className="terminal-pane__overlay">
             <p>主机已被删除，无法建立连接。</p>

@@ -74,8 +74,12 @@ export interface Settings {
   connectTimeoutMs: number;
   /** 终端内选中文本即复制到剪贴板 */
   copyOnSelect: boolean;
-  /** 粘贴触发方式：快捷键 / 右键 / 两者都行 */
-  pasteMode: 'both' | 'shortcut' | 'context';
+  /** 复制快捷键：Ctrl+C（有选中时复制，无选中时发送中断）/ Ctrl+Shift+C */
+  copyShortcut: 'ctrl-c' | 'ctrl-shift-c';
+  /** 复制成功是否弹提示 */
+  copyToast: boolean;
+  /** 粘贴触发方式：Ctrl+V 直接粘贴 / 右键直接粘贴 */
+  pasteMode: 'ctrl-v' | 'right-click';
   /** 右侧常驻面板宽度（像素） */
   dockWidth: number;
 }

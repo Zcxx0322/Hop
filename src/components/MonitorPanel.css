@@ -180,3 +180,86 @@
 .monitor__refresh:disabled {
   opacity: 0.55;
 }
+
+/* ---- 详情列表 / 进程表 -------------------------------------------------- */
+.monitor__ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monitor__list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 132px;
+  overflow-y: auto;
+}
+
+.monitor__mount-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+
+.monitor__mount-head .monitor__ellipsis {
+  color: var(--text);
+}
+
+.monitor__kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+}
+
+.monitor__key {
+  flex: 0 0 auto;
+}
+
+.monitor__val {
+  min-width: 0;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monitor__table {
+  width: 100%;
+  margin-top: 8px;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.monitor__table th {
+  padding: 4px 6px 6px 0;
+  color: var(--text-dim);
+  font-weight: 500;
+  text-align: left;
+}
+
+.monitor__table th:not(:first-child),
+.monitor__table td:not(:first-child) {
+  text-align: right;
+  width: 52px;
+}
+
+.monitor__table td {
+  padding: 4px 6px 4px 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  color: var(--text);
+  max-width: 0;
+}
+
+.monitor__table td:first-child {
+  width: auto;
+}

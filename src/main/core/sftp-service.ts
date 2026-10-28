@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
 import path from 'node:path';
 import type { Client, SFTPWrapper, FileEntryWithStats } from 'ssh2';
-import { dialog } from 'electron';
+import { app, dialog, shell } from 'electron';
 import { fail } from './errors';
 import { createLogger } from './logger';
-import { execOnce, withRemote, type RemoteDeps } from './remote';
+import { execOnce, type RemoteDeps, type RemotePool } from './remote';
 import { getMainWindow } from '../window';
 
 const log = createLogger('sftp');
@@ -95,22 +96,33 @@ function toMillis(value: number | undefined): number {
   return value > 1e12 ? value : value * 1000;
 }
 
-function withSftp<T>(client: Client, fn: (sftp: SFTPWrapper) => Promise<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
+/**
+ * 每条 SSH 连接只开一个 SFTP 子系统通道，后续请求共用。
+ * 每次重开通道要一个 RTT（跨网络 80 ms 起），连续浏览目录时体验差别很明显。
+ */
+const sftpChannels = new WeakMap<Client, Promise<SFTPWrapper>>();
+
+function getSftp(client: Client): Promise<SFTPWrapper> {
+  const cached = sftpChannels.get(client);
+  if (cached) return cached;
+
+  const opening = new Promise<SFTPWrapper>((resolve, reject) => {
     client.sftp((err, sftp) => {
       if (err) {
         reject(fail('NETWORK', `无法启动 SFTP 子系统：${err.message}`));
         return;
       }
-      fn(sftp).then(resolve, reject).finally(() => {
-        try {
-          sftp.end();
-        } catch {
-          /* 已关闭 */
-        }
-      });
+      resolve(sftp);
     });
   });
+  sftpChannels.set(client, opening);
+  opening.catch(() => sftpChannels.delete(client));
+  client.once('close', () => sftpChannels.delete(client));
+  return opening;
+}
+
+async function withSftp<T>(client: Client, fn: (sftp: SFTPWrapper) => Promise<T>): Promise<T> {
+  return fn(await getSftp(client));
 }
 
 function call<T>(sftp: SFTPWrapper, method: keyof SFTPWrapper, ...args: unknown[]): Promise<T> {
@@ -154,11 +166,14 @@ async function resolveRemotePath(client: Client, target: string): Promise<string
 export class SftpService {
   private readonly transfers = new Map<string, Transfer>();
 
-  constructor(private readonly deps: RemoteDeps) {}
+  constructor(
+    private readonly deps: RemoteDeps,
+    private readonly pool: RemotePool,
+  ) {}
 
   async list(profileId: string, remotePath: string): Promise<DirectoryListing> {
     const target = normalizeRemotePath(remotePath);
-    return withRemote(this.deps, profileId, (client) =>
+    return this.pool.with(profileId, (client) =>
       withSftp(client, async (sftp) => {
         const resolved = await resolveRemotePath(client, target);
         const raw = await call<FileEntryWithStats[]>(sftp, 'readdir', resolved);
@@ -182,7 +197,7 @@ export class SftpService {
       throw fail('CONFIG_INVALID', '文件夹名不能包含斜杠');
     }
     const target = parent === '/' ? `/${clean}` : `${parent.replace(/\/+$/, '')}/${clean}`;
-    await withRemote(this.deps, profileId, (client) =>
+    await this.pool.with(profileId, (client) =>
       withSftp(client, async (sftp) =>
         call<void>(sftp, 'mkdir', await resolveRemotePath(client, target)),
       ),
@@ -194,7 +209,7 @@ export class SftpService {
     const target = normalizeRemotePath(remotePath);
     if (target === '/' || target === '~') throw fail('CONFIG_INVALID', '不能删除根目录');
 
-    await withRemote(this.deps, profileId, async (client) => {
+    await this.pool.with(profileId, async (client) => {
       // `~` 在引号里不会被 shell 展开，先换成绝对路径再删
       const resolved = await resolveRemotePath(client, target);
       const quoted = `'${resolved.replace(/'/g, `'\\''`)}'`;
@@ -220,7 +235,7 @@ export class SftpService {
     if (!clean || clean.includes('/')) throw fail('CONFIG_INVALID', '新名称不能包含斜杠');
     const parent = parentPath(source) ?? '/';
     const target = parent === '/' ? `/${clean}` : `${parent.replace(/\/+$/, '')}/${clean}`;
-    await withRemote(this.deps, profileId, (client) =>
+    await this.pool.with(profileId, (client) =>
       withSftp(client, async (sftp) =>
         call<void>(
           sftp,
@@ -264,7 +279,7 @@ export class SftpService {
     id: string,
   ): Promise<void> {
     try {
-      await withRemote(this.deps, profileId, (client) =>
+      await this.pool.with(profileId, (client) =>
         withSftp(client, async (sftp) => {
           const resolved = await resolveRemotePath(client, remotePath);
           await new Promise<void>((resolve, reject) => {
@@ -305,7 +320,7 @@ export class SftpService {
     id: string,
   ): Promise<void> {
     try {
-      await withRemote(this.deps, profileId, (client) =>
+      await this.pool.with(profileId, (client) =>
         withSftp(client, async (sftp) => {
           const resolved = await resolveRemotePath(client, remotePath);
           await new Promise<void>((resolve, reject) => {
@@ -322,6 +337,33 @@ export class SftpService {
     } catch (err) {
       this.finish(id, err instanceof Error ? err.message : String(err));
     }
+  }
+
+  /**
+   * 右键「打开」：把远端文件拉到临时目录，再用系统默认程序打开。
+   * 目录不在这里处理（前端直接进入目录）。
+   */
+  async openFile(profileId: string, remotePath: string): Promise<{ localPath: string; opened: boolean }> {
+    const source = normalizeRemotePath(remotePath);
+    const name = path.basename(source) || 'download';
+    const dir = path.join(app.getPath('temp'), 'hop-open');
+    await fs.promises.mkdir(dir, { recursive: true });
+    /* 同名文件加时间戳，避免上次打开的旧内容缓存 */
+    const stamp = new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14);
+    const localPath = path.join(dir, `${stamp}-${name.replace(/[\\/:*?"<>|]/g, '_')}`);
+
+    await this.pool.with(profileId, (client) =>
+      withSftp(client, async (sftp) => {
+        const resolved = await resolveRemotePath(client, source);
+        await new Promise<void>((resolve, reject) => {
+          sftp.fastGet(resolved, localPath, (err) => (err ? reject(toSftpError(err)) : resolve()));
+        });
+      }),
+    );
+
+    const error = await shell.openPath(localPath);
+    if (error) log.warn('failed to open remote file', { localPath, error });
+    return { localPath, opened: !error };
   }
 
   listTransfers(hostId?: string): Transfer[] {

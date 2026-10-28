@@ -351,3 +351,42 @@
     display: none;
   }
 }
+
+/* ---- 右键菜单 ---------------------------------------------------------- */
+.files__menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+
+.files__menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.files__menu button:hover {
+  background: var(--hover);
+}
+
+.files__menu button.is-danger {
+  color: var(--danger);
+}

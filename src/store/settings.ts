@@ -17,7 +17,9 @@ export const DEFAULT_SETTINGS: Settings = {
   keepAliveSeconds: 30,
   connectTimeoutMs: 15_000,
   copyOnSelect: true,
-  pasteMode: 'both',
+  copyShortcut: 'ctrl-c',
+  copyToast: true,
+  pasteMode: 'ctrl-v',
   dockWidth: 372,
 };
 
@@ -54,7 +56,15 @@ const THEMES = ['dark', 'light', 'system'] as const;
 const ACCENT_KEYS = ACCENTS.map((item) => item.key);
 const FONT_KEYS = Object.keys(FONT_STACKS) as FontKey[];
 const CURSORS = ['block', 'bar', 'underline'] as const;
-const PASTE_MODES = ['both', 'shortcut', 'context'] as const;
+const COPY_SHORTCUTS = ['ctrl-c', 'ctrl-shift-c'] as const;
+
+/** 旧版本只有 both / shortcut / context 三种，升级时映射到新的两种模式。 */
+function migratePasteMode(value: unknown): Settings['pasteMode'] {
+  if (value === 'right-click') return 'right-click';
+  if (value === 'ctrl-v') return 'ctrl-v';
+  if (value === 'context') return 'right-click';
+  return DEFAULT_SETTINGS.pasteMode;
+}
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(Math.round(value), min), max);
@@ -92,9 +102,11 @@ export function normalizeSettings(input: Partial<Settings>): Settings {
       ? clamp(merged.connectTimeoutMs, 3000, 60_000)
       : DEFAULT_SETTINGS.connectTimeoutMs,
     copyOnSelect: Boolean(merged.copyOnSelect),
-    pasteMode: PASTE_MODES.includes(merged.pasteMode)
-      ? merged.pasteMode
-      : DEFAULT_SETTINGS.pasteMode,
+    copyShortcut: COPY_SHORTCUTS.includes(merged.copyShortcut)
+      ? merged.copyShortcut
+      : DEFAULT_SETTINGS.copyShortcut,
+    copyToast: merged.copyToast === undefined ? true : Boolean(merged.copyToast),
+    pasteMode: migratePasteMode(merged.pasteMode),
     dockWidth: Number.isFinite(merged.dockWidth)
       ? clamp(merged.dockWidth, 280, 620)
       : DEFAULT_SETTINGS.dockWidth,

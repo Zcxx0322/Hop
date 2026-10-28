@@ -5,6 +5,7 @@ import {
   listFiles,
   listTransfers,
   makeDirectory,
+  openRemoteFile,
   removeRemote,
   renameRemote,
   startDownload,
@@ -15,6 +16,7 @@ import {
 } from '../api/workspace';
 import { useApp } from '../store/AppStore';
 import { errorMessage } from '../lib/utils';
+import { copyText } from '../lib/clipboard';
 import { Icon } from './ui/Icon';
 import { Spinner } from './ui/Spinner';
 import './FilesPanel.css';
@@ -67,6 +69,7 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
   const [busy, setBusy] = useState(false);
   const [renaming, setRenaming] = useState<{ from: string; value: string } | null>(null);
   const [creating, setCreating] = useState<string | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; entry: RemoteFile } | null>(null);
   const requestId = useRef(0);
   /* 上传结束要自动刷新当前目录，这里用 ref 读取最新的路径与上一轮记录 */
   const pathRef = useRef('~');
@@ -140,6 +143,21 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
     pathRef.current = path;
   }, [path]);
 
+  /* 右键菜单：点空白处或 Esc 收起 */
+  useEffect(() => {
+    if (!menu) return;
+    const close = () => setMenu(null);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenu(null);
+    };
+    window.addEventListener('pointerdown', close);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('pointerdown', close);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [menu]);
+
   const entries = useMemo(() => {
     const rows = listing?.entries ?? [];
     return [...rows].sort((a, b) => {
@@ -192,6 +210,20 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
 
   const handleDelete = (entry: RemoteFile) => {
     void runAction(() => removeRemote(hostId, entry.path));
+  };
+
+  /* 打开：目录进入；文件交给系统默认程序（xdg-open / open / start） */
+  const handleOpen = async (entry: RemoteFile) => {
+    if (entry.type === 'dir') {
+      void load(entry.path);
+      return;
+    }
+    try {
+      const result = await openRemoteFile(hostId, entry.path);
+      if (!result.opened) actions.toast('error', '服务器上没有可用的打开方式');
+    } catch (err) {
+      actions.toast('error', errorMessage(err, '打开文件失败'));
+    }
   };
 
   const activeTransfers = transfers.filter((item) => item.status === 'active');
@@ -314,6 +346,10 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
               key={entry.path}
               className={`files__row${entry.type === 'dir' ? ' is-dir' : ''}`}
               role="row"
+              onContextMenu={(event) => {
+                event.preventDefault();
+                setMenu({ x: event.clientX, y: event.clientY, entry });
+              }}
               onDoubleClick={() => {
                 if (entry.type === 'dir') void load(entry.path);
                 else void handleDownload(entry);
@@ -437,6 +473,89 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
             );
           })}
         </section>
+      )}
+
+      {menu && (
+        <div
+          className="files__menu"
+          role="menu"
+          style={{ left: menu.x, top: menu.y }}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              void handleOpen(menu.entry);
+              setMenu(null);
+            }}
+          >
+            <Icon name="enter" size={13} />
+            {menu.entry.type === 'dir' ? '打开目录' : '打开文件'}
+          </button>
+          {menu.entry.type !== 'dir' && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                void handleDownload(menu.entry);
+                setMenu(null);
+              }}
+            >
+              <Icon name="download" size={13} />
+              下载到本机
+            </button>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setRenaming({ from: menu.entry.path, value: menu.entry.name });
+              setMenu(null);
+            }}
+          >
+            <Icon name="pencil" size={13} />
+            重命名
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              const target = menu.entry.path;
+              void copyText(target).then((ok) => {
+                actions.toast(ok ? 'success' : 'error', ok ? '已复制路径' : '剪贴板不可用');
+              });
+              setMenu(null);
+            }}
+          >
+            <Icon name="copy" size={13} />
+            复制路径
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setCreating('新建文件夹');
+              void runAction(() => makeDirectory(hostId, path, '新建文件夹'));
+              setMenu(null);
+            }}
+          >
+            <Icon name="folder" size={13} />
+            新建文件夹
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="is-danger"
+            onClick={() => {
+              handleDelete(menu.entry);
+              setMenu(null);
+            }}
+          >
+            <Icon name="trash" size={13} />
+            删除
+          </button>
+        </div>
       )}
     </div>
   );

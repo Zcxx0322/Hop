@@ -6,6 +6,7 @@ import type { HopError, HostKeyChallenge, SessionSnapshot } from '../shared/cont
 import { KnownHostsStore } from './core/known-hosts';
 import { flushLogger, initLogger, createLogger } from './core/logger';
 import { ProfileStore } from './core/profile-store';
+import { RemotePool } from './core/remote';
 import { SecretStore } from './core/secret-store';
 import { SessionManager } from './core/session-manager';
 import { SftpService } from './core/sftp-service';
@@ -102,9 +103,10 @@ async function bootstrap(): Promise<void> {
 
   registerIpc({ profiles, knownHosts, sessions, secureStorage: secrets.isSecure });
 
-  // 文件传输与资源监控共用同一份凭证/known_hosts，各自开短连接。
-  const sftp = new SftpService({ profiles, knownHosts });
-  const monitor = new MonitorService({ profiles, knownHosts });
+  // 文件传输与资源监控共用同一条按主机复用的连接（空闲 45 秒回收）。
+  const remotePool = new RemotePool({ profiles, knownHosts });
+  const sftp = new SftpService({ profiles, knownHosts }, remotePool);
+  const monitor = new MonitorService({ profiles, knownHosts }, remotePool);
 
   // The renderer talks REST + WebSocket over loopback (see docs/API-CONTRACT.md).
   // Both transports share the same stores, so credentials and known hosts are
@@ -152,6 +154,7 @@ async function bootstrap(): Promise<void> {
     sessions.closeAll();
     void gateway?.close();
     gateway = null;
+    remotePool.dispose();
     flushLogger();
   });
 }

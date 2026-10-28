@@ -93,20 +93,51 @@ export const clearTransfers = (): Promise<void> => request<void>('/transfers', {
 
 /* ---- 主机监控 ---------------------------------------------------------- */
 
+export interface HostAddress {
+  iface: string;
+  address: string;
+  family: 'ipv4';
+}
+
+export interface HostDisk {
+  filesystem: string;
+  mount: string;
+  total: number;
+  used: number;
+}
+
+export interface HostProcess {
+  pid: number;
+  name: string;
+  cpu: number;
+  mem: number;
+}
+
 export interface HostMetrics {
   sampledAt: number;
   os: string | null;
+  hostname: string | null;
+  kernel: string | null;
+  arch: string | null;
+  timezone: string | null;
+  cpuModel: string | null;
   cores: number | null;
   /** 0–100；第一次采样没有基线时为 null。 */
   cpu: number | null;
   load: [number, number, number] | null;
   uptimeSec: number | null;
+  users: number | null;
   memTotal: number;
   memUsed: number;
   swapTotal: number;
   swapUsed: number;
   diskTotal: number;
   diskUsed: number;
+  disks: HostDisk[];
+  addresses: HostAddress[];
+  dns: string[];
+  gateway: string | null;
+  processes: HostProcess[];
   rxBytes: number;
   txBytes: number;
   rxRate: number;
@@ -114,5 +145,48 @@ export interface HostMetrics {
   unsupported: boolean;
 }
 
-export const sampleHost = (hostId: string): Promise<HostMetrics> =>
-  request<HostMetrics>(hostPath(hostId, '/monitor'));
+/**
+ * 采样主机状态。
+ *
+ * 这里做一次形状兜底：如果本机还开着旧版后端（多实例、热更新没重启主进程），
+ * 新渲染层可能拿到缺字段的 payload，直接渲染会整页崩掉。缺的数组一律补空。
+ */
+export const sampleHost = async (hostId: string): Promise<HostMetrics> => {
+  const payload = await request<Partial<HostMetrics>>(hostPath(hostId, '/monitor'));
+  return {
+    sampledAt: payload.sampledAt ?? Date.now(),
+    os: payload.os ?? null,
+    hostname: payload.hostname ?? null,
+    kernel: payload.kernel ?? null,
+    arch: payload.arch ?? null,
+    timezone: payload.timezone ?? null,
+    cpuModel: payload.cpuModel ?? null,
+    cores: payload.cores ?? null,
+    cpu: payload.cpu ?? null,
+    load: payload.load ?? null,
+    uptimeSec: payload.uptimeSec ?? null,
+    users: payload.users ?? null,
+    memTotal: payload.memTotal ?? 0,
+    memUsed: payload.memUsed ?? 0,
+    swapTotal: payload.swapTotal ?? 0,
+    swapUsed: payload.swapUsed ?? 0,
+    diskTotal: payload.diskTotal ?? 0,
+    diskUsed: payload.diskUsed ?? 0,
+    disks: payload.disks ?? [],
+    addresses: payload.addresses ?? [],
+    dns: payload.dns ?? [],
+    gateway: payload.gateway ?? null,
+    processes: payload.processes ?? [],
+    rxBytes: payload.rxBytes ?? 0,
+    txBytes: payload.txBytes ?? 0,
+    rxRate: payload.rxRate ?? 0,
+    txRate: payload.txRate ?? 0,
+    unsupported: payload.unsupported ?? false,
+  };
+};
+
+export const openRemoteFile = (hostId: string, path: string): Promise<{ opened: boolean }> =>
+  request<{ opened: boolean }>(hostPath(hostId, '/files/open'), {
+    method: 'POST',
+    body: JSON.stringify({ path }),
+  });

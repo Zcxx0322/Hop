@@ -11,6 +11,15 @@ const log = createLogger('remote');
 const CONNECT_TIMEOUT_MS = 12_000;
 const JUMP_TIMEOUT_MS = 10_000;
 
+/** 关掉 Nagle：SSH 通道上的小包应立刻发出，否则要等对端 delayed-ACK。 */
+function enableNoDelay(conn: Client): void {
+  try {
+    (conn as unknown as { setNoDelay?: (value: boolean) => void }).setNoDelay?.(true);
+  } catch {
+    /* 极少数实现不支持，忽略即可 */
+  }
+}
+
 export interface RemoteDeps {
   profiles: ProfileStore;
   knownHosts: KnownHostsStore;
@@ -83,8 +92,11 @@ function connectEndpoint(
     };
 
     conn.on('ready', () => {
+      /* 关掉 Nagle：SFTP 的每个请求/响应都是小包，攒包会白等 40–200 ms */
+      enableNoDelay(conn);
       done(() => resolve(conn));
     });
+    conn.once('handshake', () => enableNoDelay(conn));
     conn.on('error', (err: Error) => {
       done(() => reject(fail('NETWORK', `连接 ${endpoint.host}:${endpoint.port} 失败：${err.message}`)));
     });
@@ -209,6 +221,133 @@ export async function openRemote(deps: RemoteDeps, profileId: string): Promise<R
     jumpConn?.end();
     throw err;
   }
+}
+
+/**
+ * 复用连接池：SFTP 浏览与监控采样共用一条已认证连接。
+ *
+ * 每次点开目录都重新握手（TCP + 密钥交换 + 认证）在跨网主机上要几百毫秒，
+ * 这里按 profile 缓存连接，空闲 45 秒后回收；SSH 本身支持多路复用，
+ * 并发请求共用同一条连接即可。
+ */
+interface PoolEntry {
+  handle: RemoteHandle;
+  users: number;
+  idleTimer: NodeJS.Timeout | null;
+  closed: boolean;
+}
+
+const REMOTE_IDLE_MS = 45_000;
+
+export class RemotePool {
+  private readonly entries = new Map<string, PoolEntry>();
+  /** 同一 profile 的并发首次请求只握手一次，其余请求等同一个 Promise */
+  private readonly pending = new Map<string, Promise<RemoteHandle>>();
+  private disposed = false;
+
+  constructor(private readonly deps: RemoteDeps) {}
+
+  async with<T>(profileId: string, fn: (client: Client) => Promise<T>): Promise<T> {
+    const { entry, reused } = await this.acquire(profileId);
+    try {
+      return await fn(entry.handle.client);
+    } catch (err) {
+      /* 连接层面的失败（握手后 socket 断了）直接丢弃，避免后续请求一直踩坏连接 */
+      if (isBrokenConnection(err)) this.drop(profileId);
+      throw err;
+    } finally {
+      this.release(profileId, reused);
+    }
+  }
+
+  dispose(): void {
+    this.disposed = true;
+    for (const [profileId, entry] of this.entries) {
+      if (entry.idleTimer) clearTimeout(entry.idleTimer);
+      try {
+        entry.handle.close();
+      } catch {
+        /* ignore */
+      }
+      this.entries.delete(profileId);
+    }
+  }
+
+  private async acquire(profileId: string): Promise<{ entry: PoolEntry; reused: boolean }> {
+    if (this.disposed) throw fail('CONFIG_INVALID', '应用正在退出');
+    const existing = this.entries.get(profileId);
+    if (existing && !existing.closed) {
+      if (existing.idleTimer) {
+        clearTimeout(existing.idleTimer);
+        existing.idleTimer = null;
+      }
+      existing.users += 1;
+      return { entry: existing, reused: true };
+    }
+    if (existing) this.drop(profileId);
+
+    const inflight = this.pending.get(profileId);
+    if (inflight) {
+      await inflight;
+      const shared = this.entries.get(profileId);
+      if (shared && !shared.closed) {
+        shared.users += 1;
+        return { entry: shared, reused: true };
+      }
+      /* 刚刚那次握手失败了，自己重新开一条 */
+    }
+
+    const opening = openRemote(this.deps, profileId).finally(() => {
+      if (this.pending.get(profileId) === opening) this.pending.delete(profileId);
+    });
+    this.pending.set(profileId, opening);
+    const handle = await opening;
+    const entry: PoolEntry = { handle, users: 1, idleTimer: null, closed: false };
+    this.entries.set(profileId, entry);
+
+    const forget = () => {
+      entry.closed = true;
+      if (this.entries.get(profileId) === entry) this.entries.delete(profileId);
+    };
+    handle.client.once('close', forget);
+    handle.client.once('error', forget);
+
+    log.info('remote connection opened', { profileId });
+    return { entry, reused: false };
+  }
+
+  private release(profileId: string, reused: boolean): void {
+    const entry = this.entries.get(profileId);
+    if (!entry) return;
+    entry.users = Math.max(0, entry.users - 1);
+    if (entry.users > 0) return;
+    if (entry.idleTimer) clearTimeout(entry.idleTimer);
+    const timer = setTimeout(() => {
+      const current = this.entries.get(profileId);
+      if (!current || current.users > 0) return;
+      this.drop(profileId);
+    }, REMOTE_IDLE_MS);
+    timer.unref?.();
+    entry.idleTimer = timer;
+    if (!reused) log.info('remote connection idle timer armed', { profileId });
+  }
+
+  private drop(profileId: string): void {
+    const entry = this.entries.get(profileId);
+    if (!entry) return;
+    this.entries.delete(profileId);
+    if (entry.idleTimer) clearTimeout(entry.idleTimer);
+    try {
+      entry.handle.close();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+function isBrokenConnection(err: unknown): boolean {
+  const code = (err as { code?: string })?.code;
+  return code === 'NETWORK' || code === 'TIMEOUT';
 }
 
 /**
