@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { isTopOverlay, pushOverlay } from '../../lib/overlayStack';
+import { lockBodyScroll } from '../../lib/scrollLock';
 import { IconButton } from './Button';
 import './Modal.css';
 
@@ -34,15 +36,21 @@ export function Modal({
   dismissible = true,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const id = useId();
   const titleId = useId();
   const descriptionId = useId();
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const isTopmost = () => isTopOverlay(id);
+
+  useEffect(() => {
+    if (!open) return;
+    return pushOverlay(id);
+  }, [open, id]);
 
   useEffect(() => {
     if (!open) return;
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockBodyScroll();
 
     const timer = window.setTimeout(() => {
       const panel = panelRef.current;
@@ -55,14 +63,17 @@ export function Modal({
 
     return () => {
       window.clearTimeout(timer);
-      document.body.style.overflow = previousOverflow;
-      restoreFocusRef.current?.focus?.();
+      unlock();
+      const previous = restoreFocusRef.current;
+      if (previous && document.contains(previous)) previous.focus?.();
     };
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
+      /* 叠了多层时只有最上面那层响应，避免一次 Esc 关掉两个对话框 */
+      if (!isTopmost()) return;
       if (event.key === 'Escape' && dismissible) {
         event.preventDefault();
         event.stopPropagation();

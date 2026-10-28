@@ -39,7 +39,7 @@ export interface AppState {
 }
 
 type Action =
-  | { type: 'hosts/loaded'; hosts: Host[]; error?: string }
+  | { type: 'hosts/loaded'; hosts?: Host[]; error?: string }
   | { type: 'hosts/upsert'; host: Host }
   | { type: 'hosts/removed'; id: string }
   | { type: 'session/connect'; sessionId: string; host: Host; now: number }
@@ -71,24 +71,50 @@ function createInitialState(): AppState {
   };
 }
 
+/**
+ * 同一台主机可以并行开多个会话，标签名按开session顺序追加序号：
+ * 「生产 Web 网关」「生产 Web 网关 (2)」……
+ * 主机改名或会话关闭后统一重算，避免出现「(3) 却只有两个标签」的断号。
+ */
+function retitleSessions(sessions: Session[], hosts: Host[]): Session[] {
+  const seen = new Map<string, number>();
+  let changed = false;
+  const next = sessions.map((session) => {
+    const order = (seen.get(session.hostId) ?? 0) + 1;
+    seen.set(session.hostId, order);
+    const base = hosts.find((host) => host.id === session.hostId)?.name ?? session.title.replace(/ \(\d+\)$/, '');
+    const title = order === 1 ? base : `${base} (${order})`;
+    if (title === session.title) return session;
+    changed = true;
+    return { ...session, title };
+  });
+  return changed ? next : sessions;
+}
+
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case 'hosts/loaded':
+    case 'hosts/loaded': {
+      /* 拉取失败时保留已有列表：后端偶尔抖动不该把侧栏清空 */
+      const hosts = action.hosts ?? state.hosts;
       return {
         ...state,
-        hosts: action.hosts,
+        hosts,
         hostsLoaded: true,
         hostsError: action.error ?? null,
+        sessions: retitleSessions(state.sessions, hosts),
       };
+    }
 
     case 'hosts/upsert': {
       const exists = state.hosts.some((host) => host.id === action.host.id);
+      const hosts = exists
+        ? state.hosts.map((host) => (host.id === action.host.id ? action.host : host))
+        : [action.host, ...state.hosts];
       return {
         ...state,
         hostsLoaded: true,
-        hosts: exists
-          ? state.hosts.map((host) => (host.id === action.host.id ? action.host : host))
-          : [action.host, ...state.hosts],
+        hosts,
+        sessions: retitleSessions(state.sessions, hosts),
       };
     }
 
@@ -104,11 +130,7 @@ function reducer(state: AppState, action: Action): AppState {
       };
 
     case 'session/connect': {
-      const existing = state.sessions.find((session) => session.hostId === action.host.id);
       const ui = { ...state.ui, paletteOpen: false, navOpen: false };
-      if (existing) {
-        return { ...state, activeSessionId: existing.id, ui };
-      }
       const session: Session = {
         id: action.sessionId,
         hostId: action.host.id,
@@ -119,7 +141,8 @@ function reducer(state: AppState, action: Action): AppState {
       };
       return {
         ...state,
-        sessions: [...state.sessions, session],
+        /* 同一主机允许并行多个会话：每次点击都新开一个标签，序号由 retitleSessions 统一分配 */
+        sessions: retitleSessions([...state.sessions, session], state.hosts),
         activeSessionId: session.id,
         ui,
       };
@@ -144,7 +167,7 @@ function reducer(state: AppState, action: Action): AppState {
       }
       return {
         ...state,
-        sessions,
+        sessions: retitleSessions(sessions, state.hosts),
         activeSessionId,
         ui: {
           ...state.ui,
@@ -268,7 +291,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       dispatch({
         type: 'hosts/loaded',
-        hosts: [],
         error: errorMessage(error, '加载主机列表失败'),
       });
     }

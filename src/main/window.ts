@@ -1,8 +1,9 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, shell } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import { CH } from '../shared/channels';
 import { createLogger } from './core/logger';
+import { JsonStore } from './core/json-store';
 
 const log = createLogger('window');
 
@@ -25,6 +26,73 @@ export interface WindowOptions {
   devServerUrl?: string;
   /** Renderer entry for the packaged app. */
   rendererEntry: string;
+}
+
+/* ---------- 窗口几何记忆 ---------- */
+
+interface WindowBounds {
+  x?: number;
+  y?: number;
+  width: number;
+  height: number;
+  maximized: boolean;
+}
+
+const DEFAULT_BOUNDS: WindowBounds = { width: 1380, height: 880, maximized: false };
+const MIN_WIDTH = 960;
+const MIN_HEIGHT = 560;
+
+let boundsStore: JsonStore<WindowBounds> | null = null;
+
+function getBoundsStore(): JsonStore<WindowBounds> {
+  if (!boundsStore) {
+    boundsStore = new JsonStore<WindowBounds>(
+      path.join(app.getPath('userData'), 'window.json'),
+      () => DEFAULT_BOUNDS,
+    );
+  }
+  return boundsStore;
+}
+
+/** 只有窗口至少有一部分落在某个显示器的工作区里才恢复位置，避免换屏后跑到看不见的地方。 */
+function isOnScreen(bounds: { x: number; y: number; width: number; height: number }): boolean {
+  return screen.getAllDisplays().some((display) => {
+    const area = display.workArea;
+    const overlapX =
+      Math.min(bounds.x + bounds.width, area.x + area.width) - Math.max(bounds.x, area.x);
+    const overlapY =
+      Math.min(bounds.y + bounds.height, area.y + area.height) - Math.max(bounds.y, area.y);
+    return overlapX >= 120 && overlapY >= 60;
+  });
+}
+
+function restoreBounds(): { bounds: WindowBounds; usable: boolean } {
+  const saved = getBoundsStore().read();
+  const width = Number.isFinite(saved.width) && saved.width >= MIN_WIDTH ? saved.width : DEFAULT_BOUNDS.width;
+  const height = Number.isFinite(saved.height) && saved.height >= MIN_HEIGHT ? saved.height : DEFAULT_BOUNDS.height;
+  const hasPosition = Number.isFinite(saved.x) && Number.isFinite(saved.y);
+  if (hasPosition && isOnScreen({ x: saved.x as number, y: saved.y as number, width, height })) {
+    return { bounds: { x: saved.x, y: saved.y, width, height, maximized: Boolean(saved.maximized) }, usable: true };
+  }
+  return { bounds: { width, height, maximized: Boolean(saved.maximized) }, usable: false };
+}
+
+function persistBounds(win: BrowserWindow): void {
+  if (win.isDestroyed()) return;
+  const maximized = win.isMaximized();
+  const current = getBoundsStore().read();
+  const bounds = win.getNormalBounds();
+  const next: WindowBounds = maximized
+    ? { ...current, width: bounds.width, height: bounds.height, maximized: true }
+    : {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        maximized: false,
+      };
+  if (next.width < MIN_WIDTH || next.height < MIN_HEIGHT) return;
+  getBoundsStore().write(next);
 }
 
 /** Window-chrome IPC is registered once per process, not per window. */
@@ -58,11 +126,14 @@ function registerWindowIpc(): void {
 export function createMainWindow(options: WindowOptions): BrowserWindow {
   registerWindowIpc();
 
+  const { bounds: savedBounds, usable } = restoreBounds();
+
   const win = new BrowserWindow({
-    width: 1380,
-    height: 880,
-    minWidth: 960,
-    minHeight: 560,
+    width: savedBounds.width,
+    height: savedBounds.height,
+    ...(usable ? { x: savedBounds.x, y: savedBounds.y } : {}),
+    minWidth: MIN_WIDTH,
+    minHeight: MIN_HEIGHT,
     backgroundColor: BACKGROUND,
     show: false,
     frame: false,
@@ -90,7 +161,24 @@ export function createMainWindow(options: WindowOptions): BrowserWindow {
   win.on('maximize', pushMaximized);
   win.on('unmaximize', pushMaximized);
 
+  /* 关窗前把几何写盘；移动/缩放时也做一次防抖保存，进程被杀也不会丢。 */
+  let saveTimer: NodeJS.Timeout | null = null;
+  const scheduleSave = () => {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      persistBounds(win);
+    }, 500);
+  };
+  win.on('resize', scheduleSave);
+  win.on('move', scheduleSave);
+  win.on('close', () => {
+    if (saveTimer) clearTimeout(saveTimer);
+    persistBounds(win);
+  });
+
   win.once('ready-to-show', () => {
+    if (savedBounds.maximized) win.maximize();
     win.show();
     if (process.env.HOP_DEVTOOLS === '1') win.webContents.openDevTools({ mode: 'detach' });
   });

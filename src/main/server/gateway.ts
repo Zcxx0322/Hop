@@ -340,12 +340,27 @@ export async function startGateway(deps: GatewayDeps): Promise<GatewayHandle | n
 
   async function routeHttp(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+
+    /*
+     * 本机网关没有登录态：必须挡住浏览器里其他站点发来的请求。
+     * - Origin 必须来自本机页面（file:// 打包页面的 Origin 是 null）
+     * - Host 必须是回环地址，防止 DNS rebinding 把 evil.com 解析到 127.0.0.1
+     */
+    if (!isAllowedHostHeader(req.headers.host)) {
+      log.warn('gateway rejected foreign host header', { host: req.headers.host });
+      sendJson(res, 403, { message: '拒绝访问：Host 头不是本机地址', code: 'FORBIDDEN' });
+      return;
+    }
     const origin = req.headers.origin;
-    if (origin && isAllowedOrigin(origin)) {
+    if (origin && !isAllowedOrigin(origin)) {
+      log.warn('gateway rejected foreign origin', { origin });
+      sendJson(res, 403, { message: '拒绝访问：来源不是 Hop 窗口', code: 'FORBIDDEN' });
+      return;
+    }
+
+    if (origin) {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
-    } else {
-      res.setHeader('Access-Control-Allow-Origin', '*');
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
@@ -467,11 +482,22 @@ export async function startGateway(deps: GatewayDeps): Promise<GatewayHandle | n
 
   /* ---------------- WebSocket ---------------- */
 
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({ noServer: true, maxPayload: 1024 * 1024 });
 
   server.on('upgrade', (req: IncomingMessage, socket: Socket, head: Buffer) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
     if (url.pathname.replace(/\/+$/, '') !== '/terminal') {
+      socket.destroy();
+      return;
+    }
+    /* WebSocket 不受 CORS 约束，必须在升级阶段自己做来源校验 */
+    const wsOrigin = req.headers.origin;
+    if (
+      !isAllowedHostHeader(req.headers.host) ||
+      (wsOrigin && !isAllowedOrigin(wsOrigin))
+    ) {
+      log.warn('gateway rejected websocket', { origin: wsOrigin, host: req.headers.host });
+      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
       socket.destroy();
       return;
     }
@@ -702,9 +728,16 @@ function mapStatus(status: SessionStatus): 'connecting' | 'connected' | 'closed'
 function isAllowedOrigin(origin: string): boolean {
   return (
     origin === 'null' ||
-    /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(origin) ||
+    /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(origin) ||
     /^file:\/\//.test(origin)
   );
+}
+
+/** Host 头必须是回环地址：挡住 DNS rebinding（evil.com → 127.0.0.1） */
+function isAllowedHostHeader(host: string | undefined): boolean {
+  if (!host) return false;
+  const name = host.replace(/:\d+$/, '').toLowerCase();
+  return name === '127.0.0.1' || name === 'localhost' || name === '[::1]' || name === '::1';
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {

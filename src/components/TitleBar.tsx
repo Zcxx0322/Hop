@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type MouseEvent } from 'react';
 import { useApp } from '../store/AppStore';
 import { LogoMark } from './ui/Logo';
 import { TabBar } from './TabBar';
@@ -42,8 +42,19 @@ export function TitleBar() {
 
   const toggleMaximize = useCallback(() => bridge?.toggleMaximize(), [bridge]);
 
+  /* 双击标题栏空白处 = 最大化 / 还原；双击标签、按钮时不要误触发 */
+  const handleDoubleClick = useCallback(
+    (event: MouseEvent<HTMLElement>) => {
+      if (!bridge) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('button, a, input, select, textarea, [role="tab"]')) return;
+      bridge.toggleMaximize();
+    },
+    [bridge],
+  );
+
   return (
-    <header className="titlebar" onDoubleClick={toggleMaximize}>
+    <header className="titlebar" onDoubleClick={handleDoubleClick}>
       <div className="titlebar__brand">
         <LogoMark size={18} />
         <span className="titlebar__name">Hop</span>

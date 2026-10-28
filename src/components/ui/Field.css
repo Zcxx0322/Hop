@@ -57,6 +57,16 @@
   color: var(--text);
 }
 
+/*
+ * base.css 里的全局 :focus-visible 会再给里面的 <input> 画一圈轮廓，
+ * 结果外层 .field__control 的高亮框和输入框本身各画一圈、大小还对不上。
+ * 焦点视觉统一交给 .field__control:focus-within，内部控件保持无轮廓。
+ */
+.field__control :is(input, textarea, select):focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
 .field__input::placeholder {
   color: var(--text-3);
 }

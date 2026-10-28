@@ -29,6 +29,8 @@ export default function App() {
             target.isContentEditable),
       );
 
+      const modalOpen = ui.hostForm !== null || ui.settingsOpen || ui.paletteOpen;
+
       if (mod && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         actions.setPaletteOpen(!ui.paletteOpen);
@@ -38,17 +40,33 @@ export default function App() {
       /* 设置面板是应用级入口：终端聚焦时也要能用（shell 里 Ctrl+, 无特殊语义） */
       if (mod && event.key === ',') {
         event.preventDefault();
-        actions.setSettingsOpen(true);
+        if (ui.settingsOpen) {
+          actions.setSettingsOpen(false);
+        } else {
+          actions.setSettingsOpen(true);
+        }
+        return;
+      }
+
+      /* 新建连接：终端聚焦时也应该能按（shell 里 Ctrl+N 用得少） */
+      if (mod && event.key.toLowerCase() === 'n') {
+        event.preventDefault();
+        if (ui.hostForm || ui.settingsOpen) return;
+        actions.setPaletteOpen(false);
+        actions.openHostForm(null);
+        return;
+      }
+
+      /* 关闭标签：终端聚焦时保留 shell 的 ^W，改用 Ctrl+Shift+W */
+      if (mod && event.key.toLowerCase() === 'w') {
+        if (modalOpen) return;
+        if (typing && !event.shiftKey) return;
+        event.preventDefault();
+        if (activeSessionId) actions.requestCloseSession(activeSessionId);
         return;
       }
 
       if (typing) return;
-
-      if (mod && event.key.toLowerCase() === 'n') {
-        event.preventDefault();
-        actions.openHostForm(null);
-        return;
-      }
 
       if (mod && event.key.toLowerCase() === 'b') {
         event.preventDefault();
@@ -72,7 +90,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [actions, sessions, ui.paletteOpen, ui.navOpen]);
+  }, [actions, sessions, activeSessionId, ui.paletteOpen, ui.hostForm, ui.settingsOpen, ui.navOpen]);
 
   return (
     <div

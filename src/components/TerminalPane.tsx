@@ -9,6 +9,7 @@ import type { TerminalTransport } from '../api/transport';
 import { useApp } from '../store/AppStore';
 import { FONT_STACKS } from '../store/settings';
 import { formatAddress } from '../lib/visual';
+import { copyText } from '../lib/clipboard';
 import { Icon } from './ui/Icon';
 import { StatusDot } from './ui/Spinner';
 import './TerminalPane.css';
@@ -91,6 +92,9 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
   const fitRef = useRef<FitAddon | null>(null);
   const webglRef = useRef<WebglAddon | null>(null);
   const transportRef = useRef<TerminalTransport | null>(null);
+  /* 连接时取一次主机快照：之后即使主机被改名或删除，已建立的会话也不该被掐断 */
+  const hostRef = useRef<Host | null>(host);
+  hostRef.current = host;
   const [attempt, setAttempt] = useState(0);
   const { updateSession } = actions;
 
@@ -101,10 +105,11 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       actions.toast('info', '先在终端里选中要复制的文本');
       return;
     }
-    void navigator.clipboard
-      .writeText(selection)
-      .then(() => actions.toast('success', '已复制选中内容'))
-      .catch(() => actions.toast('error', '浏览器拒绝了剪贴板访问'));
+    void copyText(selection).then((ok) =>
+      ok
+        ? actions.toast('success', '已复制选中内容')
+        : actions.toast('error', '剪贴板不可用，复制失败'),
+    );
   }, [actions]);
 
   /* ---------- 创建终端实例 ---------- */
@@ -204,7 +209,8 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
 
   /* ---------- 连接传输层 ---------- */
   useEffect(() => {
-    if (!host) return;
+    const target = hostRef.current;
+    if (!target) return;
     const term = terminalRef.current;
     if (!term) return;
 
@@ -232,7 +238,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
 
     transport.connect({
       sessionId: session.id,
-      host,
+      host: target,
       cols: term.cols,
       rows: term.rows,
       timeoutMs: settings.connectTimeoutMs,
@@ -246,7 +252,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     };
     // 重连通过 attempt 递增触发
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [host?.id, session.id, attempt]);
+  }, [session.id, attempt]);
 
   /* ---------- 外观设置实时生效 ---------- */
   useEffect(() => {
@@ -306,6 +312,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       role="tabpanel"
       aria-label={`${session.title} 终端`}
       aria-hidden={!active}
+      inert={!active}
     >
       <div className="terminal-pane__bar">
         <span className={`terminal-pane__state terminal-pane__state--${session.status}`}>
@@ -338,8 +345,8 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
             type="button"
             className="terminal-pane__tool"
             onClick={reconnect}
-            disabled={busy}
-            title="重新连接"
+            disabled={busy || !host}
+            title={host ? '重新连接' : '主机已被删除'}
             aria-label="重新连接"
           >
             <Icon name="refresh" size={13} />
@@ -349,7 +356,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
 
       <div className="terminal-pane__screen">
         <div ref={containerRef} className="terminal-pane__xterm" />
-        {!host && (
+        {!host && session.status !== 'connected' && (
           <div className="terminal-pane__overlay">
             <p>主机已被删除，无法建立连接。</p>
             <button type="button" onClick={() => actions.requestCloseSession(session.id)}>

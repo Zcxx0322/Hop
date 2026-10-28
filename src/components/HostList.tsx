@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom';
 import type { Host } from '../types';
 import { formatAddress, relativeTime, hostAccent, hostInitials } from '../lib/visual';
+import { copyText } from '../lib/clipboard';
 import { useApp } from '../store/AppStore';
 import { Icon } from './ui/Icon';
 import { StatusDot } from './ui/Spinner';
@@ -60,23 +61,24 @@ export function HostList({ hosts, loaded, error, connectedHostIds }: HostListPro
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setMenu(null);
     };
+    const onViewportChange = () => setMenu(null);
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
-    window.addEventListener('resize', () => setMenu(null));
-    window.addEventListener('blur', () => setMenu(null));
+    window.addEventListener('resize', onViewportChange);
+    window.addEventListener('blur', onViewportChange);
+    window.addEventListener('scroll', onViewportChange, true);
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('resize', onViewportChange);
+      window.removeEventListener('blur', onViewportChange);
+      window.removeEventListener('scroll', onViewportChange, true);
     };
   }, [menu]);
 
   const copyAddress = async (host: Host) => {
-    try {
-      await navigator.clipboard.writeText(formatAddress(host));
-      actions.toast('success', '地址已复制到剪贴板');
-    } catch {
-      actions.toast('error', '浏览器拒绝了剪贴板访问');
-    }
+    const ok = await copyText(formatAddress(host));
+    actions.toast(ok ? 'success' : 'error', ok ? '地址已复制到剪贴板' : '剪贴板不可用，复制失败');
   };
 
   return (

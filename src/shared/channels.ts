@@ -9,6 +9,7 @@ export const CH = {
   /* request / response (ipcMain.handle) */
   info: 'hop:app:info',
   pickPrivateKey: 'hop:app:pick-private-key',
+  clipboardWrite: 'hop:app:clipboard-write',
 
   profilesList: 'hop:profiles:list',
   profilesSave: 'hop:profiles:save',

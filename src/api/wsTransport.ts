@@ -30,6 +30,9 @@ export class WebSocketTransport implements TerminalTransport {
   private disposed = false;
   private lastCols = 80;
   private lastRows = 24;
+  /** 握手完成前敲下的按键先攒着，连上后按序补发，避免「刚连上打字丢字符」 */
+  private pendingInput = '';
+  private static readonly MAX_PENDING = 32 * 1024;
 
   onData(listener: DataListener): () => void {
     this.dataListeners.add(listener);
@@ -59,6 +62,7 @@ export class WebSocketTransport implements TerminalTransport {
 
   connect(options: ConnectOptions): void {
     this.disposed = false;
+    this.pendingInput = '';
     this.lastCols = options.cols;
     this.lastRows = options.rows;
     this.emitStatus('connecting');
@@ -98,6 +102,7 @@ export class WebSocketTransport implements TerminalTransport {
           rows: this.lastRows,
         }),
       );
+      this.flushPendingInput();
     });
 
     socket.addEventListener('message', (event) => {
@@ -134,6 +139,8 @@ export class WebSocketTransport implements TerminalTransport {
 
     socket.addEventListener('close', (event) => {
       this.clearTimer();
+      if (this.socket === socket) this.socket = null;
+      this.pendingInput = '';
       if (this.disposed) return;
       if (event.code === 1000 || event.code === 1005) {
         this.emitStatus('closed', event.reason || '会话已结束');
@@ -150,9 +157,27 @@ export class WebSocketTransport implements TerminalTransport {
     });
   }
 
+  private flushPendingInput(): void {
+    const buffered = this.pendingInput;
+    this.pendingInput = '';
+    if (!buffered) return;
+    if (this.socket?.readyState !== WebSocket.OPEN) {
+      this.pendingInput = buffered;
+      return;
+    }
+    this.socket.send(JSON.stringify({ type: 'input', data: buffered }));
+  }
+
   sendInput(data: string): void {
-    if (this.socket?.readyState !== WebSocket.OPEN) return;
-    this.socket.send(JSON.stringify({ type: 'input', data }));
+    const socket = this.socket;
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'input', data }));
+      return;
+    }
+    /* 只在「正在连接」时缓存按键；会话已断开就不要再往缓冲区堆了 */
+    if (socket?.readyState === WebSocket.CONNECTING && this.pendingInput.length < WebSocketTransport.MAX_PENDING) {
+      this.pendingInput += data;
+    }
   }
 
   resize(cols: number, rows: number): void {
@@ -164,6 +189,7 @@ export class WebSocketTransport implements TerminalTransport {
 
   dispose(): void {
     this.disposed = true;
+    this.pendingInput = '';
     this.clearTimer();
     const socket = this.socket;
     this.socket = null;

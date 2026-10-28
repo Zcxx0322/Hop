@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain } from 'electron';
+import { app, clipboard, dialog, ipcMain } from 'electron';
 import { CH } from '../../shared/channels';
 import type {
   AppInfo,
@@ -50,6 +50,15 @@ export function registerIpc(ctx: IpcContext): () => void {
 
   /* ---- app ------------------------------------------------------- */
   handle(CH.info, () => info(ctx));
+  /* 渲染层是 file:// 页面，navigator.clipboard 受权限策略限制；
+     统一走主进程系统剪贴板，避免"复制"在打包版里静默失败。 */
+  handle(CH.clipboardWrite, (payload: { text?: string }) => {
+    const text = payload?.text;
+    if (typeof text !== 'string') throw fail('CONFIG_INVALID', 'text 必须是字符串');
+    if (text.length > 1_000_000) throw fail('CONFIG_INVALID', '剪贴板内容过大');
+    clipboard.writeText(text);
+    return true;
+  });
   handle(CH.pickPrivateKey, async () => {
     const result = await dialog.showOpenDialog({
       title: '选择私钥文件',

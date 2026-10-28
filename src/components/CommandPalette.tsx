@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../store/AppStore';
+import { isTopOverlay, pushOverlay } from '../lib/overlayStack';
+import { lockBodyScroll } from '../lib/scrollLock';
 import { modKey } from '../lib/utils';
 import { Icon, type IconName } from './ui/Icon';
 import { Kbd } from './ui/Kbd';
@@ -24,8 +26,9 @@ export function CommandPalette() {
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const overlayId = useId();
 
-  const close = () => actions.setPaletteOpen(false);
+  const close = useCallback(() => actions.setPaletteOpen(false), [actions]);
 
   const items = useMemo<CommandItem[]>(() => {
     const sessionItems: CommandItem[] = state.sessions.map((session) => ({
@@ -138,16 +141,33 @@ export function CommandPalette() {
 
   useEffect(() => {
     if (!open) return;
+    const release = pushOverlay(overlayId);
+    /* Esc / Tab 在 document 层拦：焦点不在面板里时也要先关面板，而不是穿透到背后的对话框 */
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (!isTopOverlay(overlayId)) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+        return;
+      }
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown, true);
     setQuery('');
     setActive(0);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockBodyScroll();
     const frame = requestAnimationFrame(() => inputRef.current?.focus());
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown, true);
+      release();
+      unlock();
       cancelAnimationFrame(frame);
     };
-  }, [open]);
+  }, [open, overlayId, close]);
 
   useEffect(() => {
     const node = listRef.current?.querySelector<HTMLElement>('.palette__item.is-active');

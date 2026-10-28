@@ -83,6 +83,11 @@ const onHostKey = eventChannel<HostKeyChallenge>(CH.evHostKey);
 const api = {
   info: () => invoke<AppInfo>(CH.info),
 
+  /** 系统剪贴板（渲染层的 navigator.clipboard 在 file:// 下会被拒绝）。 */
+  clipboard: {
+    writeText: (text: string) => invoke<boolean>(CH.clipboardWrite, { text }),
+  },
+
   profiles: {
     list: () => invoke<ConnectionProfile[]>(CH.profilesList),
     save: (profile: ProfileInput) => invoke<ConnectionProfile>(CH.profilesSave, profile),
