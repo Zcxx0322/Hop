@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { Host } from '../types';
 import { sampleHost, type HostMetrics } from '../api/workspace';
 import './MonitorPanel.css';
@@ -55,12 +55,49 @@ function shortCpuModel(model: string | null): string | null {
     .trim();
 }
 
+interface RowProps {
+  label: ReactNode;
+  value: ReactNode;
+  mono?: boolean;
+  title?: string;
+  /** 0–100：有值时在该行下方画一条进度条 */
+  bar?: number;
+  tone?: 'ok' | 'warn' | 'hot';
+}
+
+/** 一行一个信息：左边名称，右边数值，进度条独占下一行 */
+function Row({ label, value, mono, title, bar, tone }: RowProps) {
+  return (
+    <div className="monitor__row">
+      <span className="monitor__label">{label}</span>
+      <span className={`monitor__value${mono ? ' mono' : ''}`} title={title}>
+        {value}
+      </span>
+      {bar !== undefined && (
+        <div className="monitor__bar monitor__bar--inline" data-tone={tone ?? toneFor(bar)}>
+          <span style={{ width: `${bar}%` }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="monitor__group">
+      <h3 className="monitor__group-title">{title}</h3>
+      {children}
+    </section>
+  );
+}
+
 interface MonitorViewProps {
   host: Host;
 }
 
 /**
  * 主机状态主体（不含外框），与文件面板一起常驻在右侧停靠区。
+ * 所有信息自上而下逐行排列，每行只放一项。
  */
 export function MonitorView({ host }: MonitorViewProps) {
   const hostId = host.id;
@@ -115,217 +152,129 @@ export function MonitorView({ host }: MonitorViewProps) {
 
       {metrics && (
         <>
-          <div className="monitor__host">
-            <span className="monitor__os" title={metrics.os ?? undefined}>
-              <Icon name="server" size={13} />{' '}
-              {metrics.os ?? (metrics.unsupported ? '未知系统' : 'Linux')}
-            </span>
-            {metrics.kernel && (
-              <span className="monitor__chip mono" title={`内核 ${metrics.kernel}`}>
-                {metrics.kernel}
-              </span>
-            )}
-            <span className="monitor__chip">
-              <Icon name="cpu" size={12} /> {metrics.cores ? `${metrics.cores} 核` : '核心数未知'}
-            </span>
-            <span className="monitor__chip">
-              <Icon name="clock" size={12} /> {formatUptime(metrics.uptimeSec)}
-            </span>
-          </div>
-
           {metrics.unsupported && (
             <p className="monitor__note">
               远端没有 <code>/proc</code>（例如 BSD 或 Windows 主机），只能显示连接状态。
             </p>
           )}
 
-          <section className="monitor__card monitor__card--cpu">
-            <header className="monitor__card-head">
-              <span className="monitor__card-title">CPU</span>
-              <span className="monitor__card-value mono">
-                {cpu === null ? '采样中' : `${Math.round(cpu)}%`}
-              </span>
-            </header>
-            <div className="monitor__bar" data-tone={cpu === null ? 'ok' : toneFor(cpu)}>
-              <span style={{ width: `${cpu ?? 0}%` }} />
-            </div>
-            <div className="monitor__load">
-              <span>负载</span>
-              <span className="mono">
-                {metrics.load ? metrics.load.map((value) => value.toFixed(2)).join('  ') : '—'}
-              </span>
-            </div>
+          <Group title="系统">
+            <Row
+              label="发行版"
+              value={metrics.os ?? (metrics.unsupported ? '未知系统' : 'Linux')}
+              title={metrics.os ?? undefined}
+            />
+            <Row label="内核" value={metrics.kernel ?? '—'} mono />
+            <Row label="架构" value={metrics.arch ?? '—'} mono />
+            <Row label="主机名" value={metrics.hostname ?? '—'} mono />
+            <Row label="时区" value={metrics.timezone ?? '—'} />
+            <Row label="运行时长" value={formatUptime(metrics.uptimeSec)} />
+            <Row label="登录用户" value={metrics.users === null ? '—' : `${metrics.users} 个`} />
+            <Row label="核心数" value={metrics.cores ? `${metrics.cores} 核` : '—'} />
+          </Group>
+
+          <Group title="CPU">
+            <Row
+              label="使用率"
+              value={cpu === null ? '采样中' : `${Math.round(cpu)}%`}
+              mono
+              bar={cpu ?? 0}
+              tone={cpu === null ? 'ok' : toneFor(cpu)}
+            />
+            <Row
+              label="负载"
+              value={
+                metrics.load
+                  ? metrics.load.map((value) => value.toFixed(2)).join(' · ')
+                  : '—'
+              }
+              mono
+            />
             {cpuModel && (
-              <div className="monitor__load">
-                <span>型号</span>
-                <span className="monitor__ellipsis" title={metrics.cpuModel ?? undefined}>
-                  {cpuModel}
-                </span>
-              </div>
+              <Row label="型号" value={cpuModel} title={metrics.cpuModel ?? undefined} />
             )}
-          </section>
+          </Group>
 
-          <section className="monitor__card">
-            <header className="monitor__card-head">
-              <span className="monitor__card-title">内存</span>
-              <span className="monitor__card-value mono">
-                {formatBytes(metrics.memUsed)} / {formatBytes(metrics.memTotal)}
-              </span>
-            </header>
-            <div className="monitor__bar" data-tone={toneFor(memPercent)}>
-              <span style={{ width: `${memPercent}%` }} />
-            </div>
-            {metrics.swapTotal > 0 && (
-              <>
-                <div className="monitor__load">
-                  <span>交换分区</span>
-                  <span className="mono">
-                    {formatBytes(metrics.swapUsed)} / {formatBytes(metrics.swapTotal)}
-                  </span>
-                </div>
-                <div className="monitor__bar monitor__bar--thin" data-tone={toneFor(swapPercent)}>
-                  <span style={{ width: `${swapPercent}%` }} />
-                </div>
-              </>
-            )}
-          </section>
+          <Group title="内存">
+            <Row
+              label="已用"
+              value={`${formatBytes(metrics.memUsed)} / ${formatBytes(metrics.memTotal)}`}
+              mono
+              bar={memPercent}
+            />
+            <Row
+              label="交换分区"
+              value={
+                metrics.swapTotal > 0
+                  ? `${formatBytes(metrics.swapUsed)} / ${formatBytes(metrics.swapTotal)}`
+                  : '未启用'
+              }
+              mono
+              bar={metrics.swapTotal > 0 ? swapPercent : undefined}
+            />
+          </Group>
 
-          <section className="monitor__card">
-            <header className="monitor__card-head">
-              <span className="monitor__card-title">
-                <Icon name="hard-drive" size={12} /> 磁盘
-              </span>
-              <span className="monitor__card-value mono">
-                {formatBytes(metrics.diskUsed)} / {formatBytes(metrics.diskTotal)}
-              </span>
-            </header>
+          <Group title="磁盘">
             {metrics.disks.length === 0 ? (
-              <div className="monitor__load">
-                <span>未识别到挂载点</span>
-              </div>
+              <Row label="挂载点" value="未识别到" />
             ) : (
-              <ul className="monitor__list">
-                {metrics.disks.map((disk) => {
-                  const used = percent(disk.used, disk.total);
-                  return (
-                    <li key={disk.mount} className="monitor__mount">
-                      <div className="monitor__mount-head">
-                        <span className="monitor__ellipsis mono" title={`${disk.filesystem} → ${disk.mount}`}>
-                          {disk.mount}
-                        </span>
-                        <span className="mono">
-                          {formatBytes(disk.used)} / {formatBytes(disk.total)}
-                        </span>
-                      </div>
-                      <div className="monitor__bar monitor__bar--thin" data-tone={toneFor(used)}>
-                        <span style={{ width: `${used}%` }} />
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+              metrics.disks.map((disk) => {
+                const used = percent(disk.used, disk.total);
+                return (
+                  <Row
+                    key={disk.mount}
+                    label={disk.mount}
+                    title={`${disk.filesystem} → ${disk.mount}`}
+                    value={`${formatBytes(disk.used)} / ${formatBytes(disk.total)}（${used}%）`}
+                    mono
+                    bar={used}
+                  />
+                );
+              })
             )}
-          </section>
+          </Group>
 
-          <section className="monitor__card">
-            <header className="monitor__card-head">
-              <span className="monitor__card-title">
-                <Icon name="network" size={12} /> 网络
-              </span>
-              <span className="monitor__card-value mono">
-                ↑ {formatRate(metrics.txRate)} · ↓ {formatRate(metrics.rxRate)}
-              </span>
-            </header>
+          <Group title="网络">
+            <Row label="上行" value={formatRate(metrics.txRate)} mono />
+            <Row label="下行" value={formatRate(metrics.rxRate)} mono />
+            <Row
+              label="累计"
+              value={`↑ ${formatBytes(metrics.txBytes)} · ↓ ${formatBytes(metrics.rxBytes)}`}
+              mono
+            />
             {metrics.addresses.length > 0 ? (
-              <ul className="monitor__list">
-                {metrics.addresses.map((item) => (
-                  <li key={`${item.iface}-${item.address}`} className="monitor__kv">
-                    <span className="monitor__key mono">{item.iface}</span>
-                    <span className="monitor__val mono">{item.address}</span>
-                  </li>
-                ))}
-              </ul>
+              metrics.addresses.map((item) => (
+                <Row
+                  key={`${item.iface}-${item.address}`}
+                  label={item.iface}
+                  value={item.address}
+                  mono
+                />
+              ))
             ) : (
-              <div className="monitor__load">
-                <span>未识别到 IP 地址</span>
-              </div>
+              <Row label="网卡" value="未识别到 IP 地址" />
             )}
-            <div className="monitor__kv">
-              <span className="monitor__key">网关</span>
-              <span className="monitor__val mono">{metrics.gateway ?? '—'}</span>
-            </div>
-            <div className="monitor__kv">
-              <span className="monitor__key">DNS</span>
-              <span className="monitor__val mono">
-                {metrics.dns.length > 0 ? metrics.dns.join('  ') : '—'}
-              </span>
-            </div>
-            <div className="monitor__kv">
-              <span className="monitor__key">累计</span>
-              <span className="monitor__val mono">
-                ↑ {formatBytes(metrics.txBytes)} · ↓ {formatBytes(metrics.rxBytes)}
-              </span>
-            </div>
-          </section>
-
-          <section className="monitor__card">
-            <header className="monitor__card-head">
-              <span className="monitor__card-title">系统信息</span>
-              {metrics.users !== null && (
-                <span className="monitor__card-value">{metrics.users} 个登录</span>
-              )}
-            </header>
-            <div className="monitor__kv">
-              <span className="monitor__key">主机名</span>
-              <span className="monitor__val mono">{metrics.hostname ?? '—'}</span>
-            </div>
-            <div className="monitor__kv">
-              <span className="monitor__key">内核</span>
-              <span className="monitor__val mono">{metrics.kernel ?? '—'}</span>
-            </div>
-            <div className="monitor__kv">
-              <span className="monitor__key">架构</span>
-              <span className="monitor__val mono">{metrics.arch ?? '—'}</span>
-            </div>
-            <div className="monitor__kv">
-              <span className="monitor__key">时区</span>
-              <span className="monitor__val mono">{metrics.timezone ?? '—'}</span>
-            </div>
-            <div className="monitor__kv">
-              <span className="monitor__key">运行时长</span>
-              <span className="monitor__val">{formatUptime(metrics.uptimeSec)}</span>
-            </div>
-          </section>
+            <Row label="网关" value={metrics.gateway ?? '—'} mono />
+            <Row label="DNS" value={metrics.dns.length > 0 ? metrics.dns.join(' · ') : '—'} mono />
+          </Group>
 
           {metrics.processes.length > 0 && (
-            <section className="monitor__card">
-              <header className="monitor__card-head">
-                <span className="monitor__card-title">占用最高的进程</span>
-                <span className="monitor__card-value">CPU %</span>
-              </header>
-              <table className="monitor__table">
-                <thead>
-                  <tr>
-                    <th scope="col">进程</th>
-                    <th scope="col">PID</th>
-                    <th scope="col">CPU</th>
-                    <th scope="col">内存</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {metrics.processes.map((proc) => (
-                    <tr key={proc.pid}>
-                      <td className="monitor__ellipsis" title={proc.name}>
-                        {proc.name}
-                      </td>
-                      <td className="mono">{proc.pid}</td>
-                      <td className="mono">{proc.cpu.toFixed(1)}</td>
-                      <td className="mono">{proc.mem.toFixed(1)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
+            <Group title="占用最高的进程">
+              <div className="monitor__proc-head">
+                <span>进程</span>
+                <span>CPU</span>
+                <span>内存</span>
+              </div>
+              {metrics.processes.map((proc) => (
+                <div className="monitor__proc" key={proc.pid}>
+                  <span className="monitor__proc-name" title={`${proc.name} (PID ${proc.pid})`}>
+                    {proc.name}
+                  </span>
+                  <span className="mono">{proc.cpu.toFixed(1)}%</span>
+                  <span className="mono">{proc.mem.toFixed(1)}%</span>
+                </div>
+              ))}
+            </Group>
           )}
         </>
       )}

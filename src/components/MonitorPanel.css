@@ -1,36 +1,122 @@
 .monitor {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
-.monitor__host {
+/* ---------- 一行一个信息 ---------- */
+.monitor__group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.monitor__group-title {
+  margin: 0 0 2px;
+  padding: 0 0 6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+}
+
+.monitor__row {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 3px 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.monitor__row:last-child {
+  border-bottom: none;
+}
+
+.monitor__label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--text-xs);
   color: var(--text-dim);
 }
 
-.monitor__os {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.monitor__value {
+  flex: 0 0 auto;
+  max-width: 72%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-size: var(--text-xs);
   color: var(--text);
-  font-size: var(--text-sm);
 }
 
-.monitor__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  border: 1px solid var(--border);
+.monitor__bar {
+  height: 6px;
   border-radius: var(--radius-pill);
-  background: var(--panel-inset);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  overflow: hidden;
 }
 
+/* 行内进度条独占整行、贴在数值下方 */
+.monitor__bar--inline {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-top: 3px;
+}
+
+.monitor__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition:
+    width 600ms var(--ease-out),
+    background var(--dur) var(--ease-out);
+}
+
+.monitor__bar[data-tone='warn'] > span {
+  background: var(--warning);
+}
+
+.monitor__bar[data-tone='hot'] > span {
+  background: var(--danger);
+}
+
+/* ---------- 进程 ---------- */
+.monitor__proc-head,
+.monitor__proc {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 52px 52px;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: var(--text-xs);
+}
+
+.monitor__proc-head {
+  color: var(--text-dim);
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.monitor__proc-head span:not(:first-child),
+.monitor__proc span:not(:first-child) {
+  text-align: right;
+}
+
+.monitor__proc-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+/* ---------- 状态 ---------- */
 .monitor__note {
   font-size: var(--text-xs);
   color: var(--text-dim);
@@ -44,91 +130,13 @@
   border-radius: var(--radius-xs);
 }
 
-.monitor__card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--panel-inset);
-}
-
-.monitor__card-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.monitor__card-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text);
-}
-
-.monitor__card-value {
-  font-size: var(--text-sm);
-  color: var(--text-dim);
-}
-
-.monitor__bar {
-  height: 8px;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--text) 10%, transparent);
-  overflow: hidden;
-}
-
-.monitor__bar--thin {
-  height: 5px;
-}
-
-.monitor__bar > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--accent);
-  transition: width 600ms var(--ease-out), background var(--dur) var(--ease-out);
-}
-
-.monitor__bar[data-tone='warn'] > span {
-  background: var(--warning);
-}
-
-.monitor__bar[data-tone='hot'] > span {
-  background: var(--danger);
-}
-
-.monitor__load {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: var(--text-xs);
-  color: var(--text-dim);
-}
-
-.monitor__load .mono {
-  color: var(--text);
-}
-
-.monitor__stamp {
-  font-size: var(--text-xs);
-  color: var(--text-dim);
-  text-align: right;
-}
-
 .monitor__loading {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 32px 0;
-  justify-content: center;
+  padding: 18px 0;
+  font-size: var(--text-xs);
   color: var(--text-dim);
-  font-size: var(--text-sm);
 }
 
 .monitor__error {
@@ -136,11 +144,11 @@
   align-items: center;
   gap: 6px;
   padding: 8px 10px;
-  border-radius: var(--radius-sm);
   border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  font-size: var(--text-xs);
   color: var(--danger);
-  font-size: var(--text-sm);
 }
 
 .monitor__footer {
@@ -149,6 +157,8 @@
   justify-content: space-between;
   width: 100%;
   gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--text) 8%, transparent);
 }
 
 .monitor__footer-note {
@@ -163,103 +173,27 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 28px;
-  padding: 0 10px;
+  height: 26px;
+  padding: 0 9px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--panel-inset);
   color: var(--text);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition:
+    border-color var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
 }
 
 .monitor__refresh:hover:not(:disabled) {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border);
   background: var(--hover);
+  color: var(--accent);
 }
 
 .monitor__refresh:disabled {
   opacity: 0.55;
-}
-
-/* ---- 详情列表 / 进程表 -------------------------------------------------- */
-.monitor__ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.monitor__list {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-  max-height: 132px;
-  overflow-y: auto;
-}
-
-.monitor__mount-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 4px;
-  font-size: var(--text-xs);
-  color: var(--text-dim);
-}
-
-.monitor__mount-head .monitor__ellipsis {
-  color: var(--text);
-}
-
-.monitor__kv {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 6px;
-  font-size: var(--text-xs);
-  color: var(--text-dim);
-}
-
-.monitor__key {
-  flex: 0 0 auto;
-}
-
-.monitor__val {
-  min-width: 0;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.monitor__table {
-  width: 100%;
-  margin-top: 8px;
-  border-collapse: collapse;
-  font-size: var(--text-xs);
-}
-
-.monitor__table th {
-  padding: 4px 6px 6px 0;
-  color: var(--text-dim);
-  font-weight: 500;
-  text-align: left;
-}
-
-.monitor__table th:not(:first-child),
-.monitor__table td:not(:first-child) {
-  text-align: right;
-  width: 52px;
-}
-
-.monitor__table td {
-  padding: 4px 6px 4px 0;
-  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-  color: var(--text);
-  max-width: 0;
-}
-
-.monitor__table td:first-child {
-  width: auto;
+  cursor: default;
 }
