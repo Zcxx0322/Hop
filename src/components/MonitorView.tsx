@@ -138,20 +138,21 @@ export function MonitorView({ host }: MonitorViewProps) {
 
   return (
     <div className="monitor">
-      {error && (
-        <div className="monitor__error" role="alert">
-          <Icon name="alert" size={13} /> {error}
-        </div>
-      )}
+      <div className="monitor__scroll">
+        {error && (
+          <div className="monitor__error" role="alert">
+            <Icon name="alert" size={13} /> {error}
+          </div>
+        )}
 
-      {!metrics && !error && (
-        <div className="monitor__loading">
-          <Spinner size={16} /> 正在采样…
-        </div>
-      )}
+        {!metrics && !error && (
+          <div className="monitor__loading">
+            <Spinner size={16} /> 正在采样…
+          </div>
+        )}
 
-      {metrics && (
-        <>
+        {metrics && (
+          <>
           {metrics.unsupported && (
             <p className="monitor__note">
               远端没有 <code>/proc</code>（例如 BSD 或 Windows 主机），只能显示连接状态。
@@ -276,8 +277,9 @@ export function MonitorView({ host }: MonitorViewProps) {
               ))}
             </Group>
           )}
-        </>
-      )}
+          </>
+        )}
+      </div>
 
       <footer className="monitor__footer">
         <span className="monitor__footer-note">

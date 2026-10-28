@@ -1,7 +1,23 @@
 .monitor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+/* 只有信息区滚动，底部采样/刷新条固定可见 */
+.monitor__scroll {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+  padding-bottom: 6px;
 }
 
 /* ---------- 一行一个信息 ---------- */

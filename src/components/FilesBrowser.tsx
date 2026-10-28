@@ -288,7 +288,8 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
         </div>
       )}
 
-      <div className="files__table" role="table" aria-label="远程文件">
+      {/* key 变化会让表格重新挂载：切换目录时播放淡入上移的过渡，并回到顶部 */}
+      <div key={path} className="files__table" role="table" aria-label="远程文件">
         <div className="files__row files__row--head" role="row">
           <span role="columnheader">名称</span>
           <span role="columnheader">大小</span>

@@ -155,33 +155,6 @@
   color: var(--text);
 }
 
-.sidebar__foot-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 8px;
-  font-size: 10px;
-  color: var(--text-3);
-}
-
-.sidebar__mode {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.sidebar__mode::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--success);
-}
-
-.sidebar__mode.is-mock::before {
-  background: var(--warning);
-}
-
 /* ---------- 折叠轨 ---------- */
 .sidebar__rail {
   display: none;

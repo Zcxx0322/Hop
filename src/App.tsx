@@ -4,11 +4,10 @@ import { TitleBar } from './components/TitleBar';
 import { Sidebar } from './components/Sidebar';
 import { TerminalPane } from './components/TerminalPane';
 import { Welcome } from './components/Welcome';
-import { StatusBar } from './components/StatusBar';
+import { Dock } from './components/Dock';
 import { CommandPalette } from './components/CommandPalette';
 import { HostFormDialog } from './components/HostFormDialog';
 import { SettingsPanel } from './components/SettingsPanel';
-import { Dock } from './components/Dock';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toasts } from './components/ui/Toasts';
 import './App.css';
@@ -150,8 +149,6 @@ export default function App() {
 
         <Dock />
       </main>
-
-      <StatusBar />
 
       <button
         type="button"

@@ -76,6 +76,25 @@
   flex-direction: column;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  animation: files-enter 180ms var(--ease-out) both;
+}
+
+/* 目录切换：内容整体淡入并轻轻上移 */
+@keyframes files-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .files__table {
+    animation: none;
+  }
 }
 
 .files__row {

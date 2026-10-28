@@ -7,7 +7,7 @@
   position: relative;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
-  grid-template-rows: var(--titlebar-h) minmax(0, 1fr) var(--statusbar-h);
+  grid-template-rows: var(--titlebar-h) minmax(0, 1fr);
   height: 100dvh;
   overflow: hidden;
   background: var(--bg);
@@ -36,11 +36,6 @@
   grid-row: 2;
 }
 
-.app-shell > .statusbar {
-  grid-column: 1 / -1;
-  grid-row: 3;
-}
-
 .workspace {
   position: relative;
   display: grid;
@@ -66,7 +61,7 @@
     grid-column: 1;
     position: fixed;
     top: var(--titlebar-h);
-    bottom: var(--statusbar-h);
+    bottom: 0;
     left: 0;
     width: var(--sidebar-w);
     z-index: var(--z-sidebar);

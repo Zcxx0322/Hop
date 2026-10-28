@@ -1,7 +1,7 @@
 .toasts {
   position: fixed;
   right: var(--space-5);
-  bottom: calc(var(--statusbar-h) + var(--space-4));
+  bottom: var(--space-4);
   z-index: var(--z-toast);
   display: flex;
   flex-direction: column;

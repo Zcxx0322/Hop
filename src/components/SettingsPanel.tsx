@@ -67,6 +67,7 @@ export function SettingsPanel() {
             <Icon name="check" size={12} /> 自动保存
           </span>
           <div className="settings-panel__footer-actions">
+            <span className="settings-panel__version mono">v{__APP_VERSION__}</span>
             <Button
               variant="ghost"
               size="sm"

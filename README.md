@@ -19,8 +19,8 @@
 | ![深色窗口](docs/screenshots/frameless-dark.png) | ![浅色窗口](docs/screenshots/frameless-light.png) |
 | **常驻侧栏：文件传输 + 主机状态（纯黑）** | **常驻侧栏（纯白）** |
 | ![侧栏深色](docs/screenshots/dock.png) | ![侧栏浅色](docs/screenshots/dock-light.png) |
-| **文件右键菜单** | **主机详情：网卡 / DNS / 进程** |
-| ![右键菜单](docs/screenshots/dock-menu.png) | ![主机详情](docs/screenshots/monitor-detail.png) |
+| **文件右键菜单** | **主机状态：逐行纵向排列** |
+| ![右键菜单](docs/screenshots/dock-menu.png) | ![主机状态](docs/screenshots/monitor-detail.png) |
 | **连接动效：握手进行中** | **连接动效：握手完成** |
 | ![连接中](docs/screenshots/connect.png) | ![已连接](docs/screenshots/connect-done.png) |
 
@@ -38,10 +38,10 @@
 | 📈 主机状态 | 一条远端命令采样后**逐行纵向排列**（系统 → CPU → 内存 → 磁盘 → 网络 → 进程），每行只放一项：名称在左、数值在右、占用率进度条独占下一行；与文件传输同栏上下分区、可各自关闭、3 秒刷新 |
 | ⚡ 浏览提速 | SSH 连接统一关闭 Nagle，SFTP 子系统通道按连接复用：目录 437 ms → 104 ms，二次进入 76 ms |
 | 📋 复制粘贴 | 选中即复制（可关，只写纯文本）、复制快捷键可配（`Ctrl+C` 或 `Ctrl+Shift+C`）、复制成功轻提示可关，粘贴二选一（`Ctrl+V` / 右键） |
+| 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
+| 🎛️ 偏好设置 | 即时生效并保存在本机；底部状态栏已移除，版本号与「恢复默认」都收进设置 |
 
 > 复制出来的内容永远是纯文本：ANSI 颜色、行尾多余空白和首尾空行都会在写入剪贴板前剥掉。
-
-| 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
 
 ## 快速开始
 
@@ -126,7 +126,7 @@ src/
 │   ├── workspace.ts      # 文件传输 + 主机监控的 REST 客户端
 │   └── mockTransport.ts + mockShell.ts
 ├── components/
-│   ├── Sidebar · HostList · TabBar · TerminalPane · Welcome · StatusBar
+│   ├── Sidebar · HostList · TabBar · TerminalPane · Welcome · Dock
 │   ├── FilesPanel · MonitorPanel · CommandPalette · HostFormDialog
 │   ├── SettingsPanel · ConfirmDialog
 │   └── ui/               # Button · Field · Modal · Kbd · Icon · Logo · Spinner · Toasts
@@ -203,7 +203,7 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 | `⌘/Ctrl + B` | 折叠 / 展开侧栏 |
 | `⌘/Ctrl + 1…9` | 切换到第 n 个会话 |
 | `⌘/Ctrl + Shift + F` | 打开 / 关闭文件传输栏 |
-| `⌘/Ctrl + Shift + M` | 打开 / 关闭主机状态栏 |
+| `⌘/Ctrl + Shift + M` | 打开 / 关闭主机状态（右侧栏） |
 | `⌘/Ctrl + Shift + C` | 复制选中内容 |
 | `⌘/Ctrl + Shift + V` | 粘贴（与右键菜单同一入口） |
 | `⌘/Ctrl + W` | 关闭当前标签（可在设置中开启二次确认） |

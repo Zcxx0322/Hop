@@ -1,5 +1,4 @@
 import { useMemo, type CSSProperties } from 'react';
-import { isMock } from '../api/config';
 import { hostAccent, hostInitials } from '../lib/visual';
 import { useApp } from '../store/AppStore';
 import { Icon } from './ui/Icon';
@@ -72,12 +71,6 @@ export function Sidebar() {
             <span>偏好设置</span>
             <Kbd>{modKey} ,</Kbd>
           </button>
-          <div className="sidebar__foot-meta">
-            <span className={`sidebar__mode${isMock() ? ' is-mock' : ''}`}>
-              {isMock() ? '演示模式' : '已连接后端'}
-            </span>
-            <span className="mono">v{__APP_VERSION__}</span>
-          </div>
         </footer>
       </div>
 
