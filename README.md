@@ -59,7 +59,7 @@ pnpm exec vite
 - 类型检查：`pnpm typecheck`
 - 端到端测试（真 SSH 握手 + 网关 REST/WS）：`pnpm test:e2e`（20 项）
 - 启动自检（真 Electron 进程内跑一遍后端）：`pnpm smoke`（13 项）
-- 打包 Windows 安装包：`pnpm dist:win` → `release/Hop-0.0.1-x64.exe`（需要普通终端，见下方「打包与分发」）
+- 打包 Windows 安装包：`pnpm dist:win` → `release/Hop-0.0.2-x64.exe`（需要普通终端，见下方「打包与分发」）
 - 重新生成图标（需要 Python + Pillow）：`pnpm icons`
 
 验证覆盖三层：`tsc` 双配置类型检查、`pnpm test:e2e`（自带假 SSH 服务器，覆盖握手/主机密钥/PTY/断线）、
@@ -94,8 +94,8 @@ node node_modules/electron-builder/cli.js --win --dir --config electron-builder.
 
 | 产物 | 用途 |
 | --- | --- |
-| `release/Hop-0.0.1-x64.exe` | NSIS 安装包：开始菜单 / 桌面快捷方式、卸载项 |
-| `release/Hop-0.0.1-x64.zip` | 免安装压缩包：解压到任意目录直接双击 `Hop.exe`，**不经过安装器** |
+| `release/Hop-0.0.2-x64.exe` | NSIS 安装包：开始菜单 / 桌面快捷方式、卸载项 |
+| `release/Hop-0.0.2-x64.zip` | 免安装压缩包：解压到任意目录直接双击 `Hop.exe`，**不经过安装器** |
 | `release/win-unpacked/` | 免安装目录（zip 的多出来的那份源目录） |
 
 目录版已验证：`release/win-unpacked/Hop.exe` 从 `app.asar` 加载主进程与渲染层、启动网关、写入 `profiles.json` / `secrets.dat` 全部正常（13 项进程内自检通过）。主进程与 preload 是自包含单文件，安装包内不含 `node_modules`。
@@ -103,7 +103,7 @@ node node_modules/electron-builder/cli.js --win --dir --config electron-builder.
 > **安装器写入失败怎么办**：安装包未做代码签名，部分安全软件会拦截 NSIS 往自定义目录
 > （例如 `D:\xxx\Hop`）写入 `uninstallerIcon.ico`，弹出「不能打开要写入的文件」。
 > 这属于安全软件/系统策略行为，不是安装包损坏。按顺序尝试：
-> ① 用 `Hop-0.0.1-x64.zip` 解压即用（最省事，功能完全一致）；
+> ① 用 `Hop-0.0.2-x64.zip` 解压即用（最省事，功能完全一致）；
 > ② 把安装包加入安全软件信任区或临时关闭其「文件保护 / 主动防御」后重装；
 > ③ 安装目录改回向导默认位置（`%LOCALAPPDATA%\Programs\Hop`）；
 > ④ 为安装包做代码签名（`win.signtoolOptions` / `CSC_LINK`），从根上消除拦截。

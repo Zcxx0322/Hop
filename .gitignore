@@ -23,3 +23,8 @@ Thumbs.db
 release3
 release4
 release5
+
+# 由 scripts/release-notes.mjs 生成
+release-notes.md
+release6
+release7

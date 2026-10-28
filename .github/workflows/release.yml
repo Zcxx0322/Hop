@@ -42,16 +42,13 @@ jobs:
         shell: pwsh
         run: Get-ChildItem release -Filter *.exe | Select-Object Name, Length
 
+      - name: Generate Chinese release notes
+        run: node scripts/release-notes.mjs
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           name: Hop ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: release-notes.md
+          generate_release_notes: false
           files: release/Hop-*-x64.exe
-          body: |
-            Hop ${{ github.ref_name }} — Windows 安装包在下方 Assets 里，文件名形如 `Hop-<version>-x64.exe`
-            （`<version>` 即 tag 去掉前缀 `v`，与 `package.json` 的 version 一致）。
-
-            安装包未签名；SmartScreen 拦截时点「更多信息 → 仍要运行」。
-
-            本机构建方式：`pnpm install && pnpm dist:win`。
