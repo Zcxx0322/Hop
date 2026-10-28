@@ -1,29 +1,33 @@
 # Hop
 
-> 一个安静、克制的 SSH 工作台。主机管理、标签式多会话终端、命令面板与偏好设置，都围绕「少一点打扰」设计。
+> 一个安静、克制的 SSH 工作台。主机管理、标签式多会话终端、文件传输、主机状态与偏好设置，都围绕「少一点打扰」设计。
 
-<br />
+<p align="left">
+  <img alt="版本" src="https://img.shields.io/badge/version-0.0.2-2ee66b?style=flat-square" />
+  <img alt="平台" src="https://img.shields.io/badge/platform-Windows-2ee66b?style=flat-square" />
+  <img alt="Electron" src="https://img.shields.io/badge/Electron-45-2ee66b?style=flat-square" />
+  <a href="CHANGELOG.md"><img alt="更新日志" src="https://img.shields.io/badge/changelog-中文-2ee66b?style=flat-square" /></a>
+</p>
 
 <p align="center">
   <img src="docs/screenshots/welcome.png" alt="Hop 欢迎页：主机库、迷你终端预览与最近使用" width="880" />
 </p>
 
-| 终端会话 | 多会话标签 |
+| 终端会话 · 文件传输 + 主机状态常驻侧栏 | 多会话标签（同一主机可开多个） |
 | --- | --- |
 | ![终端](docs/screenshots/terminal.png) | ![多会话标签](docs/screenshots/tabs.png) |
 | **命令面板** | **新建连接** |
 | ![命令面板](docs/screenshots/command-palette.png) | ![新建连接](docs/screenshots/host-form.png) |
-| **浅色主题（纯白 + 墨绿）** | **偏好设置** |
-| ![浅色终端](docs/screenshots/terminal-light.png) | ![偏好设置](docs/screenshots/settings.png) |
-| **无边框窗口 · 纯黑 + 荧光绿** | **无边框窗口 · 纯白 + 墨绿** |
-| ![深色窗口](docs/screenshots/frameless-dark.png) | ![浅色窗口](docs/screenshots/frameless-light.png) |
-| **常驻侧栏：文件传输 + 主机状态（纯黑）** | **常驻侧栏（纯白）** |
-| ![侧栏深色](docs/screenshots/dock.png) | ![侧栏浅色](docs/screenshots/dock-light.png) |
 | **文件右键菜单** | **主机状态：逐行纵向排列** |
 | ![右键菜单](docs/screenshots/dock-menu.png) | ![主机状态](docs/screenshots/monitor-detail.png) |
 | **连接动效：握手进行中** | **连接动效：握手完成** |
 | ![连接中](docs/screenshots/connect.png) | ![已连接](docs/screenshots/connect-done.png) |
+| **浅色主题：欢迎页（纯白 + 墨绿）** | **浅色主题：终端** |
+| ![浅色欢迎页](docs/screenshots/welcome-light.png) | ![浅色终端](docs/screenshots/terminal-light.png) |
 
+<p align="center">
+  <img src="docs/screenshots/settings.png" alt="偏好设置：主题、字体、复制与粘贴、连接参数" width="620" />
+</p>
 
 | 能力 | 说明 |
 | --- | --- |
@@ -44,6 +48,9 @@
 > 复制出来的内容永远是纯文本：ANSI 颜色、行尾多余空白和首尾空行都会在写入剪贴板前剥掉。
 
 ## 快速开始
+
+> 下载：到 [Releases](https://github.com/Zcxx0322/Hop/releases) 取 `Hop-0.0.2-x64.exe`（安装版，建开始菜单与桌面快捷方式）
+> 或 `Hop-0.0.2-portable.zip`（免安装，解压即用）；每个版本的改动都在 [CHANGELOG.md](CHANGELOG.md)。
 
 ```bash
 pnpm install
@@ -187,6 +194,7 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 
 | 文档 | 内容 |
 | --- | --- |
+| [`CHANGELOG.md`](CHANGELOG.md) | 每个版本的中文改动清单（发布页正文也由它生成） |
 | [`docs/TECH-DECISION.md`](docs/TECH-DECISION.md) | 选型与理由（Electron / ssh2 / safeStorage / esbuild / electron-builder 的取舍，含踩坑记录） |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | 进程模型、模块职责、数据布局、状态机、数据流与性能条款、安全模型、验证策略 |
 | [`docs/ICONS.md`](docs/ICONS.md) | 图标概念、几何参数、小尺寸变体、产出清单与再生成方式 |
