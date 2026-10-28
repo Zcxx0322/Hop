@@ -72,6 +72,12 @@ export interface Settings {
   defaultPort: number;
   keepAliveSeconds: number;
   connectTimeoutMs: number;
+  /** 终端内选中文本即复制到剪贴板 */
+  copyOnSelect: boolean;
+  /** 粘贴触发方式：快捷键 / 右键 / 两者都行 */
+  pasteMode: 'both' | 'shortcut' | 'context';
+  /** 右侧常驻面板宽度（像素） */
+  dockWidth: number;
 }
 
 export type ToastTone = 'success' | 'error' | 'info';

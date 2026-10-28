@@ -16,6 +16,9 @@ export const DEFAULT_SETTINGS: Settings = {
   defaultPort: 22,
   keepAliveSeconds: 30,
   connectTimeoutMs: 15_000,
+  copyOnSelect: true,
+  pasteMode: 'both',
+  dockWidth: 372,
 };
 
 export const ACCENTS: Array<{
@@ -51,6 +54,7 @@ const THEMES = ['dark', 'light', 'system'] as const;
 const ACCENT_KEYS = ACCENTS.map((item) => item.key);
 const FONT_KEYS = Object.keys(FONT_STACKS) as FontKey[];
 const CURSORS = ['block', 'bar', 'underline'] as const;
+const PASTE_MODES = ['both', 'shortcut', 'context'] as const;
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(Math.max(Math.round(value), min), max);
@@ -87,6 +91,13 @@ export function normalizeSettings(input: Partial<Settings>): Settings {
     connectTimeoutMs: Number.isFinite(merged.connectTimeoutMs)
       ? clamp(merged.connectTimeoutMs, 3000, 60_000)
       : DEFAULT_SETTINGS.connectTimeoutMs,
+    copyOnSelect: Boolean(merged.copyOnSelect),
+    pasteMode: PASTE_MODES.includes(merged.pasteMode)
+      ? merged.pasteMode
+      : DEFAULT_SETTINGS.pasteMode,
+    dockWidth: Number.isFinite(merged.dockWidth)
+      ? clamp(merged.dockWidth, 280, 620)
+      : DEFAULT_SETTINGS.dockWidth,
   };
 }
 

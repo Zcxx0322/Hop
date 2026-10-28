@@ -3,6 +3,7 @@ node_modules
 dist
 dist-ssr
 release
+release2
 *.local
 .env
 .env.*

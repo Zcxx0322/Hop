@@ -253,28 +253,6 @@ export function HostList({ hosts, loaded, error, connectedHostIds }: HostListPro
               className="host-menu__item"
               onClick={() => {
                 setMenu(null);
-                actions.openFiles(menu.host.id);
-              }}
-            >
-              <Icon name="folder" size={14} /> 文件传输
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className="host-menu__item"
-              onClick={() => {
-                setMenu(null);
-                actions.openMonitor(menu.host.id);
-              }}
-            >
-              <Icon name="cpu" size={14} /> 主机状态
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              className="host-menu__item"
-              onClick={() => {
-                setMenu(null);
                 actions.openHostForm(menu.host.id);
               }}
             >

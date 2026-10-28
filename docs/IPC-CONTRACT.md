@@ -184,6 +184,15 @@ window.hop.events.onSessionClosed ◄ 'hop:session:closed'
 
 见 §5.3。**必须对每个 challenge 调用一次**，否则连接会在 30 秒后以 `TIMEOUT` 失败。
 
+### `hop.clipboard`
+
+| 方法 | 参数 | 返回 |
+| --- | --- | --- |
+| `writeText(text)` | `string` | `void` |
+| `readText()` | — | `string` |
+
+渲染层通过 `hop:app:clipboard` / `hop:app:clipboard-read` 访问系统剪贴板；浏览器环境（演示模式）回退到 `navigator.clipboard`。粘贴统一走 `src/lib/clipboard.ts`，右键菜单与快捷键共用同一入口。
+
 ---
 
 ## 5. 事件

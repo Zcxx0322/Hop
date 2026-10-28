@@ -283,3 +283,20 @@
     width: 140px;
   }
 }
+
+.settings-hint {
+  margin: 2px 2px 0;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+.settings-hint kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: 3px;
+  background: var(--panel-inset);
+  font: inherit;
+  font-size: 11px;
+  color: var(--text);
+}

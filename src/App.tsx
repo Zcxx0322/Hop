@@ -8,8 +8,7 @@ import { StatusBar } from './components/StatusBar';
 import { CommandPalette } from './components/CommandPalette';
 import { HostFormDialog } from './components/HostFormDialog';
 import { SettingsPanel } from './components/SettingsPanel';
-import { FilesPanel } from './components/FilesPanel';
-import { MonitorPanel } from './components/MonitorPanel';
+import { Dock } from './components/Dock';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toasts } from './components/ui/Toasts';
 import './App.css';
@@ -77,14 +76,8 @@ export default function App() {
         const active = sessions.find((session) => session.id === activeSessionId) ?? null;
         if (!active) return;
         event.preventDefault();
-        if (event.key.toLowerCase() === 'f') {
-          if (ui.filesHostId === active.hostId) actions.closeFiles();
-          else actions.openFiles(active.hostId);
-        } else if (ui.monitorHostId === active.hostId) {
-          actions.closeMonitor();
-        } else {
-          actions.openMonitor(active.hostId);
-        }
+        if (event.key.toLowerCase() === 'f') actions.toggleDockFiles();
+        else actions.toggleDockMonitor();
         return;
       }
 
@@ -120,8 +113,8 @@ export default function App() {
     ui.hostForm,
     ui.settingsOpen,
     ui.navOpen,
-    ui.filesHostId,
-    ui.monitorHostId,
+    ui.dockFiles,
+    ui.dockMonitor,
   ]);
 
   return (
@@ -135,7 +128,9 @@ export default function App() {
       <Sidebar />
 
       <main
-        className={`workspace${hasSessions ? '' : ' workspace--empty'}`}
+        className={`workspace${hasSessions ? '' : ' workspace--empty'}${
+          hasSessions && (ui.dockFiles || ui.dockMonitor) ? ' with-dock' : ''
+        }`}
         aria-label="终端工作区"
       >
         <div className="terminal-stack">
@@ -152,6 +147,8 @@ export default function App() {
             <Welcome />
           )}
         </div>
+
+        <Dock />
       </main>
 
       <StatusBar />
@@ -166,8 +163,6 @@ export default function App() {
       <CommandPalette />
       <HostFormDialog />
       <SettingsPanel />
-      <FilesPanel />
-      <MonitorPanel />
       <ConfirmDialog />
       <Toasts toasts={state.toasts} onDismiss={actions.dismissToast} />
     </div>

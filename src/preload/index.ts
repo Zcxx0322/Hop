@@ -86,6 +86,7 @@ const api = {
   /** 系统剪贴板（渲染层的 navigator.clipboard 在 file:// 下会被拒绝）。 */
   clipboard: {
     writeText: (text: string) => invoke<boolean>(CH.clipboardWrite, { text }),
+    readText: () => invoke<string>(CH.clipboardRead),
   },
 
   profiles: {

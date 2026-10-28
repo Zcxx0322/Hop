@@ -25,10 +25,9 @@ interface UiState {
   hostForm: { hostId: string | null } | null;
   pendingCloseSessionId: string | null;
   pendingDeleteHostId: string | null;
-  /** 打开文件面板的主机；null 表示关闭 */
-  filesHostId: string | null;
-  /** 打开监控面板的主机；null 表示关闭 */
-  monitorHostId: string | null;
+  /** 右侧常驻面板：文件 / 主机状态 */
+  dockFiles: boolean;
+  dockMonitor: boolean;
 }
 
 export interface AppState {
@@ -52,6 +51,7 @@ type Action =
   | { type: 'session/activate'; id: string }
   | { type: 'settings/patch'; patch: Partial<Settings> }
   | { type: 'ui/patch'; patch: Partial<UiState> }
+  | { type: 'ui/toggle-dock'; pane: 'files' | 'monitor' }
   | { type: 'toast/add'; toast: Toast }
   | { type: 'toast/dismiss'; id: string };
 
@@ -71,8 +71,8 @@ function createInitialState(): AppState {
       hostForm: null,
       pendingCloseSessionId: null,
       pendingDeleteHostId: null,
-      filesHostId: null,
-      monitorHostId: null,
+      dockFiles: false,
+      dockMonitor: false,
     },
   };
 }
@@ -136,7 +136,8 @@ function reducer(state: AppState, action: Action): AppState {
       };
 
     case 'session/connect': {
-      const ui = { ...state.ui, paletteOpen: false, navOpen: false };
+      /* 新建会话时把文件传输和主机状态一起展开，开箱即用 */
+      const ui = { ...state.ui, paletteOpen: false, navOpen: false, dockFiles: true, dockMonitor: true };
       const session: Session = {
         id: action.sessionId,
         hostId: action.host.id,
@@ -198,6 +199,16 @@ function reducer(state: AppState, action: Action): AppState {
     case 'ui/patch':
       return { ...state, ui: { ...state.ui, ...action.patch } };
 
+    case 'ui/toggle-dock':
+      return {
+        ...state,
+        ui: {
+          ...state.ui,
+          dockFiles: action.pane === 'files' ? !state.ui.dockFiles : state.ui.dockFiles,
+          dockMonitor: action.pane === 'monitor' ? !state.ui.dockMonitor : state.ui.dockMonitor,
+        },
+      };
+
     case 'toast/add':
       return { ...state, toasts: [...state.toasts, action.toast].slice(-4) };
 
@@ -231,11 +242,12 @@ export interface AppActions {
   toggleSidebar: () => void;
   openHostForm: (hostId?: string | null) => void;
   closeHostForm: () => void;
-  /** 文件面板 / 监控面板：hostId 为 null 表示关闭 */
-  openFiles: (hostId: string) => void;
-  closeFiles: () => void;
-  openMonitor: (hostId: string) => void;
-  closeMonitor: () => void;
+  /** 右侧常驻面板：开关文件 / 主机状态，以及整体展开 */
+  toggleDockFiles: () => void;
+  toggleDockMonitor: () => void;
+  closeDockFiles: () => void;
+  closeDockMonitor: () => void;
+  expandDock: () => void;
   toast: (tone: Toast['tone'], message: string) => void;
   dismissToast: (id: string) => void;
 }
@@ -465,20 +477,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /* 文件 / 监控面板互斥，避免两个抽屉叠在一起 */
-  const openFiles = useCallback((hostId: string) => {
-    dispatch({ type: 'ui/patch', patch: { filesHostId: hostId, monitorHostId: null } });
+  const toggleDockFiles = useCallback(() => {
+    dispatch({ type: 'ui/toggle-dock', pane: 'files' });
   }, []);
 
-  const closeFiles = useCallback(() => {
-    dispatch({ type: 'ui/patch', patch: { filesHostId: null } });
+  const toggleDockMonitor = useCallback(() => {
+    dispatch({ type: 'ui/toggle-dock', pane: 'monitor' });
   }, []);
 
-  const openMonitor = useCallback((hostId: string) => {
-    dispatch({ type: 'ui/patch', patch: { monitorHostId: hostId, filesHostId: null } });
+  const closeDockFiles = useCallback(() => {
+    dispatch({ type: 'ui/patch', patch: { dockFiles: false } });
   }, []);
 
-  const closeMonitor = useCallback(() => {
-    dispatch({ type: 'ui/patch', patch: { monitorHostId: null } });
+  const closeDockMonitor = useCallback(() => {
+    dispatch({ type: 'ui/patch', patch: { dockMonitor: false } });
+  }, []);
+
+  const expandDock = useCallback(() => {
+    dispatch({ type: 'ui/patch', patch: { dockFiles: true, dockMonitor: true } });
   }, []);
 
   const actions = useMemo<AppActions>(
@@ -504,10 +520,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSidebar,
       openHostForm,
       closeHostForm,
-      openFiles,
-      closeFiles,
-      openMonitor,
-      closeMonitor,
+      toggleDockFiles,
+      toggleDockMonitor,
+      closeDockFiles,
+      closeDockMonitor,
+      expandDock,
       toast,
       dismissToast,
     }),
@@ -533,10 +550,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSidebar,
       openHostForm,
       closeHostForm,
-      openFiles,
-      closeFiles,
-      openMonitor,
-      closeMonitor,
+      toggleDockFiles,
+      toggleDockMonitor,
+      closeDockFiles,
+      closeDockMonitor,
+      expandDock,
       toast,
       dismissToast,
     ],

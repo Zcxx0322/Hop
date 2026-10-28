@@ -10,6 +10,7 @@ export const CH = {
   info: 'hop:app:info',
   pickPrivateKey: 'hop:app:pick-private-key',
   clipboardWrite: 'hop:app:clipboard-write',
+  clipboardRead: 'hop:app:clipboard-read',
 
   profilesList: 'hop:profiles:list',
   profilesSave: 'hop:profiles:save',

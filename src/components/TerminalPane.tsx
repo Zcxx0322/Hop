@@ -9,7 +9,7 @@ import type { TerminalTransport } from '../api/transport';
 import { useApp } from '../store/AppStore';
 import { FONT_STACKS } from '../store/settings';
 import { formatAddress } from '../lib/visual';
-import { copyText } from '../lib/clipboard';
+import { copyText, readClipboardText } from '../lib/clipboard';
 import { Icon } from './ui/Icon';
 import { StatusDot } from './ui/Spinner';
 import './TerminalPane.css';
@@ -95,6 +95,10 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
   /* 连接时取一次主机快照：之后即使主机被改名或删除，已建立的会话也不该被掐断 */
   const hostRef = useRef<Host | null>(host);
   hostRef.current = host;
+  /* 复制/粘贴策略在终端创建后仍要随设置变化，用 ref 读最新值 */
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const { updateSession } = actions;
 
@@ -111,6 +115,15 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
         : actions.toast('error', '剪贴板不可用，复制失败'),
     );
   }, [actions]);
+
+  const pasteClipboard = useCallback(async () => {
+    const term = terminalRef.current;
+    if (!term) return;
+    const text = await readClipboardText();
+    if (!text) return;
+    term.paste(text);
+    term.focus();
+  }, []);
 
   /* ---------- 创建终端实例 ---------- */
   useEffect(() => {
@@ -176,14 +189,37 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       transportRef.current?.sendInput(data);
     });
 
+    /* 选中即复制：终端里拖选一下就能直接粘贴到别处 */
+    const selectionDisposable = term.onSelectionChange(() => {
+      if (!settingsRef.current.copyOnSelect) return;
+      const selected = term.getSelection();
+      if (selected) void copyText(selected);
+    });
+
     term.attachCustomKeyEventHandler((event) => {
-      if (
-        event.type === 'keydown' &&
-        event.shiftKey &&
-        (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === 'c'
-      ) {
+      if (event.type !== 'keydown') return true;
+      const mod = event.ctrlKey || event.metaKey;
+      const key = event.key.toLowerCase();
+      const mode = settingsRef.current.pasteMode;
+
+      if (mod && event.shiftKey && key === 'c') {
+        /* 阻止浏览器原生复制，避免与手动写入剪贴板重复 */
+        event.preventDefault();
+        event.stopPropagation();
         copySelection();
+        return false;
+      }
+      if (mode !== 'context' && mod && event.shiftKey && key === 'v') {
+        event.preventDefault();
+        event.stopPropagation();
+        void pasteClipboard();
+        return false;
+      }
+      /* “智能粘贴”：Ctrl+V 在 both 模式下按剪贴板内容粘贴，其余情况交给 shell */
+      if (mode === 'both' && mod && !event.shiftKey && key === 'v') {
+        event.preventDefault();
+        event.stopPropagation();
+        void pasteClipboard();
         return false;
       }
       return true;
@@ -193,6 +229,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       cancelAnimationFrame(frame);
       observer.disconnect();
       dataDisposable.dispose();
+      selectionDisposable.dispose();
       try {
         webglRef.current?.dispose();
       } catch {
@@ -294,6 +331,21 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     return () => cancelAnimationFrame(frame);
   }, [active]);
 
+  /* ---------- 右键菜单：点击别处或按 Esc 关闭 ---------- */
+  useEffect(() => {
+    if (!menu) return;
+    const dismiss = () => setMenu(null);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenu(null);
+    };
+    window.addEventListener('pointerdown', dismiss);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('pointerdown', dismiss);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [menu]);
+
   const reconnect = () => {
     transportRef.current?.dispose();
     transportRef.current = null;
@@ -329,6 +381,28 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
         </span>
         {host && <span className="terminal-pane__addr mono truncate">{formatAddress(host)}</span>}
         <span className="terminal-pane__tools">
+          <button
+            type="button"
+            className="terminal-pane__tool"
+            data-on={state.ui.dockFiles}
+            onClick={actions.toggleDockFiles}
+            title="文件传输 (Ctrl+Shift+F)"
+            aria-label="切换文件传输面板"
+            aria-pressed={state.ui.dockFiles}
+          >
+            <Icon name="folder" size={13} />
+          </button>
+          <button
+            type="button"
+            className="terminal-pane__tool"
+            data-on={state.ui.dockMonitor}
+            onClick={actions.toggleDockMonitor}
+            title="主机状态 (Ctrl+Shift+M)"
+            aria-label="切换主机状态面板"
+            aria-pressed={state.ui.dockMonitor}
+          >
+            <Icon name="monitor" size={13} />
+          </button>
           <button type="button" className="terminal-pane__tool" onClick={copySelection} title="复制选中内容 (Ctrl+Shift+C)" aria-label="复制选中内容">
             <Icon name="copy" size={13} />
           </button>
@@ -354,8 +428,59 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
         </span>
       </div>
 
-      <div className="terminal-pane__screen">
-        <div ref={containerRef} className="terminal-pane__xterm" />
+      <div
+        className="terminal-pane__screen"
+        onContextMenu={(event) => {
+          /* 右键菜单：只有“仅快捷键”模式才交给系统 */
+          if (settings.pasteMode === 'shortcut') return;
+          event.preventDefault();
+          const rect = event.currentTarget.getBoundingClientRect();
+          setMenu({ x: event.clientX - rect.left, y: event.clientY - rect.top });
+        }}
+      >
+        <div className="terminal-pane__xterm">
+          <div ref={containerRef} className="terminal-pane__fit" />
+        </div>
+        {menu && (
+          <div
+            className="terminal-pane__menu"
+            style={{ left: menu.x, top: menu.y }}
+            role="menu"
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              role="menuitem"
+              disabled={!terminalRef.current?.hasSelection()}
+              onClick={() => {
+                copySelection();
+                setMenu(null);
+              }}
+            >
+              复制 <kbd>Ctrl+Shift+C</kbd>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                void pasteClipboard();
+                setMenu(null);
+              }}
+            >
+              粘贴 <kbd>Ctrl+Shift+V</kbd>
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                terminalRef.current?.selectAll();
+                setMenu(null);
+              }}
+            >
+              全选
+            </button>
+          </div>
+        )}
         {!host && session.status !== 'connected' && (
           <div className="terminal-pane__overlay">
             <p>主机已被删除，无法建立连接。</p>

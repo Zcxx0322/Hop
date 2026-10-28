@@ -17,8 +17,8 @@
 | ![浅色终端](docs/screenshots/terminal-light.png) | ![偏好设置](docs/screenshots/settings.png) |
 | **无边框窗口 · 纯黑 + 荧光绿** | **无边框窗口 · 纯白 + 墨绿** |
 | ![深色窗口](docs/screenshots/frameless-dark.png) | ![浅色窗口](docs/screenshots/frameless-light.png) |
-| **文件传输（SFTP）** | **主机状态监控** |
-| ![文件传输](docs/screenshots/files.png) | ![主机监控](docs/screenshots/monitor.png) |
+| **常驻侧栏：文件传输 + 主机状态（纯黑）** | **常驻侧栏（纯白）** |
+| ![侧栏深色](docs/screenshots/dock.png) | ![侧栏浅色](docs/screenshots/dock-light.png) |
 
 
 | 能力 | 说明 |
@@ -29,8 +29,9 @@
 | ⌘ 命令面板 | 一个输入框覆盖「连接 / 新建 / 切换 / 设置」，支持 `host:`、`edit:` 前缀 |
 | 🎨 两套主题 | 纯黑 + 荧光绿 / 纯白 + 墨绿，终端配色随主题一起切换 |
 | 🪟 无边框窗口 | 自绘标题栏（品牌 / 标签 / 最小化·最大化·关闭），双击标题栏最大化 |
-| 📁 文件传输 | SFTP 浏览远端目录、新建/重命名/删除、上传下载带进度与失败原因 |
-| 📈 主机状态 | CPU / 内存 / 交换 / 磁盘 / 网络速率与累计，单条远端命令采样，3 秒刷新 |
+| 📁 文件传输 | 连接后常驻侧栏：SFTP 浏览远端目录、新建/重命名/删除、上传下载带进度与失败原因，可拖拽调宽（280–620 px） |
+| 📈 主机状态 | 与文件传输同栏上下分区，可各自关闭；CPU / 内存 / 交换 / 磁盘 / 网络速率与累计，单条远端命令采样，3 秒刷新 |
+| 📋 复制粘贴 | 选中即复制（可关）、右键菜单、`Ctrl+Shift+C/V`、`Ctrl+Insert` / `Shift+Insert`，设置里可切换粘贴触发方式 |
 | 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
 
 ## 快速开始
@@ -192,8 +193,10 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 | `⌘/Ctrl + ,` | 偏好设置 |
 | `⌘/Ctrl + B` | 折叠 / 展开侧栏 |
 | `⌘/Ctrl + 1…9` | 切换到第 n 个会话 |
-| `⌘/Ctrl + Shift + F` | 打开 / 关闭文件传输面板 |
-| `⌘/Ctrl + Shift + M` | 打开 / 关闭主机状态面板 |
+| `⌘/Ctrl + Shift + F` | 打开 / 关闭文件传输栏 |
+| `⌘/Ctrl + Shift + M` | 打开 / 关闭主机状态栏 |
+| `⌘/Ctrl + Shift + C` | 复制选中内容 |
+| `⌘/Ctrl + Shift + V` | 粘贴（与右键菜单同一入口） |
 | `⌘/Ctrl + W` | 关闭当前标签（可在设置中开启二次确认） |
 | `Esc` | 关闭浮层 / 移动端抽屉 |
 
@@ -204,6 +207,8 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 - **设计令牌驱动**：`src/styles/tokens.css` 定义全部颜色、字号、间距、圆角与缓动；换肤只改 `data-theme` / `data-accent`。
 - **两套配色**：`--ink` 纯黑 + 荧光绿（#3ddc84）与纯白 + 墨绿（#12a150），只有一组强调色，界面与终端同步切换。
 - **无边框窗口**：`frame: false` + 自绘 40px 标题栏，`-webkit-app-region: drag` 拖动、双击最大化，窗口控制走 IPC（`hop:window:*`）。
+- **终端尺寸自适应**：FitAddon 量的是单元格容器的内容盒，外层 padding 单独承载留白，避免「最后一行压到底栏」。
+- **右侧常驻栏**：`grid-template-columns: minmax(0, 1fr) auto`，宽度写入设置（280–620 px，双击分隔条复位 372），窄窗口（<1180 px）自动变成悬浮抽屉。
 - **有节制的动效**：180 ms 主节奏、`cubic-bezier(0.16, 1, 0.3, 1)`；尊重 `prefers-reduced-motion`。
 - **响应式**：≥981 px 双栏；<980 px 侧栏变抽屉；<640 px 收紧标签高度。
 - **可访问性**：语义化标签 + `role="tablist"` 键盘左右切换、对话框焦点陷阱与 `aria-modal`、可见焦点环、`aria-live` 通知、图标按钮均带 `aria-label`。

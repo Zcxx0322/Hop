@@ -59,6 +59,7 @@ export function registerIpc(ctx: IpcContext): () => void {
     clipboard.writeText(text);
     return true;
   });
+  handle(CH.clipboardRead, () => clipboard.readText());
   handle(CH.pickPrivateKey, async () => {
     const result = await dialog.showOpenDialog({
       title: '选择私钥文件',

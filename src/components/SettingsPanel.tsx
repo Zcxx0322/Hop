@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { useApp } from '../store/AppStore';
 import { ACCENTS, DEFAULT_SETTINGS, FONT_STACKS, SCROLLBACK_OPTIONS } from '../store/settings';
 import type { CursorStyle, FontKey, ThemeMode } from '../types';
+import type { Settings } from '../types';
 import { Icon } from './ui/Icon';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
@@ -18,6 +19,12 @@ const CURSOR_OPTIONS: Array<{ value: CursorStyle; label: string }> = [
   { value: 'block', label: '方块' },
   { value: 'bar', label: '竖线' },
   { value: 'underline', label: '下划线' },
+];
+
+const PASTE_MODE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'both', label: 'Ctrl+V' },
+  { value: 'shortcut', label: '仅快捷键' },
+  { value: 'context', label: '右键菜单' },
 ];
 
 const KEEPALIVE_OPTIONS = [
@@ -213,6 +220,43 @@ export function SettingsPanel() {
               }
             />
           </div>
+        </section>
+
+        <section className="settings-group" aria-labelledby="settings-clipboard">
+          <h3 className="settings-group__title" id="settings-clipboard">
+            复制与粘贴
+          </h3>
+
+          <div className="settings-row">
+            <div className="settings-row__text">
+              <span className="settings-row__label">选中即复制</span>
+              <span className="settings-row__desc">在终端里选中文本时自动写入剪贴板</span>
+            </div>
+            <Switch
+              label="选中即复制"
+              checked={settings.copyOnSelect}
+              onChange={(checked) => actions.updateSettings({ copyOnSelect: checked })}
+            />
+          </div>
+
+          <div className="settings-row">
+            <div className="settings-row__text">
+              <span className="settings-row__label">粘贴方式</span>
+              <span className="settings-row__desc">Ctrl+V 直接粘贴，或只用快捷键 / 右键菜单</span>
+            </div>
+            <Segmented
+              label="粘贴方式"
+              value={settings.pasteMode}
+              options={PASTE_MODE_OPTIONS}
+              onChange={(value) =>
+                actions.updateSettings({ pasteMode: value as Settings['pasteMode'] })
+              }
+            />
+          </div>
+
+          <p className="settings-hint">
+            复制始终可用：<kbd>Ctrl+Shift+C</kbd> 或右键菜单；粘贴快捷键为 <kbd>Ctrl+Shift+V</kbd>。
+          </p>
         </section>
 
         <section className="settings-group" aria-labelledby="settings-connection">

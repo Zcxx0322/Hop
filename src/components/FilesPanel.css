@@ -326,3 +326,28 @@
   opacity: 0.55;
   cursor: default;
 }
+
+/* 停靠区里空间有限：按容器宽度逐级收起次要列，优先保住文件名 */
+.dock__body {
+  container-type: inline-size;
+}
+
+@container (max-width: 430px) {
+  .files__row {
+    grid-template-columns: minmax(0, 1fr) 68px 74px;
+  }
+
+  .files__row > :nth-child(3) {
+    display: none;
+  }
+}
+
+@container (max-width: 330px) {
+  .files__row {
+    grid-template-columns: minmax(0, 1fr) 74px;
+  }
+
+  .files__row > :nth-child(2) {
+    display: none;
+  }
+}
