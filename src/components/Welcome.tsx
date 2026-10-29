@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 import { isMock } from '../api/config';
 import { useApp } from '../store/AppStore';
 import { hostAccent, hostInitials, formatAddress, relativeTime } from '../lib/visual';
@@ -7,13 +8,166 @@ import { Icon } from './ui/Icon';
 import { Kbd, KbdGroup } from './ui/Kbd';
 import './Welcome.css';
 
-const DEMO_LINES = [
-  { text: 'hop connect demo-prod-web', tone: 'prompt' },
-  { text: '正在协商 ssh-ed25519 密钥 … 完成', tone: 'dim' },
-  { text: '已连接 10.0.4.21 · Ubuntu 24.04 LTS', tone: 'ok' },
-  { text: 'root@prod-web:~$ uptime', tone: 'prompt' },
-  { text: ' 22:16:04 up 41 days,  3:12,  2 users,  load average: 0.18, 0.24, 0.31', tone: 'mono' },
-] as const;
+type Tone = 'dim' | 'ok' | 'mono';
+
+interface ScriptLine {
+  text: string;
+  tone: Tone;
+}
+
+interface Scene {
+  command: string;
+  lines: ScriptLine[];
+}
+
+/**
+ * 欢迎页中间的「活终端」：自己敲命令、自己出结果，停一会儿再换下一幕。
+ * 用 setTimeout 逐字推进；prefers-reduced-motion 时停在最终帧。
+ */
+const SCENES: Scene[] = [
+  {
+    command: 'hop connect prod-web',
+    lines: [
+      { text: '正在协商 ssh-ed25519 密钥 … 完成', tone: 'dim' },
+      { text: '已连接 root@prod-web · Ubuntu 24.04 LTS', tone: 'ok' },
+    ],
+  },
+  {
+    command: 'uptime',
+    lines: [
+      { text: ' 22:16:04 up 41 days,  3:12,  2 users,  load average: 0.18, 0.24, 0.31', tone: 'mono' },
+    ],
+  },
+  {
+    command: 'docker ps --format "{{.Names}}  {{.Status}}"',
+    lines: [
+      { text: 'nginx-proxy   Up 41 days (healthy)', tone: 'mono' },
+      { text: 'hop-agent     Up 12 hours', tone: 'mono' },
+    ],
+  },
+];
+
+const CHAR_MS = 42;
+const LINE_MS = 200;
+const HOLD_MS = 1900;
+
+function LiveTerminal() {
+  const [sceneIndex, setSceneIndex] = useState(0);
+  const [typed, setTyped] = useState('');
+  const [lines, setLines] = useState<ScriptLine[]>([]);
+  /** 已经跑完的旧命令输出，保留几行，让卡片不会在中途变空 */
+  const [history, setHistory] = useState<Array<{ id: string; line: ScriptLine }>>([]);
+  const [reduced, setReduced] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setReduced(query.matches);
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
+
+  useEffect(() => {
+    if (reduced) return;
+    const scene = SCENES[sceneIndex % SCENES.length];
+    let cancelled = false;
+    let timer = 0;
+
+    const typeChar = (index: number) => {
+      if (cancelled) return;
+      if (index < scene.command.length) {
+        setTyped(scene.command.slice(0, index + 1));
+        timer = window.setTimeout(() => typeChar(index + 1), CHAR_MS + (index % 3) * 12);
+        return;
+      }
+      let line = 0;
+      const emit = () => {
+        if (cancelled) return;
+        if (line < scene.lines.length) {
+          const next = scene.lines[line];
+          line += 1;
+          setLines((prev) => [...prev, next]);
+          timer = window.setTimeout(emit, LINE_MS);
+          return;
+        }
+        timer = window.setTimeout(() => {
+          if (cancelled) return;
+          const last = sceneIndex % SCENES.length === SCENES.length - 1;
+          if (!last) {
+            setHistory((prev) =>
+              [...prev, ...scene.lines.map((line, index) => ({ id: `${sceneIndex}-${index}`, line }))].slice(-3),
+            );
+          } else {
+            setHistory([]);
+          }
+          setLines([]);
+          setTyped('');
+          setSceneIndex((value) => value + 1);
+        }, HOLD_MS);
+      };
+      timer = window.setTimeout(emit, 260);
+    };
+
+    setTyped('');
+    setLines([]);
+    timer = window.setTimeout(() => typeChar(0), 240);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [sceneIndex, reduced]);
+
+  const scene = SCENES[sceneIndex % SCENES.length];
+  const visibleCommand = reduced ? scene.command : typed;
+  const visibleLines = reduced ? scene.lines : lines;
+  const visibleHistory = reduced ? [] : history;
+
+  return (
+    <div
+      className="welcome__preview"
+      role="img"
+      aria-label={`Hop 终端会话动画示意：${scene.command}`}
+    >
+      <header className="welcome__preview-bar">
+        <span className="welcome__lights" aria-hidden="true">
+          <i /> <i /> <i />
+        </span>
+        <span className="welcome__preview-title mono">
+          {isMock() ? 'hop — demo-prod-web' : 'hop — 终端会话预览'}
+        </span>
+        <span className="welcome__preview-badge">SSH</span>
+      </header>
+      <div className="welcome__preview-body mono" aria-hidden="true">
+        {visibleHistory.map((item) => (
+          <p key={item.id} className={`welcome__line welcome__line--${item.line.tone}`}>
+            {item.line.text}
+          </p>
+        ))}
+        <p className="welcome__line welcome__line--prompt">
+          <span className="welcome__prompt">$</span> {visibleCommand}
+          {!reduced && <span className="welcome__caret welcome__caret--inline" />}
+        </p>
+        {visibleLines.map((line, index) => (
+          <p
+            key={`${sceneIndex}-${index}`}
+            className={`welcome__line welcome__line--${line.tone} welcome__line--enter`}
+          >
+            {line.text}
+          </p>
+        ))}
+        {reduced && (
+          <p className="welcome__line welcome__line--prompt welcome__caret-line">
+            <span className="welcome__prompt">$</span>
+            <span className="welcome__caret" />
+          </p>
+        )}
+      </div>
+      <span className="welcome__scan" aria-hidden="true" />
+    </div>
+  );
+}
 
 export function Welcome() {
   const { state, actions } = useApp();
@@ -30,7 +184,10 @@ export function Welcome() {
 
   return (
     <div className="welcome">
-      <div className="welcome__glow" aria-hidden="true" />
+      <div className="welcome__glow" aria-hidden="true">
+        <span className="welcome__aura welcome__aura--a" />
+        <span className="welcome__aura welcome__aura--b" />
+      </div>
 
       <section className="welcome__inner" aria-labelledby="welcome-title">
         <p className="welcome__eyebrow">
@@ -62,38 +219,7 @@ export function Welcome() {
           </button>
         </div>
 
-        <div className="welcome__preview" role="img" aria-label="Hop 终端会话示意">
-          <header className="welcome__preview-bar">
-            <span className="welcome__lights" aria-hidden="true">
-              <i /> <i /> <i />
-            </span>
-            <span className="welcome__preview-title mono">
-              {isMock() ? 'hop — demo-prod-web' : 'hop — 终端会话预览'}
-            </span>
-            <span className="welcome__preview-badge">SSH</span>
-          </header>
-          <div className="welcome__preview-body mono" aria-hidden="true">
-            {DEMO_LINES.map((line, index) => (
-              <p
-                key={line.text}
-                className={`welcome__line welcome__line--${line.tone}`}
-                style={{ animationDelay: `${120 + index * 90}ms` }}
-              >
-                {line.tone === 'prompt' ? (
-                  <>
-                    <span className="welcome__prompt">$</span> {line.text}
-                  </>
-                ) : (
-                  line.text
-                )}
-              </p>
-            ))}
-            <p className="welcome__line welcome__line--prompt welcome__caret-line">
-              <span className="welcome__prompt">$</span>
-              <span className="welcome__caret" aria-hidden="true" />
-            </p>
-          </div>
-        </div>
+        <LiveTerminal />
 
         {recentHosts.length > 0 && (
           <div className="welcome__recent">
