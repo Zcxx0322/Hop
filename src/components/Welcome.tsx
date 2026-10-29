@@ -13,6 +13,8 @@ type Tone = 'dim' | 'ok' | 'mono';
 interface ScriptLine {
   text: string;
   tone: Tone;
+  /** 历史里的命令行：渲染成「提示符 + 命令」 */
+  isCommand?: boolean;
 }
 
 interface Scene {
@@ -24,18 +26,21 @@ interface Scene {
  * 欢迎页中间的「活终端」：自己敲命令、自己出结果，停一会儿再换下一幕。
  * 用 setTimeout 逐字推进；prefers-reduced-motion 时停在最终帧。
  */
+/** 已经连上的那台机器：提示符直接写成远端会话的样子 */
+const PROMPT = 'root@prod-web:~$';
+
 const SCENES: Scene[] = [
-  {
-    command: 'hop connect prod-web',
-    lines: [
-      { text: '正在协商 ssh-ed25519 密钥 … 完成', tone: 'dim' },
-      { text: '已连接 root@prod-web · Ubuntu 24.04 LTS', tone: 'ok' },
-    ],
-  },
   {
     command: 'uptime',
     lines: [
-      { text: ' 22:16:04 up 41 days,  3:12,  2 users,  load average: 0.18, 0.24, 0.31', tone: 'mono' },
+      { text: ' 01:12:04 up 41 days,  3:12,  2 users,  load average: 0.18, 0.24, 0.31', tone: 'mono' },
+    ],
+  },
+  {
+    command: 'df -h /',
+    lines: [
+      { text: 'Filesystem      Size  Used Avail Use% Mounted on', tone: 'dim' },
+      { text: '/dev/vda1        39G   16G   21G  44% /', tone: 'mono' },
     ],
   },
   {
@@ -93,14 +98,13 @@ function LiveTerminal() {
         }
         timer = window.setTimeout(() => {
           if (cancelled) return;
-          const last = sceneIndex % SCENES.length === SCENES.length - 1;
-          if (!last) {
-            setHistory((prev) =>
-              [...prev, ...scene.lines.map((line, index) => ({ id: `${sceneIndex}-${index}`, line }))].slice(-3),
-            );
-          } else {
-            setHistory([]);
-          }
+          setHistory((prev) =>
+            [
+              ...prev,
+              { id: `${sceneIndex}-cmd`, line: { text: scene.command, tone: 'mono' as Tone, isCommand: true } },
+              ...scene.lines.map((line, index) => ({ id: `${sceneIndex}-${index}`, line })),
+            ].slice(-4),
+          );
           setLines([]);
           setTyped('');
           setSceneIndex((value) => value + 1);
@@ -140,13 +144,19 @@ function LiveTerminal() {
         <span className="welcome__preview-badge">SSH</span>
       </header>
       <div className="welcome__preview-body mono" aria-hidden="true">
-        {visibleHistory.map((item) => (
-          <p key={item.id} className={`welcome__line welcome__line--${item.line.tone}`}>
-            {item.line.text}
-          </p>
-        ))}
+        {visibleHistory.map((item) =>
+          item.line.isCommand ? (
+            <p key={item.id} className="welcome__line welcome__line--prompt">
+              <span className="welcome__prompt">{PROMPT}</span> {item.line.text}
+            </p>
+          ) : (
+            <p key={item.id} className={`welcome__line welcome__line--${item.line.tone}`}>
+              {item.line.text}
+            </p>
+          ),
+        )}
         <p className="welcome__line welcome__line--prompt">
-          <span className="welcome__prompt">$</span> {visibleCommand}
+          <span className="welcome__prompt">{PROMPT}</span> {visibleCommand}
           {!reduced && <span className="welcome__caret welcome__caret--inline" />}
         </p>
         {visibleLines.map((line, index) => (
@@ -159,7 +169,7 @@ function LiveTerminal() {
         ))}
         {reduced && (
           <p className="welcome__line welcome__line--prompt welcome__caret-line">
-            <span className="welcome__prompt">$</span>
+            <span className="welcome__prompt">{PROMPT}</span>
             <span className="welcome__caret" />
           </p>
         )}
