@@ -5,6 +5,13 @@
 
 export type AuthMethod = 'password' | 'key' | 'agent';
 
+/** 远端发行版：连接成功后由主进程探测并写入，离线也保留。 */
+export interface HostDistro {
+  id: string;
+  name: string;
+  version: string;
+}
+
 export interface Host {
   id: string;
   name: string;
@@ -18,6 +25,8 @@ export interface Host {
   note?: string;
   favorite?: boolean;
   lastConnectedAt?: number | null;
+  /** 只读：探测到的远端发行版 */
+  distro?: HostDistro | null;
   createdAt: number;
   updatedAt: number;
   /** 只读：后端是否保存了登录密码（明文永不回传） */

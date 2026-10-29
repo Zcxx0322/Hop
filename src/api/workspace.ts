@@ -14,6 +14,8 @@ export interface RemoteFile {
 export interface DirectoryListing {
   path: string;
   parent: string | null;
+  /** 绝对主目录，用于把路径显示成 ~ 前缀 */
+  home: string;
   entries: RemoteFile[];
 }
 

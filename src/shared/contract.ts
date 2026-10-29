@@ -115,6 +115,16 @@ export interface PublicAuth {
   keyFingerprint?: string;
 }
 
+/** 远端发行版（连接成功后自动探测，写入 profile 供离线时也能显示图标）。 */
+export interface HostDistro {
+  /** os-release 的 ID，小写，例如 ubuntu / arch / rocky */
+  id: string;
+  /** 展示名，例如 "Ubuntu 24.04.4 LTS" */
+  name: string;
+  /** 版本号，可能为空字符串 */
+  version: string;
+}
+
 export interface ConnectionProfile {
   id: string;
   name: string;
@@ -137,6 +147,8 @@ export interface ConnectionProfile {
   updatedAt: string;
   /** Last successful connection, ISO string or null. */
   lastConnectedAt: string | null;
+  /** 探测到的远端发行版，从未连上过时为 null。 */
+  distro: HostDistro | null;
 }
 
 /* ------------------------------------------------------------------ */

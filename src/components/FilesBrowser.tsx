@@ -55,6 +55,32 @@ interface FilesBrowserProps {
 /**
  * 文件浏览主体（不含外框）：常驻面板复用，命令面板/快捷键也走同一套状态。
  */
+
+interface Crumb {
+  label: string;
+  path: string;
+}
+
+const HOME_LABEL = '主目录';
+
+/** 把绝对路径拆成可点击的面包屑；主目录前缀折叠成一段。 */
+function buildCrumbs(path: string, home: string | null): Crumb[] {
+  if (!path || path === '~') return [{ label: HOME_LABEL, path: '~' }];
+  const homePrefix = home && home !== '/' && path.startsWith(home) ? home : null;
+  const rest = homePrefix ? path.slice(homePrefix.length) : path;
+  const parts = rest.split('/').filter(Boolean);
+  const basePath = homePrefix ? '' : '';
+  const crumbs: Crumb[] = homePrefix
+    ? [{ label: HOME_LABEL, path: homePrefix }]
+    : [{ label: '/', path: '/' }];
+  let acc = basePath;
+  for (const part of parts) {
+    acc = `${acc}/${part}`;
+    crumbs.push({ label: part, path: `${homePrefix ?? ''}${acc}` });
+  }
+  return crumbs;
+}
+
 export function FilesBrowser({ host }: FilesBrowserProps) {
   const { actions } = useApp();
   const hostId = host.id;
@@ -202,32 +228,34 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
     }
   };
 
+  const crumbs = useMemo(() => buildCrumbs(path, listing?.home ?? null), [path, listing?.home]);
+
   return (
     <div className="files">
       <div className="files__bar">
         <button
           type="button"
-          className="files__icon-btn"
+          className="files__tool"
           title="上一级"
           aria-label="上一级"
           disabled={!listing?.parent || loading}
           onClick={() => listing?.parent && void load(listing.parent)}
         >
-          <Icon name="arrow-up" size={14} />
+          <Icon name="arrow-up" size={16} />
         </button>
         <button
           type="button"
-          className="files__icon-btn"
+          className="files__tool"
           title="刷新"
           aria-label="刷新目录"
           disabled={loading}
           onClick={() => void load(path)}
         >
-          <Icon name="refresh" size={14} />
+          <Icon name="refresh" size={16} />
         </button>
         <button
           type="button"
-          className="files__icon-btn"
+          className="files__tool"
           title="新建文件夹"
           aria-label="新建文件夹"
           disabled={busy}
@@ -236,21 +264,35 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
             void runAction(() => makeDirectory(hostId, path, '新建文件夹'));
           }}
         >
-          <Icon name="folder" size={14} />
+          <Icon name="folder" size={16} />
         </button>
         <button
           type="button"
-          className="files__icon-btn files__icon-btn--upload"
+          className="files__tool files__tool--primary"
           title="上传文件"
           aria-label="上传文件"
           disabled={busy}
           onClick={() => void handleUpload()}
         >
-          <Icon name="upload" size={14} />
+          <Icon name="upload" size={16} />
         </button>
-        <span className="files__path mono truncate" title={path}>
-          {path}
-        </span>
+      </div>
+
+      <div className="files__crumbs" aria-label="当前路径">
+        {crumbs.map((crumb, index) => (
+          <span className="files__crumb-wrap" key={`${crumb.path}-${index}`}>
+            {index > 0 && <span className="files__crumb-sep">/</span>}
+            <button
+              type="button"
+              className="files__crumb mono"
+              title={crumb.path}
+              disabled={index === crumbs.length - 1}
+              onClick={() => void load(crumb.path)}
+            >
+              {crumb.label}
+            </button>
+          </span>
+        ))}
         {loading && <Spinner size={12} />}
       </div>
 

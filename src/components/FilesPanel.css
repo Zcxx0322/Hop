@@ -19,39 +19,96 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 8px;
+  padding: 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--panel-inset);
 }
 
-.files__icon-btn {
+/* 工具按钮：30×30 图标钮，靠 hover 提示说明用途，避免窄侧栏里挤成两行 */
+.files__tool {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
+  flex: none;
   border-radius: var(--radius-xs);
-  color: var(--text-dim);
+  color: var(--text-2);
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 
-.files__icon-btn:hover:not(:disabled) {
+.files__tool:hover:not(:disabled) {
   background: var(--hover);
   color: var(--text);
 }
 
-.files__icon-btn:disabled {
+.files__tool:disabled {
   opacity: 0.35;
   cursor: default;
 }
 
-.files__path {
-  flex: 1;
+.files__tool--primary {
+  margin-left: auto;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+}
+
+.files__tool--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent);
+}
+
+.files__bar-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 2px;
+  background: var(--border);
+}
+
+/* 路径面包屑：每段可点，最后一段为当前位置 */
+.files__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 22px;
+  padding: 0 4px;
   min-width: 0;
+  overflow: hidden;
+}
+
+.files__crumb-wrap {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.files__crumb {
+  max-width: 140px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  color: var(--text-2);
   font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.files__crumb:hover:not(:disabled) {
+  background: var(--hover);
   color: var(--text);
-  padding-left: 4px;
+}
+
+.files__crumb:disabled {
+  color: var(--text);
+  opacity: 1;
+  cursor: default;
+}
+
+.files__crumb-sep {
+  color: var(--text-3);
+  font-size: var(--text-sm);
 }
 
 .files__error {

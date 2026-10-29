@@ -9,6 +9,7 @@ import { ProfileStore } from './core/profile-store';
 import { RemotePool } from './core/remote';
 import { SecretStore } from './core/secret-store';
 import { SessionManager } from './core/session-manager';
+import { detectDistro } from './core/distro';
 import { SftpService } from './core/sftp-service';
 import { MonitorService } from './core/monitor-service';
 import { registerIpc } from './ipc/register';
@@ -81,6 +82,21 @@ async function bootstrap(): Promise<void> {
   const profiles = new ProfileStore(path.join(userData, 'profiles.json'), secrets);
   const knownHosts = new KnownHostsStore(path.join(userData, 'known_hosts.json'));
 
+  // 文件传输 / 资源监控 / 发行版探测共用同一条按主机复用的连接（空闲 45 秒回收）。
+  const remotePool = new RemotePool({ profiles, knownHosts });
+
+  /* 会话刚连上时顺手认一下远端发行版，写进 profile 供资产页显示图标。 */
+  const detectAndStore = (profileId: string): void => {
+    void remotePool
+      .with(profileId, (client) => detectDistro(client))
+      .then((distro) => {
+        if (distro) profiles.setDistro(profileId, distro);
+      })
+      .catch((err: unknown) => {
+        log.warn('distro detect failed', { profileId, err: String(err) });
+      });
+  };
+
   const sessions = new SessionManager(
     {
       onData(sessionId: string, data: string) {
@@ -98,13 +114,16 @@ async function bootstrap(): Promise<void> {
         if (win && !win.isFocused()) win.flashFrame(true);
       },
     },
-    { profiles, knownHosts },
+    {
+      profiles,
+      knownHosts,
+      /* 连上就顺手认一下远端发行版，写进 profile 供资产页显示图标。 */
+      onReady: detectAndStore,
+    },
   );
 
   registerIpc({ profiles, knownHosts, sessions, secureStorage: secrets.isSecure });
 
-  // 文件传输与资源监控共用同一条按主机复用的连接（空闲 45 秒回收）。
-  const remotePool = new RemotePool({ profiles, knownHosts });
   const sftp = new SftpService({ profiles, knownHosts }, remotePool);
   const monitor = new MonitorService({ profiles, knownHosts }, remotePool);
 
@@ -120,6 +139,7 @@ async function bootstrap(): Promise<void> {
       preferredPort: gatewayPort(),
       sftp,
       monitor,
+      onSessionReady: detectAndStore,
     });
     if (gateway) log.info('gateway ready', { origin: gateway.origin });
   } catch (err) {

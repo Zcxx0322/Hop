@@ -23,7 +23,12 @@ export class SessionManager {
 
   constructor(
     private readonly hooks: SessionHooks,
-    private readonly deps: { profiles: ProfileStore; knownHosts: KnownHostsStore },
+    private readonly deps: {
+      profiles: ProfileStore;
+      knownHosts: KnownHostsStore;
+      /** 连上之后跑一次只读探测（发行版识别），失败不影响会话。 */
+      onReady?: (profileId: string) => void;
+    },
   ) {}
 
   list(): SessionSnapshot[] {
@@ -54,9 +59,18 @@ export class SessionManager {
     this.sessions.set(session.id, session);
 
     // Fire and forget: failures surface through onStatus / onClosed.
-    void session.connect().catch((err) => {
-      log.error('session connect threw', { id: session.id, err: String(err) });
-    });
+    void session
+      .connect()
+      .then(() => {
+        try {
+          this.deps.onReady?.(req.profileId);
+        } catch (err) {
+          log.warn('onReady hook threw', { err: String(err) });
+        }
+      })
+      .catch((err) => {
+        log.error('session connect threw', { id: session.id, err: String(err) });
+      });
 
     this.deps.profiles.markUsed(req.profileId);
     log.info('session opened', { id: session.id, profileId: req.profileId, host: resolved.target.host });

@@ -51,6 +51,7 @@ interface HostDto {
   createdAt: number;
   updatedAt: number;
   lastConnectedAt: number | null;
+  distro: { id: string; name: string; version: string } | null;
   /* Extras the UI may use once it knows about them (harmless otherwise). */
   hasPassword: boolean;
   keyFingerprint: string;
@@ -78,6 +79,8 @@ export interface GatewayDeps {
   sftp?: SftpService;
   /** 主机资源采样；缺省时不注册 /hosts/:id/monitor */
   monitor?: MonitorService;
+  /** 会话建立后回调（发行版探测等），失败不影响终端 */
+  onSessionReady?: (profileId: string) => void;
 }
 
 export interface GatewayHandle {
@@ -114,6 +117,7 @@ function toHost(profile: ConnectionProfile): HostDto {
     createdAt: Number.isFinite(created) ? created : Date.now(),
     updatedAt: Number.isFinite(updated) ? updated : Date.now(),
     lastConnectedAt: Number.isFinite(used) ? used : null,
+    distro: profile.distro ?? null,
     hasPassword: profile.auth.hasSecret,
     keyFingerprint: profile.auth.keyFingerprint ?? '',
   };
@@ -329,7 +333,17 @@ export async function startGateway(deps: GatewayDeps): Promise<GatewayHandle | n
         }
       },
     },
-    { profiles: deps.profiles, knownHosts: deps.knownHosts },
+    {
+      profiles: deps.profiles,
+      knownHosts: deps.knownHosts,
+      onReady(profileId: string) {
+        try {
+          deps.onSessionReady?.(profileId);
+        } catch (err) {
+          log.warn('onSessionReady hook threw', { err: String(err) });
+        }
+      },
+    },
   );
 
   /* ---------------- HTTP ---------------- */

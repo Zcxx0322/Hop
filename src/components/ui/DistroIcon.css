@@ -1,0 +1,22 @@
+.distro-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-weight: 700;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.distro-icon svg {
+  display: block;
+}
+
+.distro-icon--fallback {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}

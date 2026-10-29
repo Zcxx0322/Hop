@@ -57,6 +57,7 @@ interface StoredProfile {
   createdAt: string;
   updatedAt: string;
   lastConnectedAt: string | null;
+  distro?: { id: string; name: string; version: string } | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -252,6 +253,7 @@ export class ProfileStore {
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
       lastConnectedAt: existing?.lastConnectedAt ?? null,
+      distro: existing?.distro ?? null,
     };
 
     this.store.update((list) => {
@@ -293,6 +295,17 @@ export class ProfileStore {
     const next = [...ordered, ...rest].map((p, i) => ({ ...p, order: i }));
     this.store.write(next);
     return this.list();
+  }
+
+  /** 连接成功后写入探测到的发行版；重复写同样的值不会落盘。 */
+  setDistro(id: string, distro: { id: string; name: string; version: string } | null): void {
+    const current = this.store.read().find((p) => p.id === id);
+    if (!current) return;
+    const same =
+      current.distro?.id === distro?.id && current.distro?.name === distro?.name;
+    if (same) return;
+    this.store.update((list) => list.map((p) => (p.id === id ? { ...p, distro } : p)));
+    log.info('profile distro updated', { id, distro: distro?.id ?? null });
   }
 
   markUsed(id: string): void {
@@ -442,6 +455,7 @@ export class ProfileStore {
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
       lastConnectedAt: p.lastConnectedAt,
+      distro: p.distro ?? null,
     };
   }
 }

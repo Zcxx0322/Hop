@@ -30,6 +30,7 @@ function seedHosts(): Host[] {
       note: '入口网关，改动需走发布流程。',
       favorite: true,
       lastConnectedAt: now - 1000 * 60 * 42,
+      distro: { id: 'ubuntu', name: 'Ubuntu 24.04.4 LTS', version: '24.04' },
     },
     {
       ...base,
@@ -44,6 +45,7 @@ function seedHosts(): Host[] {
       note: '每日 02:00 由 CI 重新部署。',
       favorite: true,
       lastConnectedAt: now - 1000 * 60 * 60 * 5,
+      distro: { id: 'debian', name: 'Debian GNU/Linux 12', version: '12' },
     },
     {
       ...base,
@@ -59,6 +61,7 @@ function seedHosts(): Host[] {
       note: '只读账号，长时间查询请走离线任务。',
       favorite: false,
       lastConnectedAt: now - 1000 * 60 * 60 * 26,
+      distro: { id: 'rocky', name: 'Rocky Linux 9.4', version: '9.4' },
     },
     {
       ...base,
@@ -73,6 +76,7 @@ function seedHosts(): Host[] {
       note: '树莓派 5，跑着 Home Assistant 与内网 DNS。',
       favorite: false,
       lastConnectedAt: null,
+      distro: { id: 'arch', name: 'Arch Linux', version: '' },
     },
   ];
 }

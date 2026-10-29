@@ -25,6 +25,8 @@ export interface RemoteFile {
 export interface DirectoryListing {
   path: string;
   parent: string | null;
+  /** 绝对主目录，供前端把路径显示成 ~ 前缀 */
+  home: string;
   entries: RemoteFile[];
 }
 
@@ -176,6 +178,7 @@ export class SftpService {
     return this.pool.with(profileId, (client) =>
       withSftp(client, async (sftp) => {
         const resolved = await resolveRemotePath(client, target);
+        const home = await resolveRemotePath(client, '~');
         const raw = await call<FileEntryWithStats[]>(sftp, 'readdir', resolved);
         const entries = raw
           .map((entry) => toRemoteFile(target, entry))
@@ -185,7 +188,7 @@ export class SftpService {
             if (b.type === 'dir' && a.type !== 'dir') return 1;
             return a.name.localeCompare(b.name, 'zh-Hans-CN');
           });
-        return { path: target, parent: parentPath(target), entries };
+        return { path: target, parent: parentPath(target), home, entries };
       }),
     );
   }
