@@ -5,6 +5,7 @@ import { TerminalPane } from './components/TerminalPane';
 import { Welcome } from './components/Welcome';
 import { AssetsPage } from './components/AssetsPage';
 import { NotesPage } from './components/NotesPage';
+import { QuickNotes } from './components/QuickNotes';
 import { SideDock } from './components/SideDock';
 import { TransfersBar } from './components/TransfersBar';
 import { useTransferHost } from './store/transfers';
@@ -75,10 +76,11 @@ export default function App() {
         return;
       }
 
-      /* 笔记：Ctrl+Shift+N 从终端页唤醒 */
+      /* 笔记：Ctrl+Shift+N 在终端页唤起速记浮层，在笔记页则回终端 */
       if (mod && event.shiftKey && event.key.toLowerCase() === 'n') {
         event.preventDefault();
-        actions.setPage(ui.page === 'notes' ? 'terminal' : 'notes');
+        if (ui.page === 'notes') actions.setPage('terminal');
+        else actions.toggleQuickNote();
         return;
       }
 
@@ -163,6 +165,8 @@ export default function App() {
         </div>
 
         <SideDock side="monitor" />
+
+        {ui.quickNote && <QuickNotes />}
       </main>
       )}
 

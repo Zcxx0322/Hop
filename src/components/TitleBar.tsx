@@ -143,9 +143,11 @@ export function TitleBar() {
             <button
               type="button"
               className="titlebar__ghost"
-              aria-label="打开笔记"
-              title="笔记（Ctrl+Shift+N）"
-              onClick={() => actions.setPage('notes')}
+              data-on={state.ui.quickNote}
+              aria-pressed={state.ui.quickNote}
+              aria-label="速记"
+              title="速记（Ctrl+Shift+N）"
+              onClick={actions.toggleQuickNote}
             >
               <Icon name="pencil" size={14} />
             </button>

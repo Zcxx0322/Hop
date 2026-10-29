@@ -257,6 +257,17 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
         >
           <Icon name="folder" size={16} />
         </button>
+        <span className="files__bar-sep" aria-hidden="true" />
+        <button
+          type="button"
+          className={`files__tool files__tool--follow${settings.followCwd ? ' is-on' : ''}`}
+          title={settings.followCwd ? '跟随终端目录：已开启' : '跟随终端目录：已关闭'}
+          aria-label="跟随终端目录"
+          aria-pressed={settings.followCwd}
+          onClick={() => actions.updateSettings({ followCwd: !settings.followCwd })}
+        >
+          <Icon name="link" size={16} />
+        </button>
         <button
           type="button"
           className="files__tool files__tool--primary"
@@ -270,6 +281,7 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
       </div>
 
       <div className="files__pathbar">
+        <Icon name="folder" size={13} className="files__path-ico" />
         <input
           ref={pathInputRef}
           className="files__path mono"
@@ -296,16 +308,6 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
           }}
         />
         {loading && <Spinner size={12} />}
-        <button
-          type="button"
-          className={`files__follow${settings.followCwd ? ' is-on' : ''}`}
-          aria-pressed={settings.followCwd}
-          title={settings.followCwd ? '跟随终端目录：开' : '跟随终端目录：关'}
-          onClick={() => actions.updateSettings({ followCwd: !settings.followCwd })}
-        >
-          <Icon name="link" size={13} />
-          跟随
-        </button>
       </div>
 
       {error && (

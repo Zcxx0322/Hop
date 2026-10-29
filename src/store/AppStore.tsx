@@ -27,8 +27,10 @@ interface UiState {
   /** 右侧常驻面板：文件 / 主机状态 */
   dockFiles: boolean;
   dockMonitor: boolean;
-  /** 主视图：终端工作区 / 资产页 */
+  /** 主视图：终端工作区 / 资产页 / 笔记页 */
   page: 'terminal' | 'assets' | 'notes';
+  /** 终端页上的速记浮层 */
+  quickNote: boolean;
 }
 
 export interface AppState {
@@ -53,6 +55,7 @@ type Action =
   | { type: 'settings/patch'; patch: Partial<Settings> }
   | { type: 'ui/patch'; patch: Partial<UiState> }
   | { type: 'ui/toggle-dock'; pane: 'files' | 'monitor' }
+  | { type: 'ui/toggle-quick-note' }
   | { type: 'toast/add'; toast: Toast }
   | { type: 'toast/dismiss'; id: string };
 
@@ -67,6 +70,7 @@ function createInitialState(): AppState {
     toasts: [],
     ui: {
       page: 'terminal',
+      quickNote: false,
       settingsOpen: false,
       paletteOpen: false,
       hostForm: null,
@@ -200,6 +204,9 @@ function reducer(state: AppState, action: Action): AppState {
     case 'ui/patch':
       return { ...state, ui: { ...state.ui, ...action.patch } };
 
+    case 'ui/toggle-quick-note':
+      return { ...state, ui: { ...state.ui, quickNote: !state.ui.quickNote } };
+
     case 'ui/toggle-dock':
       return {
         ...state,
@@ -243,6 +250,7 @@ export interface AppActions {
   setPage: (page: 'terminal' | 'assets' | 'notes') => void;
   closeHostForm: () => void;
   /** 右侧常驻面板：开关文件 / 主机状态，以及整体展开 */
+  toggleQuickNote: () => void;
   toggleDockFiles: () => void;
   toggleDockMonitor: () => void;
   closeDockFiles: () => void;
@@ -465,6 +473,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ui/patch', patch: { page } });
   }, []);
 
+  const toggleQuickNote = useCallback(() => {
+    dispatch({ type: 'ui/toggle-quick-note' });
+  }, []);
+
   const toggleDockFiles = useCallback(() => {
     dispatch({ type: 'ui/toggle-dock', pane: 'files' });
   }, []);
@@ -507,6 +519,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       openHostForm,
       setPage,
       closeHostForm,
+      toggleQuickNote,
       toggleDockFiles,
       toggleDockMonitor,
       closeDockFiles,
@@ -536,6 +549,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       openHostForm,
       setPage,
       closeHostForm,
+      toggleQuickNote,
       toggleDockFiles,
       toggleDockMonitor,
       closeDockFiles,

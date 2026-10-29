@@ -1,0 +1,148 @@
+/* 速记浮层：贴在右侧、压在终端上方的一块，不抢布局 */
+.quicknote {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 40;
+  width: min(420px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg, 0 18px 48px rgb(0 0 0 / 45%));
+  animation: quicknote-in 180ms var(--ease-out) both;
+  overflow: hidden;
+}
+
+@keyframes quicknote-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.quicknote__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 8px 0 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: var(--text-sm);
+}
+
+.quicknote__switch {
+  flex: 1;
+  min-width: 0;
+  height: 24px;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
+  background: var(--panel-inset);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
+
+.quicknote__ghost {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-xs);
+  color: var(--text-3);
+}
+
+.quicknote__ghost:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.quicknote__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.quicknote__title {
+  flex: none;
+  height: 42px;
+  padding: 0 14px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.quicknote__title:focus {
+  outline: none;
+}
+
+.quicknote__editor {
+  flex: 1;
+  min-height: 0;
+  padding: 2px 14px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: 1.75;
+  resize: none;
+}
+
+.quicknote__editor:focus {
+  outline: none;
+}
+
+.quicknote__editor::placeholder {
+  color: var(--text-3);
+}
+
+.quicknote__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 14px;
+  border-top: 1px solid var(--border);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+
+.quicknote__empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-3);
+  font-size: var(--text-sm);
+}
+
+.quicknote__primary {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--text-sm);
+}
+
+.quicknote__primary:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
