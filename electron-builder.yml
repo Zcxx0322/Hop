@@ -74,7 +74,8 @@ linux:
     - target: deb
       arch:
         - x64
-  icon: build/icons
+  # 单张 1024×1024 交给 electron-builder 生成各尺寸（build/icons 里的 icon-*.png 供窗口用）
+  icon: build/icon.png
   category: Network
   synopsis: SSH workspace
   description: Hop 是一个安静克制的 SSH 工作台：主机管理、多会话终端、文件传输、主机状态与笔记。
