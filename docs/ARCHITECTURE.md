@@ -46,6 +46,10 @@
 | `src/main/core/profile-store.ts` | 连接配置读写、校验、公共视图（剥离机密）、解析成连接参数 | `ProfileStore.resolve()` |
 | `src/main/core/secret-store.ts` | `safeStorage` 加解密，`enc:` 落盘、无密钥环则纯内存 | `SecretStore` |
 | `src/main/core/known-hosts.ts` | `host:port` → 指纹 pin 的检查/信任/列表/遗忘 | `KnownHostsStore` |
+| `src/main/core/remote.ts` | 给文件/监控复用的短连接：同一主机一个池化连接（45 s 空闲回收）、并发首请求共享一次握手、握手后关 Nagle | `RemotePool` `withRemote` `execOnce` |
+| `src/main/core/sftp-service.ts` | 文件浏览上传下载、`~` 解析、SFTP 子系统通道复用、传输记录与进度 | `SftpService` |
+| `src/main/core/monitor-service.ts` | 读取 `/proc` 采样，双次采样算 CPU 与网速，进程 / 磁盘 / DNS / 网关概览 | `MonitorService` |
+| `src/main/core/distro.ts` | `/etc/os-release` + `uname` 识别发行版，写入 profile 供资产页图标 | `detectDistro` |
 | `src/main/core/json-store.ts` | 带版本号的 JSON 原子写（tmp + rename），损坏文件另存 `.corrupt` | `JsonStore<T>` |
 | `src/main/core/errors.ts` | `HopFailure`、`fail(code, msg)`、`toHopError()` 归一化 | `fail` `toHopError` `asResult` |
 | `src/main/core/keys.ts` | 私钥读取、`utils.parseKey`、SHA-256 指纹、`~` 展开、口令缺失识别 | `parsePrivateKey` `sha256Fingerprint` |
@@ -67,6 +71,16 @@
 对外 `ConnectionProfile`（IPC）会剥掉 `auth` 里的密钥材料，只留 `PublicAuth{type, hasSecret, privateKeyPath?, agentSocket?, keyFingerprint?}`；HTTP 面的 `HostDto` 是同一信息的扁平化投影（`authMethod` + `hasPassword` + `keyFingerprint`）。
 
 **为什么要两份 DTO**：IPC 的消费者是自家 preload（可以表达嵌套对象），HTTP 的消费者是前端已有的 `Host` 类型（扁平、便于表单双向绑定）。映射集中在 `gateway.ts` 的 `toHost()` / `toProfileInput()`，不允许两侧各自长出逻辑。
+
+## 3.5 界面结构
+
+- 顶层三页：`终端 / 资产 / 笔记`，状态在 `AppStore.UiState.page`；标题栏负责切换与窗口操作。
+- 终端页：中间是会话标签 + xterm，左侧「文件传输」、右侧「主机状态」各是一块可独立关闭、
+  可拖拽调宽的侧栏（`SideDock`）；底部 `TransfersBar` 常驻，展示所有传输的极简进度。
+- 资产页：列表式主机管理（连接 / 编辑 / 删除），图标按探测到的发行版着色。
+- 笔记：独立笔记页 + 终端页的「速记浮层」；内容存 `localStorage`（`hop.notes.v1`），
+  即时渲染由 `src/lib/markdown.tsx` 完成，不引第三方解析库。
+- 跟随终端目录：`src/store/cwd.ts` 订阅 OSC 7 与 `cd` 指令，文件栏按需跟随。
 
 ## 4. 会话状态机
 

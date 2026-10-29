@@ -3,7 +3,7 @@
 > 一个安静、克制的 SSH 工作台。主机管理、标签式多会话终端、文件传输、主机状态与偏好设置，都围绕「少一点打扰」设计。
 
 <p align="left">
-  <img alt="版本" src="https://img.shields.io/badge/version-0.0.2-2ee66b?style=flat-square" />
+  <img alt="版本" src="https://img.shields.io/badge/version-0.0.3-2ee66b?style=flat-square" />
   <img alt="平台" src="https://img.shields.io/badge/platform-Windows-2ee66b?style=flat-square" />
   <img alt="Electron" src="https://img.shields.io/badge/Electron-45-2ee66b?style=flat-square" />
   <a href="CHANGELOG.md"><img alt="更新日志" src="https://img.shields.io/badge/changelog-中文-2ee66b?style=flat-square" /></a>
@@ -52,8 +52,8 @@
 
 ## 快速开始
 
-> 下载：到 [Releases](https://github.com/Zcxx0322/Hop/releases) 取 `Hop-0.0.2-x64.exe`（安装版，建开始菜单与桌面快捷方式）
-> 或 `Hop-0.0.2-portable.zip`（免安装，解压即用）；每个版本的改动都在 [CHANGELOG.md](CHANGELOG.md)。
+> 下载：到 [Releases](https://github.com/Zcxx0322/Hop/releases) 取对应平台的包——Windows 用 `Hop-0.0.3-x64.exe`（安装版）或 `Hop-0.0.3-portable.zip`（免安装）；
+> macOS 用 `Hop-0.0.3-arm64.dmg` / `Hop-0.0.3-x64.dmg`；Linux 用 `Hop-0.0.3-x64.AppImage` 或 `.deb`。每个版本的改动都在 [CHANGELOG.md](CHANGELOG.md)。
 
 ```bash
 pnpm install
@@ -69,7 +69,7 @@ pnpm exec vite
 - 类型检查：`pnpm typecheck`
 - 端到端测试（真 SSH 握手 + 网关 REST/WS）：`pnpm test:e2e`（20 项）
 - 启动自检（真 Electron 进程内跑一遍后端）：`pnpm smoke`（13 项）
-- 打包 Windows 安装包：`pnpm dist:win` → `release/Hop-0.0.2-x64.exe`（需要普通终端，见下方「打包与分发」）
+- 打包：`pnpm dist:win` / `pnpm dist:mac` / `pnpm dist:linux`，详见下方「打包与分发」
 - 重新生成图标（需要 Python + Pillow）：`pnpm icons`
 
 验证覆盖三层：`tsc` 双配置类型检查、`pnpm test:e2e`（自带假 SSH 服务器，覆盖握手/主机密钥/PTY/断线）、
@@ -97,23 +97,33 @@ pnpm test:e2e                      # 自带假 SSH 服务器，无需真实主�
 ### 打包与分发
 
 ```bash
-pnpm dist:win                       # 一次出三个产物（见下表）
-node node_modules/electron-builder/cli.js --win --dir --config electron-builder.yml
-                                    # 仅目录版：release/win-unpacked/Hop.exe（免安装，可直接双击）
+pnpm dist:win     # Windows：NSIS 安装包 + 免安装 zip
+pnpm dist:mac     # macOS：dmg + zip（x64 / arm64）
+pnpm dist:linux   # Linux：AppImage + deb（x64）
 ```
 
-| 产物 | 用途 |
-| --- | --- |
-| `release/Hop-0.0.2-x64.exe` | NSIS 安装包：开始菜单 / 桌面快捷方式、卸载项 |
-| `release/Hop-0.0.2-x64.zip` | 免安装压缩包：解压到任意目录直接双击 `Hop.exe`，**不经过安装器** |
-| `release/win-unpacked/` | 免安装目录（zip 的多出来的那份源目录） |
+| 平台 | 产物 | 说明 |
+| --- | --- | --- |
+| Windows | `Hop-0.0.3-x64.exe` | NSIS 安装包：开始菜单 / 桌面快捷方式、卸载项 |
+| Windows | `Hop-0.0.3-portable.zip` | 免安装：解压到任意目录直接双击 `Hop.exe`，**不经过安装器** |
+| macOS | `Hop-0.0.3-x64.dmg` / `Hop-0.0.3-arm64.dmg` | 拖进「应用程序」；未签名，首次需右键 → 打开 |
+| macOS | `Hop-0.0.3-*.zip` | `.app` 压缩包，解压即用 |
+| Linux | `Hop-0.0.3-x64.AppImage` | `chmod +x` 后直接运行，不依赖系统库 |
+| Linux | `Hop-0.0.3-x64.deb` | Debian / Ubuntu：`sudo dpkg -i` 安装 |
+
+打 tag（`v0.0.3`）后 GitHub Actions 会在 Windows / macOS / Linux 三个 runner 上并行构建，
+由最后的发布 job 统一下载、生成中文发布说明并挂到 Releases；网络不好时也可以自己本地构建。
+
+`dist:*` 脚本与 CI 共用同一份 `electron-builder.yml`；目录版可用
+`node node_modules/electron-builder/cli.js --win --dir --config electron-builder.yml` 单独产出
+`release/win-unpacked/Hop.exe`（免安装，可直接双击）。
 
 目录版已验证：`release/win-unpacked/Hop.exe` 从 `app.asar` 加载主进程与渲染层、启动网关、写入 `profiles.json` / `secrets.dat` 全部正常（13 项进程内自检通过）。主进程与 preload 是自包含单文件，安装包内不含 `node_modules`。
 
 > **安装器写入失败怎么办**：安装包未做代码签名，部分安全软件会拦截 NSIS 往自定义目录
 > （例如 `D:\xxx\Hop`）写入 `uninstallerIcon.ico`，弹出「不能打开要写入的文件」。
 > 这属于安全软件/系统策略行为，不是安装包损坏。按顺序尝试：
-> ① 用 `Hop-0.0.2-x64.zip` 解压即用（最省事，功能完全一致）；
+> ① 用免安装 zip 解压即用（最省事，功能完全一致）；
 > ② 把安装包加入安全软件信任区或临时关闭其「文件保护 / 主动防御」后重装；
 > ③ 安装目录改回向导默认位置（`%LOCALAPPDATA%\Programs\Hop`）；
 > ④ 为安装包做代码签名（`win.signtoolOptions` / `CSC_LINK`），从根上消除拦截。

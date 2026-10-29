@@ -2,32 +2,28 @@ node_modules
 .pnpm-store
 dist
 dist-ssr
-release
-release2
 *.local
+
 .env
 .env.*
 !.env.example
+
 .DS_Store
 Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .idea
+
 *.tsbuildinfo
 .cache
 .tmp
 .edge-profile
 
-# `build/` holds the committed app icons (icon.ico / icon.png / icon.svg + build/icons/*)
-# used by electron-builder and the window; do not ignore it.
-release3
-release4
-release5
-
+# 打包产物 / 中间目录：`release`（本地构建输出）与 `releaseN`（换目录重打包时用）
+release
+release*/
 # 由 scripts/release-notes.mjs 生成
 release-notes.md
-release6
-release7
 
-# 打包中间目录
-release*/
+# `build/` 存放提交进仓库的应用图标（icon.ico / icon.png / icon.svg + build/icons/*），
+# electron-builder 与窗口都从这里取，所以不要忽略。

@@ -7,9 +7,9 @@ directories:
   buildResources: build
 
 # Everything the packaged app needs: the esbuild output, the Vite renderer
-# bundle, and the window icon used by `window.ts` (the .exe icon comes from
-# `win.icon` below). ssh2/ws are inlined into dist/main/index.cjs, so no
-# node_modules are shipped.
+# bundle, and the window icon used by `window.ts` (the .exe/.app icon comes from
+# the per-platform `icon` below). ssh2/ws are inlined into dist/main/index.cjs,
+# so no node_modules are shipped.
 files:
   - dist/**/*
   - build/icons/icon-{16,32,48,64,128,256,512}.png
@@ -48,5 +48,37 @@ nsis:
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
   installerHeaderIcon: build/icon.ico
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    # .app 套在 zip 里：不想走 dmg 时解压即用（首次需要右键 → 打开）
+    - target: zip
+      arch:
+        - x64
+        - arm64
+  # electron-builder 会用这张 1024×1024 的图生成 .icns
+  icon: build/icon.png
+  category: public.app-category.developer-tools
+  darkModeSupport: true
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  icon: build/icons
+  category: Network
+  synopsis: SSH workspace
+  description: Hop 是一个安静克制的 SSH 工作台：主机管理、多会话终端、文件传输、主机状态与笔记。
+  maintainer: Hop <hop@local>
+  artifactName: ${productName}-${version}-${arch}.${ext}
 
 publish: null

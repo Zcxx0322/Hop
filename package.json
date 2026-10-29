@@ -1,7 +1,7 @@
 {
   "name": "hop",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "description": "Hop — a calm, modern SSH workspace",
   "main": "dist/main/index.cjs",
@@ -15,7 +15,9 @@
     "test:e2e": "node scripts/run-e2e.mjs",
     "smoke": "node scripts/smoke.mjs",
     "icons": "node scripts/make-icons.mjs",
-    "dist:win": "node scripts/build.mjs && electron-builder --win --config electron-builder.yml"
+    "dist:win": "node scripts/build.mjs && electron-builder --win --config electron-builder.yml",
+    "dist:mac": "node scripts/build.mjs && electron-builder --mac --config electron-builder.yml",
+    "dist:linux": "node scripts/build.mjs && electron-builder --linux --config electron-builder.yml"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",

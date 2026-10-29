@@ -9,11 +9,23 @@ on:
 permissions:
   contents: write
 
+# 三平台并行构建：每个 job 只做「打包 + 上传 artifact」，
+# 最后由 release job 统一下载、生成中文说明并发布，避免并发抢着建 Release。
 jobs:
-  windows-installer:
-    name: Build Windows installer
-    runs-on: windows-latest
-    timeout-minutes: 30
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: --win nsis zip
+          - os: macos-latest
+            target: --mac dmg zip
+          - os: ubuntu-latest
+            target: --linux AppImage deb
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,19 +47,59 @@ jobs:
       - name: Build bundles
         run: pnpm build
 
-      - name: Package NSIS installer
-        run: pnpm exec electron-builder --win nsis --config electron-builder.yml
+      - name: Package
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: pnpm exec electron-builder ${{ matrix.target }} --config electron-builder.yml
 
-      - name: List artifacts
-        shell: pwsh
-        run: Get-ChildItem release -Filter *.exe | Select-Object Name, Length
-
-      - name: Build portable zip
+      - name: Rename Windows portable zip
+        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $ver = "${{ github.ref_name }}".TrimStart('v')
-          Compress-Archive -Path release/win-unpacked/* -DestinationPath "release/Hop-$ver-portable.zip" -CompressionLevel Optimal
-          Get-ChildItem release -Filter *.zip | Select-Object Name, Length
+          $src = Get-ChildItem release -Filter 'Hop-*-x64.zip' | Select-Object -First 1
+          if ($src) { Rename-Item $src.FullName "Hop-$ver-portable.zip" }
+
+      - name: List artifacts
+        shell: bash
+        run: ls -lh release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hop-${{ runner.os }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.deb
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release
+          find artifacts -type f -maxdepth 3 -exec cp {} release/ \;
+          ls -lh release
 
       - name: Generate Chinese release notes
         run: node scripts/release-notes.mjs
@@ -59,5 +111,8 @@ jobs:
           body_path: release-notes.md
           generate_release_notes: false
           files: |
-            release/Hop-*-x64.exe
-            release/Hop-*-portable.zip
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.AppImage
+            release/*.deb
