@@ -57,9 +57,27 @@ export function bundleArgs(entry, outfile, opts = {}) {
  * @param {string[]} args
  * @returns {Promise<void>}
  */
+/**
+ * 按平台决定怎么调用 esbuild。
+ *
+ * esbuild 的 `bin/esbuild` 在安装时会被替换成当前平台的**原生可执行文件**
+ * （Linux 上是 ELF，Windows 上仍是 node 脚本）。所以：
+ *   - Windows：用 node 执行那个脚本；
+ *   - macOS / Linux：直接执行原生二进制。
+ * 之前两端都用 `process.execPath` 启动，Linux 上会把 ELF 当 JS 解析
+ * （`SyntaxError: Invalid or unexpected token`），CI 因此失败。
+ */
+function esbuildInvocation(args) {
+  if (process.platform === 'win32') {
+    return { cmd: process.execPath, argv: [esbuildBin, ...args] };
+  }
+  return { cmd: esbuildBin, argv: args };
+}
+
 export function runEsbuild(args) {
+  const { cmd, argv } = esbuildInvocation(args);
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [esbuildBin, ...args], {
+    const child = spawn(cmd, argv, {
       cwd: root,
       stdio: 'inherit',
       env: esbuildEnv(),
@@ -80,5 +98,6 @@ export function esbuildEnv() {
  * @returns {import('node:child_process').ChildProcess}
  */
 export function spawnEsbuild(args) {
-  return spawn(process.execPath, [esbuildBin, ...args], { cwd: root, stdio: 'inherit', env: esbuildEnv() });
+  const { cmd, argv } = esbuildInvocation(args);
+  return spawn(cmd, argv, { cwd: root, stdio: 'inherit', env: esbuildEnv() });
 }

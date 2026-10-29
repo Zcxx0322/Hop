@@ -74,6 +74,10 @@ linux:
     - target: deb
       arch:
         - x64
+    # Arch Linux 原生包（pacman -U）
+    - target: pacman
+      arch:
+        - x64
   # 单张 1024×1024 交给 electron-builder 生成各尺寸（build/icons 里的 icon-*.png 供窗口用）
   icon: build/icon.png
   category: Network

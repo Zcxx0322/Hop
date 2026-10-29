@@ -9,8 +9,9 @@ on:
 permissions:
   contents: write
 
-# 三平台并行构建：每个 job 只做「打包 + 上传 artifact」，
+# Windows + Linux 并行构建：每个 job 只做「打包 + 上传 artifact」，
 # 最后由 release job 统一下载、生成中文说明并发布，避免并发抢着建 Release。
+# macOS 产物暂不发布（需要 macOS 机器或自备签名证书），配置保留在 electron-builder.yml 里。
 jobs:
   build:
     name: Build (${{ matrix.os }})
@@ -22,10 +23,9 @@ jobs:
         include:
           - os: windows-latest
             target: --win nsis zip
-          - os: macos-latest
-            target: --mac dmg zip
           - os: ubuntu-latest
-            target: --linux AppImage deb
+            # AppImage 适合 Arch / 任意发行版，deb 面向 Ubuntu/Debian，pacman 面向 Arch
+            target: --linux AppImage deb pacman
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,10 +71,10 @@ jobs:
           name: hop-${{ runner.os }}
           path: |
             release/*.exe
-            release/*.dmg
             release/*.zip
             release/*.AppImage
             release/*.deb
+            release/*.pkg.tar.*
           if-no-files-found: error
 
   release:
@@ -112,7 +112,7 @@ jobs:
           generate_release_notes: false
           files: |
             release/*.exe
-            release/*.dmg
             release/*.zip
             release/*.AppImage
             release/*.deb
+            release/*.pkg.tar.*

@@ -24,9 +24,10 @@
 
 ### 构建与分发
 
-- **三平台发布**：打 tag 后 GitHub Actions 并行构建 Windows（NSIS 安装包 + 免安装 zip）、
-  macOS（dmg + zip，x64 / arm64）、Linux（AppImage + deb），统一生成中文发布说明并挂到 Releases。
-- 本地同样可用 `pnpm dist:win` / `dist:mac` / `dist:linux`，三端共用一份 `electron-builder.yml`。
+- **Windows + Linux 发布**：打 tag 后 GitHub Actions 并行构建 Windows（NSIS 安装包 + 免安装 zip）与
+  Linux（AppImage 通用包、deb 面向 Ubuntu/Debian、pkg.tar.zst 面向 Arch），统一生成中文发布说明并挂到 Releases。
+- 本地可用 `pnpm dist:win` / `dist:linux`；macOS 配置保留在 `electron-builder.yml`，需在 macOS 上自行构建。
+- 修复：Linux/macOS 上构建脚本把 esbuild 原生二进制当成 JS 用 node 执行（CI 报 `SyntaxError`），改为按平台直接调用。
 - 清理：删除过期版本的截图与冗余构建目录，`.gitignore` 归并整理，README / 架构说明同步新结构。
 
 

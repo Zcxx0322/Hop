@@ -4,7 +4,7 @@
 
 <p align="left">
   <img alt="版本" src="https://img.shields.io/badge/version-0.0.3-2ee66b?style=flat-square" />
-  <img alt="平台" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-2ee66b?style=flat-square" />
+  <img alt="平台" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2ee66b?style=flat-square" />
   <img alt="Electron" src="https://img.shields.io/badge/Electron-45-2ee66b?style=flat-square" />
   <a href="CHANGELOG.md"><img alt="更新日志" src="https://img.shields.io/badge/changelog-中文-2ee66b?style=flat-square" /></a>
 </p>
@@ -53,7 +53,7 @@
 ## 快速开始
 
 > 下载：到 [Releases](https://github.com/Zcxx0322/Hop/releases) 取对应平台的包——Windows 用 `Hop-0.0.3-x64.exe`（安装版）或 `Hop-0.0.3-portable.zip`（免安装）；
-> macOS 用 `Hop-0.0.3-arm64.dmg` / `Hop-0.0.3-x64.dmg`；Linux 用 `Hop-0.0.3-x64.AppImage` 或 `.deb`。每个版本的改动都在 [CHANGELOG.md](CHANGELOG.md)。
+> Linux 用 `Hop-0.0.3-x64.AppImage`（通用，含 Arch）、`Hop-0.0.3-x64.deb`（Ubuntu/Debian）或 `Hop-0.0.3-x64.pkg.tar.zst`（Arch，`pacman -U` 安装）。每个版本的改动都在 [CHANGELOG.md](CHANGELOG.md)。
 
 ```bash
 pnpm install
@@ -69,7 +69,7 @@ pnpm exec vite
 - 类型检查：`pnpm typecheck`
 - 端到端测试（真 SSH 握手 + 网关 REST/WS）：`pnpm test:e2e`（20 项）
 - 启动自检（真 Electron 进程内跑一遍后端）：`pnpm smoke`（13 项）
-- 打包：`pnpm dist:win` / `pnpm dist:mac` / `pnpm dist:linux`，详见下方「打包与分发」
+- 打包：`pnpm dist:win` / `pnpm dist:linux`（macOS 需在 macOS 上自行构建），详见下方「打包与分发」
 - 重新生成图标（需要 Python + Pillow）：`pnpm icons`
 
 验证覆盖三层：`tsc` 双配置类型检查、`pnpm test:e2e`（自带假 SSH 服务器，覆盖握手/主机密钥/PTY/断线）、
@@ -98,7 +98,7 @@ pnpm test:e2e                      # 自带假 SSH 服务器，无需真实主�
 
 ```bash
 pnpm dist:win     # Windows：NSIS 安装包 + 免安装 zip
-pnpm dist:mac     # macOS：dmg + zip（x64 / arm64）
+pnpm dist:mac     # macOS：dmg + zip（x64 / arm64，需在 macOS 上运行）
 pnpm dist:linux   # Linux：AppImage + deb（x64）
 ```
 
@@ -106,12 +106,11 @@ pnpm dist:linux   # Linux：AppImage + deb（x64）
 | --- | --- | --- |
 | Windows | `Hop-0.0.3-x64.exe` | NSIS 安装包：开始菜单 / 桌面快捷方式、卸载项 |
 | Windows | `Hop-0.0.3-portable.zip` | 免安装：解压到任意目录直接双击 `Hop.exe`，**不经过安装器** |
-| macOS | `Hop-0.0.3-x64.dmg` / `Hop-0.0.3-arm64.dmg` | 拖进「应用程序」；未签名，首次需右键 → 打开 |
-| macOS | `Hop-0.0.3-*.zip` | `.app` 压缩包，解压即用 |
+| Arch Linux | `Hop-0.0.3-x64.pkg.tar.zst` | `sudo pacman -U Hop-0.0.3-x64.pkg.tar.zst` |
 | Linux | `Hop-0.0.3-x64.AppImage` | `chmod +x` 后直接运行，不依赖系统库 |
 | Linux | `Hop-0.0.3-x64.deb` | Debian / Ubuntu：`sudo dpkg -i` 安装 |
 
-打 tag（`v0.0.3`）后 GitHub Actions 会在 Windows / macOS / Linux 三个 runner 上并行构建，
+打 tag（`v0.0.3`）后 GitHub Actions 会在 Windows 与 Linux runner 上并行构建，
 由最后的发布 job 统一下载、生成中文发布说明并挂到 Releases；网络不好时也可以自己本地构建。
 
 `dist:*` 脚本与 CI 共用同一份 `electron-builder.yml`；目录版可用
