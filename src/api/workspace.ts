@@ -93,6 +93,24 @@ export const listTransfers = (hostId?: string): Promise<Transfer[]> =>
 
 export const clearTransfers = (): Promise<void> => request<void>('/transfers', { method: 'DELETE' });
 
+/* ---- 主机可达性 -------------------------------------------------------- */
+
+export type ProbeReason = 'timeout' | 'refused' | 'dns' | 'error';
+
+export interface ProbeResult {
+  reachable: boolean;
+  rttMs: number | null;
+  reason?: ProbeReason;
+}
+
+/** 只做 TCP 探测（不握手、不发凭据），用于资产页的在线 / 离线状态。 */
+export const probeHosts = (ids: string[]): Promise<Record<string, ProbeResult>> =>
+  request<{ results: Record<string, ProbeResult> }>('/hosts/probe', {
+    method: 'POST',
+    body: JSON.stringify({ ids }),
+    timeoutMs: 8000,
+  }).then((payload) => payload.results);
+
 /* ---- 主机监控 ---------------------------------------------------------- */
 
 export interface HostAddress {

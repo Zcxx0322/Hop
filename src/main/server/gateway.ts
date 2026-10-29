@@ -13,6 +13,7 @@ import type {
 import { toHopError } from '../core/errors';
 import type { KnownHostsStore } from '../core/known-hosts';
 import { createLogger } from '../core/logger';
+import { probeAll } from '../core/probe';
 import type { ProfileStore } from '../core/profile-store';
 import { SessionManager } from '../core/session-manager';
 import type { SftpService } from '../core/sftp-service';
@@ -410,6 +411,20 @@ export async function startGateway(deps: GatewayDeps): Promise<GatewayHandle | n
 
     if (path === '/hosts' && method === 'GET') {
       sendJson(res, 200, deps.profiles.list().map(toHost));
+      return;
+    }
+
+    // 资产页「在线 / 离线」：只做 TCP 探测，不涉及凭据
+    if (path === '/hosts/probe' && method === 'POST') {
+      const body = await readJson(req);
+      const ids = Array.isArray(body.ids) ? body.ids.filter((id): id is string => typeof id === 'string') : [];
+      const targets = ids
+        .slice(0, 100)
+        .map((id) => deps.profiles.get(id))
+        .filter((profile): profile is NonNullable<typeof profile> => Boolean(profile))
+        .map((profile) => ({ id: profile.id, host: profile.host, port: profile.port }));
+      const results = await probeAll(targets);
+      sendJson(res, 200, { results });
       return;
     }
 

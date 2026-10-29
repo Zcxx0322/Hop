@@ -278,6 +278,15 @@
   flex: 0 0 auto;
 }
 
+/* 已连接：实心强调色 */
+.assets__state--connected {
+  color: var(--accent-ink);
+  border-color: transparent;
+  background: var(--accent);
+  font-weight: 600;
+}
+
+/* 在线（端口通、未建会话）：描边样式，与已连接区分 */
 .assets__state--online {
   color: var(--accent);
   border-color: var(--accent-border);
@@ -285,7 +294,24 @@
 }
 
 .assets__state--online .assets__state-dot {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  background: var(--accent);
+}
+
+/* 检测中：中性，轻微脉冲 */
+.assets__state--checking {
+  color: var(--text-3);
+  border-color: var(--border);
+}
+
+.assets__state--checking .assets__state-dot {
+  animation: assets-pulse 1.1s ease-in-out infinite;
+}
+
+/* 离线：压暗 */
+.assets__state--offline {
+  color: var(--text-3);
+  border-color: var(--border);
+  opacity: 0.72;
 }
 
 .assets__state--connecting {

@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { isMock } from '../api/config';
+import { probeHosts } from '../api/workspace';
 import { relativeTime } from '../lib/visual';
 import { useApp } from '../store/AppStore';
 import { DistroIcon } from './ui/DistroIcon';
@@ -11,18 +13,22 @@ const AUTH_LABEL: Record<string, string> = {
   agent: 'Agent',
 };
 
-type HostStatus = 'online' | 'connecting' | 'offline';
+type HostStatus = 'connected' | 'connecting' | 'online' | 'offline' | 'checking';
 
 const STATE_LABEL: Record<HostStatus, string> = {
-  online: '在线',
+  connected: '已连接',
   connecting: '连接中',
+  online: '在线',
   offline: '离线',
+  checking: '检测中',
 };
 
 const STATE_HINT: Record<HostStatus, string> = {
-  online: '当前有会话已连上',
+  connected: '当前有会话已连上',
   connecting: '正在建立连接',
-  offline: '当前没有活动会话',
+  online: 'SSH 端口可连通，尚未建立会话',
+  offline: 'SSH 端口探测不通',
+  checking: '正在探测 SSH 端口',
 };
 
 /** 状态点 + 文案：在线 / 连接中 / 离线 */
@@ -43,15 +49,49 @@ export function AssetsPage() {
   const { state, actions } = useApp();
   const { hosts, hostsLoaded, hostsError, sessions } = state;
   const [query, setQuery] = useState('');
+  /** 端口探测结果：在线 / 离线；还没有结果时为 undefined */
+  const [reach, setReach] = useState<Record<string, boolean>>({});
 
-  /** 会话决定状态：有已连接会话=在线，正在建连=连接中，其余=离线 */
+  /** 状态 = 会话状态优先，没有会话时看 SSH 端口通不通 */
   const statusOf = (hostId: string): HostStatus => {
     const session = sessions.find((item) => item.hostId === hostId);
-    if (!session) return 'offline';
-    if (session.status === 'connected') return 'online';
-    if (session.status === 'connecting' || session.status === 'reconnecting') return 'connecting';
-    return 'offline';
+    if (session?.status === 'connected') return 'connected';
+    if (session?.status === 'connecting' || session?.status === 'reconnecting') return 'connecting';
+    const probed = reach[hostId];
+    if (probed === true) return 'online';
+    if (probed === false) return 'offline';
+    return 'checking';
   };
+
+  // 进入资产页先探一轮，之后每 20 秒刷新一次；只测 TCP，不碰凭据
+  useEffect(() => {
+    const ids = hosts.map((host) => host.id);
+    if (!ids.length) return;
+    if (isMock()) {
+      // 演示模式没有真实端口，按示例主机名给一个稳定的结果
+      setReach(Object.fromEntries(ids.map((id) => [id, !id.endsWith('unreachable')])));
+      return;
+    }
+    let cancelled = false;
+    const run = () => {
+      probeHosts(ids)
+        .then((results) => {
+          if (cancelled) return;
+          const next: Record<string, boolean> = {};
+          for (const [id, result] of Object.entries(results)) next[id] = result.reachable;
+          setReach(next);
+        })
+        .catch(() => {
+          /* 探测失败保持上一轮结果 */
+        });
+    };
+    run();
+    const timer = window.setInterval(run, 20_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [hosts]);
 
   const list = useMemo(() => {
     const keyword = query.trim().toLowerCase();
