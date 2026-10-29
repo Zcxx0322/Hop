@@ -3,7 +3,7 @@
 > 一个安静、克制的 SSH 工作台。主机管理、标签式多会话终端、文件传输、主机状态与偏好设置，都围绕「少一点打扰」设计。
 
 <p align="left">
-  <img alt="版本" src="https://img.shields.io/badge/version-0.0.3-2ee66b?style=flat-square" />
+  <img alt="版本" src="https://img.shields.io/badge/version-0.0.5-2ee66b?style=flat-square" />
   <img alt="平台" src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-2ee66b?style=flat-square" />
   <img alt="Electron" src="https://img.shields.io/badge/Electron-45-2ee66b?style=flat-square" />
   <a href="CHANGELOG.md"><img alt="更新日志" src="https://img.shields.io/badge/changelog-中文-2ee66b?style=flat-square" /></a>
@@ -35,30 +35,30 @@
 
 | 能力 | 说明 |
 | --- | --- |
-| 🗄️ 资产页 | 后台管理式列表（标题栏「终端 / 资产 / 笔记」切换，`Esc` 回终端）：主机 / 标签 / 认证 / 上次连接 / 操作六列，每行 **连接 · 编辑 · 删除**，搜索名称·地址·标签，收藏置顶；状态列用 **TCP 探测**（不握手、不碰凭据）区分 在线 / 离线，已建会话显示 已连接，每 20 秒自动刷新 |
-| 🐧 发行版图标 | 连上主机后自动读取 `/etc/os-release`（回退 `uname`），把发行版记在资产上；Ubuntu / Debian / Arch / Rocky / Fedora / Alpine / openSUSE / Kali 等直接显示品牌标志，未识别时退回主机名首字 |
-| 🗂️ 多会话标签 | 同一主机可开多个会话（标签带序号）、连接状态点、快捷键切换、中键/⌘W 关闭 |
-| ⌨️ 真终端 | xterm.js + WebGL 渲染 + 自适应尺寸 + 主题跟随 + 断线重连；SSH socket 关闭 Nagle，逐键回显不做多余攒包 |
-| ⌘ 命令面板 | 一个输入框覆盖「连接 / 新建 / 切换 / 设置」，支持 `host:`、`edit:` 前缀 |
-| 🎨 界面主题 | 11 套：纯黑 + 绿、纯白 + 绿、跟随系统，另移植 One Dark / Dracula / Nord / Tokyo Night / Gruvbox / Catppuccin / Solarized 深浅；偏好设置里卡片预览切换，写入 `data-palette` 覆盖设计令牌 |
-| 🖌️ 终端主题 | 9 套，与界面主题**完全独立**：可「跟随界面」，也可固定成 One Dark / Dracula / Nord / Tokyo Night / Gruvbox / Catppuccin / Solarized 深浅，16 色 ANSI、光标与选区整套替换 |
-| 🪟 无边框窗口 | 自绘标题栏（品牌 / 标签 / 会话操作 / 最小化·最大化·关闭）；文件传输、主机状态、重新连接都在右上角，终端从标题栏下一行直通到底，没有多余横条 |
-| 🎬 连接动效 | 连接/重连时覆盖终端：呼吸光环 + 分段文案（建通道 → 协商密钥 → 验证身份 → 启动终端），成功后闪光淡出 |
-| 📁 文件传输 | 连接后常驻**左侧**：30 px 图标工具条（上一级 / 刷新 / 新建文件夹 / 跟随终端目录 / 上传）+ 带描边与路径图标的可输入路径框（`~`、`/`、绝对/相对路径都能跳，`Esc` 还原），工具条上的「跟随终端目录」按钮点亮后随终端 `cd` 自动切换目录；右键打开/下载/重命名/复制路径/删除，目录按名称排序，可拖拽调宽（260–620 px），从主目录能一路退回 `/` |
-| 📈 主机状态 | 连接后常驻**右侧**，一条远端命令采样后**逐行纵向排列**（系统 → CPU → 内存 → 磁盘 → 网络 → 进程）：纯数值一行一项（名称在左、数值在右），带占用率的指标独立成块——名称与数值一行、4 px 细进度条单独一行，文字和条形不再互相挤；两侧可各自关闭、独立拖拽调宽、3 秒刷新 |
-| ⚡ 浏览提速 | SSH 连接统一关闭 Nagle，SFTP 子系统通道按连接复用：目录 437 ms → 104 ms，二次进入 76 ms |
-| 📋 复制粘贴 | 选中即复制（可关，只写纯文本）、复制快捷键可配（`Ctrl+C` 或 `Ctrl+Shift+C`）、复制成功轻提示可关，粘贴二选一（`Ctrl+V` / 右键） |
-| 📊 传输进度 | 汇总在**整页最下方的一条 39 px 窄栏**：每条传输一行（图标 / 文件名 / 百分比 · 速率 · 剩余），进度线压成 2 px 贴在行底，完成态自动隐藏；失败原因直接写在行内，点 ✕ 收起，新传输开始时自动重新出现 |
-| ✍️ 笔记 | 两种入口：标题栏「笔记」进入完整笔记页；终端页右侧铅笔按钮（或 `Ctrl+Shift+N`）唤出**速记浮层**，不离开会话就能随手记，`Esc` 收起；都兼容常用 Markdown（标题、列表、引用、代码块、表格、链接），笔记页的「即时渲染」开关默认关闭，打开后左右分栏实时预览，内容自动存在本机 |
-| 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
-| 🎛️ 偏好设置 | 标题栏右上角齿轮随时打开；**居中双栏窗口**（左主题、右终端与连接），即时生效并保存在本机，底部保留版本号与「恢复默认」 |
+| 资产页 | 后台管理式列表（标题栏「终端 / 资产 / 笔记」切换，`Esc` 回终端）：主机 / 标签 / 认证 / 上次连接 / 操作六列，每行 **连接 · 编辑 · 删除**，搜索名称·地址·标签，收藏置顶；状态列用 **TCP 探测**（不握手、不碰凭据）区分 在线 / 离线，已建会话显示 已连接，每 20 秒自动刷新 |
+| 发行版图标 | 连上主机后自动读取 `/etc/os-release`（回退 `uname`），把发行版记在资产上；Ubuntu / Debian / Arch / Rocky / Fedora / Alpine / openSUSE / Kali 等直接显示品牌标志，未识别时退回主机名首字 |
+| 多会话标签 | 同一主机可开多个会话（标签带序号）、连接状态点、快捷键切换、中键/⌘W 关闭 |
+| 真终端 | xterm.js + WebGL 渲染 + 自适应尺寸 + 主题跟随 + 断线重连；SSH socket 关闭 Nagle，逐键回显不做多余攒包 |
+| 命令面板 | 一个输入框覆盖「连接 / 新建 / 切换 / 设置」，支持 `host:`、`edit:` 前缀 |
+| 界面主题 | 11 套：纯黑 + 绿、纯白 + 绿、跟随系统，另移植 One Dark / Dracula / Nord / Tokyo Night / Gruvbox / Catppuccin / Solarized 深浅；偏好设置里卡片预览切换，写入 `data-palette` 覆盖设计令牌 |
+| 终端主题 | 9 套，与界面主题**完全独立**：可「跟随界面」，也可固定成 One Dark / Dracula / Nord / Tokyo Night / Gruvbox / Catppuccin / Solarized 深浅，16 色 ANSI、光标与选区整套替换 |
+| 无边框窗口 | 自绘标题栏（品牌 / 标签 / 会话操作 / 最小化·最大化·关闭）；文件传输、主机状态、重新连接都在右上角，终端从标题栏下一行直通到底，没有多余横条 |
+| 连接动效 | 连接/重连时覆盖终端：呼吸光环 + 分段文案（建通道 → 协商密钥 → 验证身份 → 启动终端），成功后闪光淡出 |
+| 文件传输 | 连接后常驻**左侧**：30 px 图标工具条（上一级 / 刷新 / 新建文件夹 / 跟随终端目录 / 上传）+ 带描边与路径图标的可输入路径框（`~`、`/`、绝对/相对路径都能跳，`Esc` 还原），工具条上的「跟随终端目录」按钮点亮后随终端 `cd` 自动切换目录；右键打开/下载/重命名/复制路径/删除，目录按名称排序，可拖拽调宽（260–620 px），从主目录能一路退回 `/` |
+| 主机状态 | 连接后常驻**右侧**，一条远端命令采样后**逐行纵向排列**（系统 → CPU → 内存 → 磁盘 → 网络 → 进程）：纯数值一行一项（名称在左、数值在右），带占用率的指标独立成块——名称与数值一行、4 px 细进度条单独一行，文字和条形不再互相挤；两侧可各自关闭、独立拖拽调宽、3 秒刷新 |
+| 浏览提速 | SSH 连接统一关闭 Nagle，SFTP 子系统通道按连接复用：目录 437 ms → 104 ms，二次进入 76 ms |
+| 复制粘贴 | 选中即复制（可关，只写纯文本）、复制快捷键可配（`Ctrl+C` 或 `Ctrl+Shift+C`）、复制成功轻提示可关，粘贴二选一（`Ctrl+V` / 右键） |
+| 传输进度 | 汇总在**整页最下方的一条 39 px 窄栏**：每条传输一行（图标 / 文件名 / 百分比 · 速率 · 剩余），进度线压成 2 px 贴在行底，完成态自动隐藏；失败原因直接写在行内，点 ✕ 收起，新传输开始时自动重新出现 |
+| 笔记 | 两种入口：标题栏「笔记」进入完整笔记页；终端页右侧铅笔按钮（或 `Ctrl+Shift+N`）唤出**速记浮层**，不离开会话就能随手记，`Esc` 收起；都兼容常用 Markdown（标题、列表、引用、代码块、表格、链接），笔记页的「即时渲染」开关默认关闭，打开后左右分栏实时预览，内容自动存在本机 |
+| 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
+| 偏好设置 | 标题栏右上角齿轮随时打开；**居中双栏窗口**（左主题、右终端与连接），即时生效并保存在本机，底部保留版本号与「恢复默认」 |
 
 > 复制出来的内容永远是纯文本：ANSI 颜色、行尾多余空白和首尾空行都会在写入剪贴板前剥掉。
 
 ## 快速开始
 
-> 下载：到 [Releases](https://github.com/Zcxx0322/Hop/releases) 取对应平台的包——Windows 用 `Hop-0.0.3-x64.exe`（安装版）或 `Hop-0.0.3-portable.zip`（免安装）；
-> Linux 用 `Hop-0.0.3-x64.AppImage`（通用，含 Arch）、`Hop-0.0.3-x64.deb`（Ubuntu/Debian）或 `Hop-0.0.3-x64.pkg.tar.zst`（Arch，`pacman -U` 安装）。每个版本的改动都在 [CHANGELOG.md](CHANGELOG.md)。
+> 下载：到 [Releases](https://github.com/Zcxx0322/Hop/releases) 取对应平台的包——Windows 用 `Hop-0.0.5-x64.exe`（安装版）或 `Hop-0.0.5-portable.zip`（免安装）；
+> Linux 用 `Hop-0.0.5-x64.AppImage`（通用，含 Arch）、`Hop-0.0.5-x64.deb`（Ubuntu/Debian）或 `Hop-0.0.5-x64.pkg.tar.zst`（Arch，`pacman -U` 安装）。每个版本的改动都在 [CHANGELOG.md](CHANGELOG.md)。
 
 ```bash
 pnpm install
@@ -109,13 +109,13 @@ pnpm dist:linux   # Linux：AppImage + deb（x64）
 
 | 平台 | 产物 | 说明 |
 | --- | --- | --- |
-| Windows | `Hop-0.0.3-x64.exe` | NSIS 安装包：开始菜单 / 桌面快捷方式、卸载项 |
-| Windows | `Hop-0.0.3-portable.zip` | 免安装：解压到任意目录直接双击 `Hop.exe`，**不经过安装器** |
-| Arch Linux | `Hop-0.0.3-x64.pkg.tar.zst` | `sudo pacman -U Hop-0.0.3-x64.pkg.tar.zst` |
-| Linux | `Hop-0.0.3-x64.AppImage` | `chmod +x` 后直接运行，不依赖系统库 |
-| Linux | `Hop-0.0.3-x64.deb` | Debian / Ubuntu：`sudo dpkg -i` 安装 |
+| Windows | `Hop-0.0.5-x64.exe` | NSIS 安装包：开始菜单 / 桌面快捷方式、卸载项 |
+| Windows | `Hop-0.0.5-portable.zip` | 免安装：解压到任意目录直接双击 `Hop.exe`，**不经过安装器** |
+| Arch Linux | `Hop-0.0.5-x64.pkg.tar.zst` | `sudo pacman -U Hop-0.0.5-x64.pkg.tar.zst` |
+| Linux | `Hop-0.0.5-x64.AppImage` | `chmod +x` 后直接运行，不依赖系统库 |
+| Linux | `Hop-0.0.5-x64.deb` | Debian / Ubuntu：`sudo dpkg -i` 安装 |
 
-打 tag（`v0.0.3`）后 GitHub Actions 会在 Windows 与 Linux runner 上并行构建，
+打 tag（`v0.0.5`）后 GitHub Actions 会在 Windows 与 Linux runner 上并行构建，
 由最后的发布 job 统一下载、生成中文发布说明并挂到 Releases；网络不好时也可以自己本地构建。
 
 `dist:*` 脚本与 CI 共用同一份 `electron-builder.yml`；目录版可用
