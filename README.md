@@ -20,8 +20,8 @@
 | ![命令面板](docs/screenshots/command-palette.png) | ![新建连接](docs/screenshots/host-form.png) |
 | **文件右键菜单** | **主机状态：逐行纵向排列** |
 | ![右键菜单](docs/screenshots/dock-menu.png) | ![主机状态](docs/screenshots/monitor-detail.png) |
-| **底部传输进度（整页最下方，可关闭）** | **偏好设置** |
-| ![传输进度](docs/screenshots/transfer.png) | ![偏好设置](docs/screenshots/settings.png) |
+| **笔记：编辑 + 即时渲染** | **偏好设置** |
+| ![笔记](docs/screenshots/notes.png) | ![偏好设置](docs/screenshots/settings.png) |
 | **连接动效：握手进行中** | **连接动效：握手完成** |
 | ![连接中](docs/screenshots/connect.png) | ![已连接](docs/screenshots/connect-done.png) |
 | **浅色主题：欢迎页（纯白 + 墨绿）** | **浅色主题：终端** |
@@ -39,11 +39,12 @@
 | 🎨 两套主题 | 纯黑 + 荧光绿 / 纯白 + 墨绿，终端配色随主题一起切换 |
 | 🪟 无边框窗口 | 自绘标题栏（品牌 / 标签 / 会话操作 / 最小化·最大化·关闭）；文件传输、主机状态、重新连接都在右上角，终端从标题栏下一行直通到底，没有多余横条 |
 | 🎬 连接动效 | 连接/重连时覆盖终端：呼吸光环 + 分段文案（建通道 → 协商密钥 → 验证身份 → 启动终端），成功后闪光淡出 |
-| 📁 文件传输 | 连接后常驻**左侧**：30 px 图标工具条（上一级 / 刷新 / 新建文件夹 / 上传）+ 可点击的路径面包屑，SFTP 浏览、右键打开/下载/重命名/复制路径/删除、目录按名称排序（中文/点文件在前），可拖拽调宽（260–620 px） |
-| 📈 主机状态 | 连接后常驻**右侧**，一条远端命令采样后**逐行纵向排列**（系统 → CPU → 内存 → 磁盘 → 网络 → 进程），每行只放一项：名称在左、数值在右、占用率进度条独占下一行；两侧可各自关闭、独立拖拽调宽、3 秒刷新 |
+| 📁 文件传输 | 连接后常驻**左侧**：30 px 图标工具条（上一级 / 刷新 / 新建文件夹 / 上传）+ 可手输回车的路径框（`~`、`/`、绝对/相对路径都能跳，`Esc` 还原），右侧「跟随」开关打开后随终端 `cd` 自动切换目录；右键打开/下载/重命名/复制路径/删除，目录按名称排序，可拖拽调宽（260–620 px），从主目录能一路退回 `/` |
+| 📈 主机状态 | 连接后常驻**右侧**，一条远端命令采样后**逐行纵向排列**（系统 → CPU → 内存 → 磁盘 → 网络 → 进程）：纯数值一行一项（名称在左、数值在右），带占用率的指标独立成块——名称与数值一行、4 px 细进度条单独一行，文字和条形不再互相挤；两侧可各自关闭、独立拖拽调宽、3 秒刷新 |
 | ⚡ 浏览提速 | SSH 连接统一关闭 Nagle，SFTP 子系统通道按连接复用：目录 437 ms → 104 ms，二次进入 76 ms |
 | 📋 复制粘贴 | 选中即复制（可关，只写纯文本）、复制快捷键可配（`Ctrl+C` 或 `Ctrl+Shift+C`）、复制成功轻提示可关，粘贴二选一（`Ctrl+V` / 右键） |
-| 📊 传输进度 | 汇总在**整页最下方**：文件名、百分比、速率、剩余时间与失败原因；点 ✕ 收起，新传输开始时自动重新出现 |
+| 📊 传输进度 | 汇总在**整页最下方的一条 39 px 窄栏**：每条传输一行（图标 / 文件名 / 百分比 · 速率 · 剩余），进度线压成 2 px 贴在行底，完成态自动隐藏；失败原因直接写在行内，点 ✕ 收起，新传输开始时自动重新出现 |
+| ✍️ 笔记 | 独立笔记页（标题栏「笔记」或在终端页点铅笔按钮 / `Ctrl+Shift+N`）：左侧列表 + 右侧编辑，兼容常用 Markdown（标题、列表、引用、代码块、表格、链接）；「即时渲染」开关默认关闭，打开后左右分栏实时预览，内容自动存在本机 |
 | 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
 | 🎛️ 偏好设置 | 即时生效并保存在本机；底部状态栏已移除，版本号与「恢复默认」都收进设置 |
 
@@ -137,14 +138,17 @@ src/
 ├── components/
 │   ├── TitleBar · TabBar · TerminalPane · Welcome · AssetsPage
 │   ├── SideDock · FilesBrowser · MonitorView · TransfersBar
-│   ├── FilesPanel · MonitorPanel · CommandPalette · HostFormDialog
+│   ├── NotesPage · CommandPalette · HostFormDialog
 │   ├── SettingsPanel · ConfirmDialog
 │   └── ui/               # Button · Field · Modal · Kbd · Icon · Logo · Spinner · Toasts
 ├── hooks/useSystemTheme.ts
-├── lib/                  # utils · visual（颜色/缩写/相对时间）· host（Host↔Draft）
+├── lib/                  # utils · visual · host（Host↔Draft）· markdown（React 渲染器）
 ├── store/
 │   ├── AppStore.tsx      # 单一 reducer + Context，所有业务动作在此收口
-│   └── settings.ts       # 默认值、钳制与持久化
+│   ├── settings.ts       # 默认值、钳制与持久化
+│   ├── transfers.ts      # 传输记录轮询与订阅
+│   ├── cwd.ts            # 终端当前目录（OSC 7 + cd 推断）
+│   └── notes.ts          # 笔记存取（本机 localStorage）
 ├── styles/
 │   ├── tokens.css        # 设计令牌：色彩/字号/间距/圆角/动效/终端色
 │   ├── base.css          # reset、滚动条、动效关键帧、无障碍工具类
@@ -214,6 +218,7 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 | `⌘/Ctrl + 1…9` | 切换到第 n 个会话 |
 | `⌘/Ctrl + Shift + F` | 打开 / 关闭文件传输栏 |
 | `⌘/Ctrl + Shift + M` | 打开 / 关闭主机状态（右侧栏） |
+| `⌘/Ctrl + Shift + N` | 打开 / 关闭笔记页 |
 | `⌘/Ctrl + Shift + C` | 复制选中内容 |
 | `⌘/Ctrl + Shift + V` | 粘贴（与右键菜单同一入口） |
 | `⌘/Ctrl + W` | 关闭当前标签（可在设置中开启二次确认） |

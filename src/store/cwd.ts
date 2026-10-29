@@ -73,7 +73,7 @@ export function inferCd(current: string, line: string): string | null {
 
   if (target.startsWith('/')) return target;
   if (target.startsWith('~/')) return `~/${target.slice(2)}`;
-  const base = current === '~' ? '~' : current || '/';
+  const base = (current || '~').replace(/\/+$/, '') || '/';
   if (base === '/') return `/${target}`;
   return `${base}/${target}`;
 }
