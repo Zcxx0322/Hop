@@ -52,6 +52,14 @@ const SCENES: Scene[] = [
   },
 ];
 
+/** 播放一遍之后固化的完整会话记录 */
+const TRANSCRIPT: Array<{ id: string; line: ScriptLine }> = SCENES.flatMap((scene, sceneIndex) => [
+  { id: `${sceneIndex}-cmd`, line: { text: scene.command, tone: 'mono' as Tone, isCommand: true } },
+  ...scene.lines.map((line, index) => ({ id: `${sceneIndex}-${index}`, line })),
+]);
+
+const PLAYED_KEY = 'hop.welcome.played.v1';
+
 const CHAR_MS = 42;
 const LINE_MS = 200;
 const HOLD_MS = 1900;
@@ -65,6 +73,15 @@ function LiveTerminal() {
   const [reduced, setReduced] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
+  /** 只播一次：播完（或系统要求减少动效）就停在静态回放 */
+  const [played, setPlayed] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return window.localStorage.getItem(PLAYED_KEY) === '1';
+    } catch {
+      return true;
+    }
+  });
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -74,7 +91,7 @@ function LiveTerminal() {
   }, []);
 
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || played) return;
     const scene = SCENES[sceneIndex % SCENES.length];
     let cancelled = false;
     let timer = 0;
@@ -107,6 +124,16 @@ function LiveTerminal() {
           );
           setLines([]);
           setTyped('');
+          if (sceneIndex % SCENES.length === SCENES.length - 1) {
+            // 三幕走完：记住「已经播过」，停在完整记录上
+            try {
+              window.localStorage.setItem(PLAYED_KEY, '1');
+            } catch {
+              /* 隐私模式下写不进去也无妨，下次再播一遍 */
+            }
+            setPlayed(true);
+            return;
+          }
           setSceneIndex((value) => value + 1);
         }, HOLD_MS);
       };
@@ -121,18 +148,19 @@ function LiveTerminal() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [sceneIndex, reduced]);
+  }, [sceneIndex, reduced, played]);
 
   const scene = SCENES[sceneIndex % SCENES.length];
-  const visibleCommand = reduced ? scene.command : typed;
-  const visibleLines = reduced ? scene.lines : lines;
-  const visibleHistory = reduced ? [] : history;
+  const still = reduced || played;
+  const visibleCommand = still ? scene.command : typed;
+  const visibleLines = still ? scene.lines : lines;
+  const visibleHistory = still ? TRANSCRIPT : history;
 
   return (
     <div
       className="welcome__preview"
       role="img"
-      aria-label={`Hop 终端会话动画示意：${scene.command}`}
+      aria-label={`Hop 终端会话示意：${scene.command}`}
     >
       <header className="welcome__preview-bar">
         <span className="welcome__lights" aria-hidden="true">
@@ -155,11 +183,13 @@ function LiveTerminal() {
             </p>
           ),
         )}
-        <p className="welcome__line welcome__line--prompt">
-          <span className="welcome__prompt">{PROMPT}</span> {visibleCommand}
-          {!reduced && <span className="welcome__caret welcome__caret--inline" />}
-        </p>
-        {visibleLines.map((line, index) => (
+        {!still && (
+          <p className="welcome__line welcome__line--prompt">
+            <span className="welcome__prompt">{PROMPT}</span> {visibleCommand}
+            <span className="welcome__caret welcome__caret--inline" />
+          </p>
+        )}
+        {!still && visibleLines.map((line, index) => (
           <p
             key={`${sceneIndex}-${index}`}
             className={`welcome__line welcome__line--${line.tone} welcome__line--enter`}
@@ -167,7 +197,7 @@ function LiveTerminal() {
             {line.text}
           </p>
         ))}
-        {reduced && (
+        {still && (
           <p className="welcome__line welcome__line--prompt welcome__caret-line">
             <span className="welcome__prompt">{PROMPT}</span>
             <span className="welcome__caret" />
