@@ -4,7 +4,7 @@
 
 <p align="left">
   <img alt="版本" src="https://img.shields.io/badge/version-0.0.3-2ee66b?style=flat-square" />
-  <img alt="平台" src="https://img.shields.io/badge/platform-Windows-2ee66b?style=flat-square" />
+  <img alt="平台" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-2ee66b?style=flat-square" />
   <img alt="Electron" src="https://img.shields.io/badge/Electron-45-2ee66b?style=flat-square" />
   <a href="CHANGELOG.md"><img alt="更新日志" src="https://img.shields.io/badge/changelog-中文-2ee66b?style=flat-square" /></a>
 </p>
@@ -31,7 +31,7 @@
 
 | 能力 | 说明 |
 | --- | --- |
-| 🗄️ 资产页 | 后台管理式列表（标题栏「终端 / 资产」切换，`Esc` 回终端）：主机 / 标签 / 认证 / 上次连接 / 操作五列，每行 **连接 · 编辑 · 删除**，搜索名称·地址·标签，收藏置顶 |
+| 🗄️ 资产页 | 后台管理式列表（标题栏「终端 / 资产 / 笔记」切换，`Esc` 回终端）：主机 / 标签 / 认证 / 上次连接 / 操作五列，每行 **连接 · 编辑 · 删除**，搜索名称·地址·标签，收藏置顶 |
 | 🐧 发行版图标 | 连上主机后自动读取 `/etc/os-release`（回退 `uname`），把发行版记在资产上；Ubuntu / Debian / Arch / Rocky / Fedora / Alpine / openSUSE / Kali 等直接显示品牌标志，未识别时退回主机名首字 |
 | 🗂️ 多会话标签 | 同一主机可开多个会话（标签带序号）、连接状态点、快捷键切换、中键/⌘W 关闭 |
 | ⌨️ 真终端 | xterm.js + WebGL 渲染 + 自适应尺寸 + 主题跟随 + 断线重连；SSH socket 关闭 Nagle，逐键回显不做多余攒包 |
