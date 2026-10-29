@@ -66,6 +66,17 @@ jobs:
           $src = Get-ChildItem release -Filter 'Hop-*-x64.zip' | Select-Object -First 1
           if ($src) { Rename-Item $src.FullName "Hop-$ver-portable.zip" }
 
+      - name: Normalise Linux artifact names
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          cd release
+          # electron-builder 用 fpm 的 arch 命名 + `${ext}`=pacman，统一成 -x64 与真实扩展名
+          for f in *-amd64.deb; do [ -e "$f" ] && mv "$f" "${f%-amd64.deb}-x64.deb"; done
+          for f in *-x86_64.AppImage; do [ -e "$f" ] && mv "$f" "${f%-x86_64.AppImage}-x64.AppImage"; done
+          for f in *.pacman; do [ -e "$f" ] && mv "$f" "${f%.pacman}.pkg.tar.zst"; done
+          ls -lh
+
       - name: List artifacts
         shell: bash
         run: ls -lh release
@@ -79,7 +90,7 @@ jobs:
             release/*.zip
             release/*.AppImage
             release/*.deb
-            release/*.pkg.tar.*
+            release/*.pkg.tar.zst
           if-no-files-found: error
 
   release:
@@ -120,4 +131,4 @@ jobs:
             release/*.zip
             release/*.AppImage
             release/*.deb
-            release/*.pkg.tar.*
+            release/*.pkg.tar.zst
