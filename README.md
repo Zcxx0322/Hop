@@ -16,18 +16,20 @@
 | 终端会话 · 左侧文件传输 + 右侧主机状态 | 多会话标签（同一主机可开多个） |
 | --- | --- |
 | ![终端](docs/screenshots/terminal.png) | ![多会话标签](docs/screenshots/tabs.png) |
-| **命令面板** | **新建连接** |
-| ![命令面板](docs/screenshots/command-palette.png) | ![新建连接](docs/screenshots/host-form.png) |
-| **文件右键菜单** | **主机状态：逐行纵向排列** |
+| **资产页：列表式主机管理** | **笔记页：Markdown + 即时渲染** |
+| ![资产页](docs/screenshots/assets.png) | ![笔记](docs/screenshots/notes.png) |
+| **速记浮层：不离开会话随手记** | **命令面板** |
+| ![速记](docs/screenshots/quicknote.png) | ![命令面板](docs/screenshots/command-palette.png) |
+| **文件右键菜单** | **主机状态：逐行纵向排版** |
 | ![右键菜单](docs/screenshots/dock-menu.png) | ![主机状态](docs/screenshots/monitor-detail.png) |
-| **速记浮层 / 笔记页** | **偏好设置** |
-| ![速记](docs/screenshots/quicknote.png) | ![偏好设置](docs/screenshots/settings.png) |
+| **新建连接** | **偏好设置** |
+| ![新建连接](docs/screenshots/host-form.png) | ![偏好设置](docs/screenshots/settings.png) |
 | **连接动效：握手进行中** | **连接动效：握手完成** |
 | ![连接中](docs/screenshots/connect.png) | ![已连接](docs/screenshots/connect-done.png) |
 | **浅色主题：欢迎页（纯白 + 墨绿）** | **浅色主题：终端** |
 | ![浅色欢迎页](docs/screenshots/welcome-light.png) | ![浅色终端](docs/screenshots/terminal-light.png) |
-| **资产页：列表式主机管理** | **资产页（浅色）** |
-| ![资产页](docs/screenshots/assets.png) | ![资产页浅色](docs/screenshots/assets-light.png) |
+| **浅色主题：资产页** | **浅色主题：笔记页** |
+| ![浅色资产页](docs/screenshots/assets-light.png) | ![浅色笔记页](docs/screenshots/notes-light.png) |
 
 | 能力 | 说明 |
 | --- | --- |
