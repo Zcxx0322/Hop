@@ -221,66 +221,181 @@
 /* ---- 传输列表 -------------------------------------------------------- */
 
 .files__transfers {
+  flex: none;
   border-top: 1px solid var(--border);
-  padding-top: 10px;
+  padding-top: 9px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 168px;
+  gap: 7px;
+  max-height: 190px;
   overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.files__transfers-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 1px 2px;
 }
 
 .files__transfers-title {
+  display: inline-flex;
+  align-items: center;
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--text-dim);
-  text-transform: uppercase;
 }
 
-.files__transfer {
+.files__transfers-badge {
+  margin-left: 6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 5px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- 传输卡片 --------------------------------------------------------- */
+
+.xfer {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) 96px 72px 40px;
-  align-items: center;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: start;
+  gap: 9px;
+  padding: 8px 9px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel-inset);
+}
+
+.xfer__icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-xs);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.xfer[data-status='done'] .xfer__icon {
+  color: var(--text-dim);
+  background: var(--hover);
+}
+
+.xfer[data-status='error'] .xfer__icon {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
+.xfer__body {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.xfer__top {
+  display: flex;
+  align-items: baseline;
   gap: 8px;
+}
+
+.xfer__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.xfer__state {
+  flex: none;
+  font-size: var(--text-xs);
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.xfer[data-status='done'] .xfer__state {
+  color: var(--text-dim);
+}
+
+.xfer[data-status='error'] .xfer__state {
+  color: var(--danger);
+}
+
+.xfer__track {
+  height: 5px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  overflow: hidden;
+}
+
+.xfer__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 55%, white));
+  transition: width 320ms var(--ease-out);
+}
+
+.xfer[data-status='done'] .xfer__fill {
+  background: var(--success);
+}
+
+.xfer[data-status='error'] .xfer__fill {
+  background: var(--danger);
+}
+
+.xfer[data-status='active'] .xfer__fill {
+  animation: xfer-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes xfer-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.66;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xfer__fill {
+    animation: none;
+    transition: none;
+  }
+}
+
+.xfer__meta {
+  display: flex;
+  gap: 10px;
   font-size: var(--text-xs);
   color: var(--text-dim);
 }
 
-.files__transfer-name {
-  color: var(--text);
-}
-
-.files__transfer-size {
-  text-align: right;
+.xfer__eta {
+  margin-left: auto;
   white-space: nowrap;
 }
 
-.files__progress {
-  height: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--panel-inset);
-  overflow: hidden;
-}
-
-.files__progress > span {
-  display: block;
-  height: 100%;
-  background: var(--accent);
-  transition: width var(--dur) var(--ease-out);
-}
-
-.files__transfer[data-status='error'] .files__progress > span {
-  background: var(--danger);
-}
-
-.files__transfer-state {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.files__transfer[data-status='error'] .files__transfer-state {
+.xfer__error {
+  grid-column: 2;
+  margin: 0;
+  font-size: var(--text-xs);
   color: var(--danger);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---- 底部 ------------------------------------------------------------ */

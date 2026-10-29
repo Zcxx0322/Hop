@@ -23,6 +23,17 @@ import './FilesPanel.css';
 
 const TRANSFER_POLL_MS = 700;
 
+function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '—';
+  const total = Math.round(seconds);
+  if (total < 60) return `${total} 秒`;
+  const minutes = Math.floor(total / 60);
+  const rest = total % 60;
+  if (minutes < 60) return rest ? `${minutes} 分 ${rest} 秒` : `${minutes} 分`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} 小时 ${minutes % 60} 分`;
+}
+
 function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return '—';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -438,7 +449,12 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
       {orderedTransfers.length > 0 && (
         <section className="files__transfers" aria-label="传输进度">
           <header className="files__transfers-head">
-            <span>传输</span>
+            <span className="files__transfers-title">
+              传输
+              {activeTransfers.length > 0 && (
+                <span className="files__transfers-badge">{activeTransfers.length}</span>
+              )}
+            </span>
             <button
               type="button"
               className="files__link"
@@ -450,27 +466,69 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
             </button>
           </header>
           {orderedTransfers.map((transfer) => {
-            const percent =
-              transfer.total > 0
+            const active = transfer.status === 'active';
+            const percent = active
+              ? transfer.total > 0
                 ? Math.min(100, Math.round((transfer.transferred / transfer.total) * 100))
-                : transfer.status === 'done'
-                  ? 100
-                  : 0;
+                : 0
+              : transfer.status === 'done'
+                ? 100
+                : 0;
+            const endAt = transfer.finishedAt ?? Date.now();
+            const seconds = Math.max(0.4, (endAt - transfer.startedAt) / 1000);
+            const speed = transfer.transferred / seconds;
+            const remain = active && speed > 0 && transfer.total > 0
+              ? Math.max(0, Math.round((transfer.total - transfer.transferred) / speed))
+              : null;
             return (
-              <div key={transfer.id} className="files__transfer" data-status={transfer.status}>
-                <Icon name={transfer.direction === 'upload' ? 'upload' : 'download'} size={12} />
-                <span className="files__transfer-name truncate">{transfer.name}</span>
-                <span className="files__transfer-size mono">
-                  {formatBytes(transfer.transferred)}
-                  {transfer.total ? ` / ${formatBytes(transfer.total)}` : ''}
+              <article key={transfer.id} className="xfer" data-status={transfer.status}>
+                <span className="xfer__icon" data-dir={transfer.direction}>
+                  <Icon name={transfer.direction === 'upload' ? 'arrow-up' : 'download'} size={13} />
                 </span>
-                <span className="files__progress" aria-hidden="true">
-                  <span style={{ width: `${percent}%` }} />
-                </span>
-                <span className="files__transfer-state">
-                  {transfer.status === 'active' ? `${percent}%` : transfer.status === 'done' ? '完成' : '失败'}
-                </span>
-              </div>
+                <div className="xfer__body">
+                  <div className="xfer__top">
+                    <span className="xfer__name truncate" title={transfer.name}>
+                      {transfer.name}
+                    </span>
+                    <span className="xfer__state">
+                      {active ? `${percent}%` : transfer.status === 'done' ? '完成' : '失败'}
+                    </span>
+                  </div>
+                  <div
+                    className="xfer__track"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={percent}
+                    aria-label={`${transfer.name} 传输进度`}
+                  >
+                    <span className="xfer__fill" style={{ width: `${percent}%` }} />
+                  </div>
+                  <div className="xfer__meta">
+                    <span className="mono">
+                      {formatBytes(transfer.transferred)}
+                      {transfer.total > 0 ? ` / ${formatBytes(transfer.total)}` : ''}
+                    </span>
+                    <span className="xfer__speed mono">
+                      {active ? `${formatBytes(speed)}/s` : transfer.direction === 'upload' ? '已上传' : '已下载'}
+                    </span>
+                    <span className="xfer__eta">
+                      {active
+                        ? remain === null
+                          ? '计算中…'
+                          : remain > 0
+                            ? `剩余 ${formatDuration(remain)}`
+                            : '即将完成'
+                        : formatDuration(Math.round(seconds))}
+                    </span>
+                  </div>
+                </div>
+                {transfer.status === 'error' && transfer.error && (
+                  <p className="xfer__error" title={transfer.error}>
+                    {transfer.error}
+                  </p>
+                )}
+              </article>
             );
           })}
         </section>

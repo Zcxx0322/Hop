@@ -21,80 +21,6 @@
   z-index: 1;
 }
 
-/* ---------- 终端顶部状态条 ---------- */
-.terminal-pane__bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  height: 30px;
-  flex: none;
-  padding: 0 8px 0 13px;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--panel) 76%, var(--term-bg));
-  font-size: 10.5px;
-  user-select: none;
-}
-
-.terminal-pane__state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  max-width: 62%;
-  color: var(--text-3);
-  line-height: 1.3;
-}
-
-.terminal-pane__state--connected {
-  color: color-mix(in srgb, var(--success) 82%, var(--text-2));
-}
-
-.terminal-pane__state--error {
-  color: var(--danger);
-}
-
-.terminal-pane__state--closed {
-  color: var(--text-3);
-}
-
-.terminal-pane__addr {
-  font-size: 10px;
-  color: var(--text-3);
-  opacity: 0.8;
-  padding-left: 10px;
-  border-left: 1px solid var(--border);
-  min-width: 0;
-}
-
-.terminal-pane__tools {
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  margin-left: auto;
-}
-
-.terminal-pane__tool {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-xs);
-  color: var(--text-3);
-  transition:
-    background var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-
-.terminal-pane__tool:hover:not(:disabled) {
-  background: var(--hover);
-  color: var(--text);
-}
-
-.terminal-pane__tool:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
 .terminal-pane__screen {
   position: relative;
   flex: 1;
@@ -165,11 +91,6 @@
 }
 
 /* 已开启的右侧面板按钮 */
-.terminal-pane__tool[data-on='true'] {
-  background: var(--accent-soft);
-  color: var(--accent-text);
-}
-
 /* 终端右键菜单 */
 .terminal-pane__menu {
   position: absolute;

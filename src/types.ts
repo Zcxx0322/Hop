@@ -48,6 +48,8 @@ export interface Session {
   status: SessionStatus;
   detail?: string;
   createdAt: number;
+  /** 标题栏「重新连接」递增，终端面板据此重建传输层 */
+  reconnectNonce?: number;
 }
 
 export type ThemeMode = 'dark' | 'light' | 'system';

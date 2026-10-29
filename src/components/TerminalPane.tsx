@@ -8,10 +8,7 @@ import { createTransport } from '../api/createTransport';
 import type { TerminalTransport } from '../api/transport';
 import { useApp } from '../store/AppStore';
 import { FONT_STACKS } from '../store/settings';
-import { formatAddress } from '../lib/visual';
 import { copyText, readClipboardText, toPlainText } from '../lib/clipboard';
-import { Icon } from './ui/Icon';
-import { StatusDot } from './ui/Spinner';
 import { ConnectFX } from './ConnectFX';
 import './TerminalPane.css';
 
@@ -20,14 +17,6 @@ interface TerminalPaneProps {
   host: Host | null;
   active: boolean;
 }
-
-const STATUS_LABEL: Record<Session['status'], string> = {
-  connecting: '正在建立 SSH 会话…',
-  connected: '已连接',
-  reconnecting: '连接中断，正在重连…',
-  closed: '会话已结束',
-  error: '连接失败',
-};
 
 function readVar(styles: CSSStyleDeclaration, name: string, fallback: string): string {
   return styles.getPropertyValue(name).trim() || fallback;
@@ -99,8 +88,6 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
   /* 复制/粘贴策略在终端创建后仍要随设置变化，用 ref 读最新值 */
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-  const [attempt, setAttempt] = useState(0);
-  const { updateSession } = actions;
 
   const copySelection = useCallback(
     (options?: { silent?: boolean; onlyIfSelected?: boolean }) => {
@@ -271,11 +258,17 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     const transport = createTransport();
     transportRef.current = transport;
 
+    /* 手动重连时清屏并给出提示，避免旧输出与新会话混淆 */
+    if (session.reconnectNonce) {
+      term.reset();
+      term.writeln('\x1b[2m· 正在重新连接…\x1b[0m');
+    }
+
     const offData = transport.onData((chunk) => {
       terminalRef.current?.write(chunk);
     });
     const offStatus = transport.onStatus((status, detail) => {
-      updateSession(session.id, { status, detail });
+      actions.updateSession(session.id, { status, detail });
       if (status === 'error') {
         terminalRef.current?.writeln(`\r\n\x1b[31m✖ ${detail ?? '连接失败'}\x1b[0m`);
       }
@@ -304,9 +297,9 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       transport.dispose();
       if (transportRef.current === transport) transportRef.current = null;
     };
-    // 重连通过 attempt 递增触发
+    // 重连通过 reconnectNonce 递增触发
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.id, attempt]);
+  }, [session.id, session.reconnectNonce]);
 
   /* ---------- 外观设置实时生效 ---------- */
   useEffect(() => {
@@ -348,17 +341,6 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     return () => cancelAnimationFrame(frame);
   }, [active]);
 
-  const reconnect = () => {
-    transportRef.current?.dispose();
-    transportRef.current = null;
-    terminalRef.current?.reset();
-    updateSession(session.id, { status: 'connecting', detail: undefined });
-    setAttempt((value) => value + 1);
-  };
-
-  const busy = session.status === 'connecting' || session.status === 'reconnecting';
-  const statusText = session.status === 'error' && session.detail ? session.detail : STATUS_LABEL[session.status];
-
   return (
     <section
       id={`pane-${session.id}`}
@@ -368,68 +350,6 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       aria-hidden={!active}
       inert={!active}
     >
-      <div className="terminal-pane__bar">
-        <span className={`terminal-pane__state terminal-pane__state--${session.status}`}>
-          <StatusDot
-            tone={
-              session.status === 'reconnecting'
-                ? 'connecting'
-                : session.status === 'closed'
-                  ? 'idle'
-                  : session.status
-            }
-          />
-          <span className="truncate">{statusText}</span>
-        </span>
-        {host && <span className="terminal-pane__addr mono truncate">{formatAddress(host)}</span>}
-        <span className="terminal-pane__tools">
-          <button
-            type="button"
-            className="terminal-pane__tool"
-            data-on={state.ui.dockFiles}
-            onClick={actions.toggleDockFiles}
-            title="文件传输 (Ctrl+Shift+F)"
-            aria-label="切换文件传输面板"
-            aria-pressed={state.ui.dockFiles}
-          >
-            <Icon name="folder" size={13} />
-          </button>
-          <button
-            type="button"
-            className="terminal-pane__tool"
-            data-on={state.ui.dockMonitor}
-            onClick={actions.toggleDockMonitor}
-            title="主机状态 (Ctrl+Shift+M)"
-            aria-label="切换主机状态面板"
-            aria-pressed={state.ui.dockMonitor}
-          >
-            <Icon name="monitor" size={13} />
-          </button>
-          <button type="button" className="terminal-pane__tool" onClick={() => copySelection()} title="复制选中内容 (Ctrl+Shift+C)" aria-label="复制选中内容">
-            <Icon name="copy" size={13} />
-          </button>
-          <button
-            type="button"
-            className="terminal-pane__tool"
-            onClick={() => terminalRef.current?.clear()}
-            title="清空终端"
-            aria-label="清空终端"
-          >
-            <Icon name="minus" size={13} />
-          </button>
-          <button
-            type="button"
-            className="terminal-pane__tool"
-            onClick={reconnect}
-            disabled={busy || !host}
-            title={host ? '重新连接' : '主机已被删除'}
-            aria-label="重新连接"
-          >
-            <Icon name="refresh" size={13} />
-          </button>
-        </span>
-      </div>
-
       <div
         className="terminal-pane__screen"
         onContextMenu={(event) => {

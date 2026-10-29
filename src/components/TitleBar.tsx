@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type MouseEvent } from 'react';
 import { useApp } from '../store/AppStore';
 import { LogoMark } from './ui/Logo';
+import { Icon } from './ui/Icon';
 import { TabBar } from './TabBar';
 import './TitleBar.css';
 
@@ -26,6 +27,21 @@ export function TitleBar() {
   const { sessions, activeSessionId } = state;
   const [bridge] = useState(windowBridge);
   const [maximized, setMaximized] = useState(false);
+
+  const activeSession = sessions.find((session) => session.id === activeSessionId) ?? null;
+  const activeHost = activeSession
+    ? (state.hosts.find((host) => host.id === activeSession.hostId) ?? null)
+    : null;
+  const busy = activeSession?.status === 'connecting' || activeSession?.status === 'reconnecting';
+
+  const reconnect = useCallback(() => {
+    if (!activeSession) return;
+    actions.updateSession(activeSession.id, {
+      status: 'connecting',
+      detail: undefined,
+      reconnectNonce: (activeSession.reconnectNonce ?? 0) + 1,
+    });
+  }, [actions, activeSession]);
 
   useEffect(() => {
     if (!bridge) return;
@@ -81,6 +97,43 @@ export function TitleBar() {
       </div>
 
       <div className="titlebar__actions no-drag">
+        {activeSession && (
+          <>
+            <button
+              type="button"
+              className="titlebar__ghost"
+              data-on={state.ui.dockFiles}
+              aria-pressed={state.ui.dockFiles}
+              aria-label="切换文件传输面板"
+              title="文件传输（Ctrl+Shift+F）"
+              onClick={actions.toggleDockFiles}
+            >
+              <Icon name="folder" size={14} />
+            </button>
+            <button
+              type="button"
+              className="titlebar__ghost"
+              data-on={state.ui.dockMonitor}
+              aria-pressed={state.ui.dockMonitor}
+              aria-label="切换主机状态面板"
+              title="主机状态（Ctrl+Shift+M）"
+              onClick={actions.toggleDockMonitor}
+            >
+              <Icon name="monitor" size={14} />
+            </button>
+            <button
+              type="button"
+              className="titlebar__ghost"
+              disabled={busy || !activeHost}
+              aria-label="重新连接"
+              title={activeHost ? '重新连接' : '主机已被删除'}
+              onClick={reconnect}
+            >
+              <Icon name="refresh" size={14} />
+            </button>
+            <span className="titlebar__divider" aria-hidden="true" />
+          </>
+        )}
         <button
           type="button"
           className="titlebar__ghost"

@@ -51,6 +51,28 @@
   color: var(--text);
 }
 
+.titlebar__ghost[data-on='true'] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.titlebar__ghost:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.titlebar__ghost:disabled:hover {
+  background: transparent;
+  color: var(--text-3);
+}
+
+.titlebar__divider {
+  width: 1px;
+  height: 14px;
+  margin: 0 5px;
+  background: var(--border);
+}
+
 .titlebar__tabs {
   display: flex;
   align-items: stretch;
