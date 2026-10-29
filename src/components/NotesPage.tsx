@@ -128,6 +128,7 @@ export function NotesPage() {
               <input
                 className="notes__title"
                 value={active.title}
+                placeholder="未命名笔记"
                 aria-label="笔记标题"
                 onChange={(event) =>
                   noteStore.update(active.id, { title: event.target.value.slice(0, 80) })

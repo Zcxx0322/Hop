@@ -67,7 +67,7 @@ export const noteStore = {
     const now = Date.now();
     const note: Note = {
       id: `note_${now.toString(36)}${Math.random().toString(36).slice(2, 6)}`,
-      title: '未命名笔记',
+      title: '',
       body: '',
       createdAt: now,
       updatedAt: now,

@@ -175,8 +175,28 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     const observer = new ResizeObserver(() => refit());
     observer.observe(container);
 
+    /* 记住这一行手敲的内容：提示符、回显都不可靠，只有按键输入最准 */
+    let typedBuf = '';
+
     const dataDisposable = term.onData((data) => {
       transportRef.current?.sendInput(data);
+
+      for (const ch of data) {
+        if (ch === '\r' || ch === '\n') {
+          const current = (hostRef.current && terminalCwd.get(hostRef.current.id)) || '~';
+          const next = inferCd(current, typedBuf);
+          if (next && hostRef.current) terminalCwd.set(hostRef.current.id, next);
+          typedBuf = '';
+        } else if (ch === '\u007f' || ch === '\b') {
+          typedBuf = typedBuf.slice(0, -1);
+        } else if (ch === '\u0003' || ch === '\u0015' || ch === '\u001b') {
+          /* Ctrl+C / Ctrl+U / 控制序列：整行作废 */
+          typedBuf = '';
+        } else if (ch >= ' ') {
+          typedBuf += ch;
+        }
+      }
+      if (typedBuf.length > 400) typedBuf = typedBuf.slice(-400);
     });
 
     /* 选中即复制：终端里拖选一下就能直接粘贴到别处；静默复制，不出提示 */
@@ -187,16 +207,6 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
 
     term.attachCustomKeyEventHandler((event) => {
       if (event.type !== 'keydown') return true;
-
-      /* 回车前从输入行里认出 cd，用于「文件栏跟随终端目录」 */
-      if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
-        const buffer = term.buffer.active;
-        const line = buffer.getLine(buffer.baseY + buffer.cursorY)?.translateToString(true) ?? '';
-        const typed = line.slice(0, buffer.cursorX);
-        const current = (hostRef.current && terminalCwd.get(hostRef.current.id)) || '~';
-        const next = inferCd(current, typed);
-        if (next && hostRef.current) terminalCwd.set(hostRef.current.id, next);
-      }
 
       const mod = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
