@@ -74,25 +74,33 @@ export function TitleBar() {
       <div className="titlebar__brand">
         <LogoMark size={18} />
         <span className="titlebar__name">Hop</span>
-        <button
-          type="button"
-          className="titlebar__ghost no-drag"
-          aria-label={state.settings.sidebarCollapsed ? '展开侧栏' : '收起侧栏'}
-          title="收起 / 展开侧栏"
-          onClick={actions.toggleSidebar}
-        >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <rect x="1.75" y="2.75" width="12.5" height="10.5" rx="2" stroke="currentColor" strokeWidth="1.2" />
-            <path d="M6 3v10" stroke="currentColor" strokeWidth="1.2" />
-          </svg>
-        </button>
+        <nav className="titlebar__nav no-drag" aria-label="主导航">
+          <button
+            type="button"
+            className="titlebar__nav-btn"
+            data-on={state.ui.page === 'terminal'}
+            aria-pressed={state.ui.page === 'terminal'}
+            onClick={() => actions.setPage('terminal')}
+          >
+            <Icon name="terminal" size={13} />
+            终端
+          </button>
+          <button
+            type="button"
+            className="titlebar__nav-btn"
+            data-on={state.ui.page === 'assets'}
+            aria-pressed={state.ui.page === 'assets'}
+            onClick={() => actions.setPage('assets')}
+          >
+            <Icon name="server" size={13} />
+            资产
+          </button>
+        </nav>
       </div>
 
       <div className="titlebar__tabs">
-        {sessions.length ? (
+        {sessions.length > 0 && (
           <TabBar sessions={sessions} activeSessionId={activeSessionId} />
-        ) : (
-          <span className="titlebar__hint">SSH 工作台</span>
         )}
       </div>
 

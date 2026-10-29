@@ -1,0 +1,132 @@
+/* 左右侧常驻面板：文件传输在左、主机状态在右 */
+
+.sidedock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.sidedock[data-side='files'] {
+  border-right: 1px solid var(--border);
+}
+
+.sidedock[data-side='monitor'] {
+  border-left: 1px solid var(--border);
+}
+
+/* 拖拽条：贴在靠近终端的一侧 */
+.sidedock__resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  z-index: 4;
+  cursor: col-resize;
+  background: transparent;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.sidedock[data-side='files'] .sidedock__resizer {
+  right: -3px;
+}
+
+.sidedock[data-side='monitor'] .sidedock__resizer {
+  left: -3px;
+}
+
+.sidedock__resizer:hover,
+.sidedock__resizer:active {
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.sidedock__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 34px;
+  padding: 0 6px 0 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.sidedock__title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-2);
+}
+
+.sidedock__title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sidedock__host {
+  min-width: 0;
+  font-size: var(--text-xs);
+  color: var(--text-3);
+}
+
+.sidedock__close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.sidedock__close:hover {
+  color: var(--text);
+  background: var(--surface-3);
+  border-color: var(--border);
+}
+
+.sidedock__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 10px 10px 0;
+  /* 面板宽度变化时，内部表格按容器宽度自适应列宽 */
+  container-type: inline-size;
+}
+
+/* 窄屏：两侧面板改为覆盖层，避免把终端挤没 */
+@media (max-width: 1180px) {
+  .sidedock {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 6;
+    width: 400px !important;
+    max-width: 80vw;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidedock[data-side='files'] {
+    left: 0;
+  }
+
+  .sidedock[data-side='monitor'] {
+    right: 0;
+  }
+}

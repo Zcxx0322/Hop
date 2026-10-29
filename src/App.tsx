@@ -1,10 +1,12 @@
 import { useEffect } from 'react';
 import { useApp } from './store/AppStore';
 import { TitleBar } from './components/TitleBar';
-import { Sidebar } from './components/Sidebar';
 import { TerminalPane } from './components/TerminalPane';
 import { Welcome } from './components/Welcome';
-import { Dock } from './components/Dock';
+import { AssetsPage } from './components/AssetsPage';
+import { SideDock } from './components/SideDock';
+import { TransfersBar } from './components/TransfersBar';
+import { useTransferHost } from './store/transfers';
 import { CommandPalette } from './components/CommandPalette';
 import { HostFormDialog } from './components/HostFormDialog';
 import { SettingsPanel } from './components/SettingsPanel';
@@ -16,8 +18,14 @@ export default function App() {
   const { state, actions } = useApp();
   const { sessions, activeSessionId, hosts, ui, settings } = state;
   const hasSessions = sessions.length > 0;
+  const activeSession = sessions.find((session) => session.id === activeSessionId) ?? null;
+  /* 传输进度是全局的：始终跟随当前会话所属主机 */
+  useTransferHost(activeSession?.hostId ?? null);
 
-  /* 全局快捷键：命令面板 / 新建连接 / 设置 / 折叠侧栏 / 切换会话 */
+  const withFiles = hasSessions && ui.dockFiles;
+  const withMonitor = hasSessions && ui.dockMonitor;
+
+  /* 全局快捷键：命令面板 / 新建连接 / 设置 / 面板开关 / 切换会话 */
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const mod = event.metaKey || event.ctrlKey;
@@ -80,13 +88,13 @@ export default function App() {
         return;
       }
 
-      if (typing) return;
-
-      if (mod && event.key.toLowerCase() === 'b') {
-        event.preventDefault();
-        actions.toggleSidebar();
+      /* 资产页按 Esc 回终端（输入框里也生效，但浮层打开时交给浮层） */
+      if (event.key === 'Escape' && ui.page === 'assets' && !modalOpen) {
+        actions.setPage('terminal');
         return;
       }
+
+      if (typing) return;
 
       if (mod && /^[1-9]$/.test(event.key)) {
         const session = sessions[Number(event.key) - 1];
@@ -95,10 +103,6 @@ export default function App() {
           actions.activateSession(session.id);
         }
         return;
-      }
-
-      if (event.key === 'Escape' && ui.navOpen) {
-        actions.setNavOpen(false);
       }
     };
 
@@ -111,7 +115,7 @@ export default function App() {
     ui.paletteOpen,
     ui.hostForm,
     ui.settingsOpen,
-    ui.navOpen,
+    ui.page,
     ui.dockFiles,
     ui.dockMonitor,
   ]);
@@ -119,19 +123,20 @@ export default function App() {
   return (
     <div
       className="app-shell"
-      data-collapsed={settings.sidebarCollapsed}
-      data-nav-open={ui.navOpen}
     >
       <TitleBar />
 
-      <Sidebar />
-
+      {ui.page === 'assets' ? (
+        <AssetsPage />
+      ) : (
       <main
         className={`workspace${hasSessions ? '' : ' workspace--empty'}${
-          hasSessions && (ui.dockFiles || ui.dockMonitor) ? ' with-dock' : ''
-        }`}
+          withFiles ? ' with-files' : ''
+        }${withMonitor ? ' with-monitor' : ''}`}
         aria-label="终端工作区"
       >
+        <SideDock side="files" />
+
         <div className="terminal-stack">
           {hasSessions ? (
             sessions.map((session) => (
@@ -147,15 +152,12 @@ export default function App() {
           )}
         </div>
 
-        <Dock />
+        <SideDock side="monitor" />
       </main>
+      )}
 
-      <button
-        type="button"
-        className="workspace-scrim"
-        aria-label="关闭导航抽屉"
-        onClick={() => actions.setNavOpen(false)}
-      />
+      <TransfersBar />
+
 
       <CommandPalette />
       <HostFormDialog />

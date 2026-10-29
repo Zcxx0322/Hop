@@ -11,7 +11,6 @@ export const DEFAULT_SETTINGS: Settings = {
   cursorBlink: true,
   scrollback: 5000,
   confirmOnClose: false,
-  sidebarCollapsed: false,
   defaultUsername: '',
   defaultPort: 22,
   keepAliveSeconds: 30,
@@ -20,7 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   copyShortcut: 'ctrl-c',
   copyToast: true,
   pasteMode: 'ctrl-v',
-  dockWidth: 372,
+  dockWidth: 332,
 };
 
 export const ACCENTS: Array<{
@@ -89,8 +88,7 @@ export function normalizeSettings(input: Partial<Settings>): Settings {
       ? merged.scrollback
       : DEFAULT_SETTINGS.scrollback,
     confirmOnClose: Boolean(merged.confirmOnClose),
-    sidebarCollapsed: Boolean(merged.sidebarCollapsed),
-    cursorBlink: Boolean(merged.cursorBlink),
+      cursorBlink: Boolean(merged.cursorBlink),
     defaultUsername: String(merged.defaultUsername ?? '').slice(0, 64),
     defaultPort: Number.isFinite(merged.defaultPort)
       ? clamp(merged.defaultPort, 1, 65_535)
@@ -108,7 +106,7 @@ export function normalizeSettings(input: Partial<Settings>): Settings {
     copyToast: merged.copyToast === undefined ? true : Boolean(merged.copyToast),
     pasteMode: migratePasteMode(merged.pasteMode),
     dockWidth: Number.isFinite(merged.dockWidth)
-      ? clamp(merged.dockWidth, 280, 620)
+      ? clamp(merged.dockWidth, 260, 620)
       : DEFAULT_SETTINGS.dockWidth,
   };
 }

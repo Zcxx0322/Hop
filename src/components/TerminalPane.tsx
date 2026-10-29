@@ -161,11 +161,6 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       webglRef.current = null;
     }
 
-    term.writeln(
-      `\x1b[38;2;46;230;107m●\x1b[0m \x1b[1mHop\x1b[0m \x1b[2m·\x1b[0m 正在准备会话 ${session.title}`,
-    );
-    term.writeln('');
-
     const refit = () => {
       if (!container.clientWidth || !container.clientHeight) return;
       try {
@@ -258,10 +253,9 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     const transport = createTransport();
     transportRef.current = transport;
 
-    /* 手动重连时清屏并给出提示，避免旧输出与新会话混淆 */
+    /* 手动重连时清屏，避免旧输出与新会话混淆；状态提示交给连接动效层 */
     if (session.reconnectNonce) {
       term.reset();
-      term.writeln('\x1b[2m· 正在重新连接…\x1b[0m');
     }
 
     const offData = transport.onData((chunk) => {

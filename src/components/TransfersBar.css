@@ -1,0 +1,232 @@
+/* 底部全局传输条：文件传输/下载进度都汇总到这里 */
+
+.transfersbar {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 92px;
+  padding: 10px 14px 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.transfersbar__head {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 104px;
+}
+
+.transfersbar__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.transfersbar__badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
+}
+
+.transfersbar__link {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.transfersbar__link:hover {
+  color: var(--text);
+}
+
+.transfersbar__list {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.transfersbar__close {
+  flex: none;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.transfersbar__close:hover {
+  color: var(--text);
+  background: var(--surface-3);
+  border-color: var(--border);
+}
+
+/* ---- 单条传输 -------------------------------------------------------- */
+
+.xfer {
+  flex: 0 0 292px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 4px 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+}
+
+.xfer__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.xfer[data-status='done'] .xfer__icon {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.xfer[data-status='error'] .xfer__icon {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+}
+
+.xfer__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xfer__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.xfer__name {
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.xfer__state {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent);
+}
+
+.xfer[data-status='done'] .xfer__state {
+  color: var(--text-3);
+}
+
+.xfer[data-status='error'] .xfer__state {
+  color: var(--danger);
+}
+
+.xfer__track {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  overflow: hidden;
+}
+
+.xfer__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 240ms var(--ease-out);
+}
+
+.xfer[data-status='done'] .xfer__fill {
+  background: var(--accent);
+}
+
+.xfer[data-status='error'] .xfer__fill {
+  background: var(--danger);
+}
+
+.xfer[data-status='active'] .xfer__fill {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--accent) 60%, transparent),
+    var(--accent)
+  );
+}
+
+.xfer__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.xfer__speed,
+.xfer__eta {
+  flex: none;
+}
+
+.xfer__eta {
+  color: var(--text-2);
+}
+
+.xfer__error {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--danger);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xfer__fill {
+    transition: none;
+  }
+}

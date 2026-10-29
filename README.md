@@ -10,38 +10,39 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/welcome.png" alt="Hop 欢迎页：主机库、迷你终端预览与最近使用" width="880" />
+  <img src="docs/screenshots/welcome.png" alt="Hop 欢迎页：终端预览与最近使用" width="880" />
 </p>
 
-| 终端会话 · 文件传输 + 主机状态常驻侧栏 | 多会话标签（同一主机可开多个） |
+| 终端会话 · 左侧文件传输 + 右侧主机状态 | 多会话标签（同一主机可开多个） |
 | --- | --- |
 | ![终端](docs/screenshots/terminal.png) | ![多会话标签](docs/screenshots/tabs.png) |
 | **命令面板** | **新建连接** |
 | ![命令面板](docs/screenshots/command-palette.png) | ![新建连接](docs/screenshots/host-form.png) |
 | **文件右键菜单** | **主机状态：逐行纵向排列** |
 | ![右键菜单](docs/screenshots/dock-menu.png) | ![主机状态](docs/screenshots/monitor-detail.png) |
+| **底部传输进度（整页最下方，可关闭）** | **偏好设置** |
+| ![传输进度](docs/screenshots/transfer.png) | ![偏好设置](docs/screenshots/settings.png) |
 | **连接动效：握手进行中** | **连接动效：握手完成** |
 | ![连接中](docs/screenshots/connect.png) | ![已连接](docs/screenshots/connect-done.png) |
 | **浅色主题：欢迎页（纯白 + 墨绿）** | **浅色主题：终端** |
 | ![浅色欢迎页](docs/screenshots/welcome-light.png) | ![浅色终端](docs/screenshots/terminal-light.png) |
-
-<p align="center">
-  <img src="docs/screenshots/settings.png" alt="偏好设置：主题、字体、复制与粘贴、连接参数" width="620" />
-</p>
+| **资产页：连接 / 编辑 / 删除** | **资产页（浅色）** |
+| ![资产页](docs/screenshots/assets.png) | ![资产页浅色](docs/screenshots/assets-light.png) |
 
 | 能力 | 说明 |
 | --- | --- |
-| 🖥️ 主机库 | 搜索、收藏、标签过滤、最近连接排序、右键快捷菜单 |
+| 🗄️ 资产页 | 独立的资产管理页（标题栏「终端 / 资产」切换，`Esc` 回终端）：每台主机一张卡片，三个按钮 **连接 / 编辑 / 删除**；支持搜索名称·地址·标签、标签展示、收藏置顶与最近连接时间 |
 | 🗂️ 多会话标签 | 同一主机可开多个会话（标签带序号）、连接状态点、快捷键切换、中键/⌘W 关闭 |
 | ⌨️ 真终端 | xterm.js + WebGL 渲染 + 自适应尺寸 + 主题跟随 + 断线重连；SSH socket 关闭 Nagle，逐键回显不做多余攒包 |
 | ⌘ 命令面板 | 一个输入框覆盖「连接 / 新建 / 切换 / 设置」，支持 `host:`、`edit:` 前缀 |
 | 🎨 两套主题 | 纯黑 + 荧光绿 / 纯白 + 墨绿，终端配色随主题一起切换 |
 | 🪟 无边框窗口 | 自绘标题栏（品牌 / 标签 / 会话操作 / 最小化·最大化·关闭）；文件传输、主机状态、重新连接都在右上角，终端从标题栏下一行直通到底，没有多余横条 |
 | 🎬 连接动效 | 连接/重连时覆盖终端：呼吸光环 + 分段文案（建通道 → 协商密钥 → 验证身份 → 启动终端），成功后闪光淡出 |
-| 📁 文件传输 | 连接后常驻侧栏：SFTP 浏览、右键打开/下载/重命名/复制路径/删除、目录按名称排序（中文/点文件在前），上传下载以卡片展示进度条、速率与剩余时间，失败原因直接写在卡片里，可拖拽调宽（280–620 px） |
-| 📈 主机状态 | 一条远端命令采样后**逐行纵向排列**（系统 → CPU → 内存 → 磁盘 → 网络 → 进程），每行只放一项：名称在左、数值在右、占用率进度条独占下一行；与文件传输同栏上下分区、可各自关闭、3 秒刷新 |
+| 📁 文件传输 | 连接后常驻**左侧**：SFTP 浏览、右键打开/下载/重命名/复制路径/删除、目录按名称排序（中文/点文件在前），可拖拽调宽（260–620 px） |
+| 📈 主机状态 | 连接后常驻**右侧**，一条远端命令采样后**逐行纵向排列**（系统 → CPU → 内存 → 磁盘 → 网络 → 进程），每行只放一项：名称在左、数值在右、占用率进度条独占下一行；两侧可各自关闭、独立拖拽调宽、3 秒刷新 |
 | ⚡ 浏览提速 | SSH 连接统一关闭 Nagle，SFTP 子系统通道按连接复用：目录 437 ms → 104 ms，二次进入 76 ms |
 | 📋 复制粘贴 | 选中即复制（可关，只写纯文本）、复制快捷键可配（`Ctrl+C` 或 `Ctrl+Shift+C`）、复制成功轻提示可关，粘贴二选一（`Ctrl+V` / 右键） |
+| 📊 传输进度 | 汇总在**整页最下方**：文件名、百分比、速率、剩余时间与失败原因；点 ✕ 收起，新传输开始时自动重新出现 |
 | 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
 | 🎛️ 偏好设置 | 即时生效并保存在本机；底部状态栏已移除，版本号与「恢复默认」都收进设置 |
 
@@ -133,7 +134,8 @@ src/
 │   ├── workspace.ts      # 文件传输 + 主机监控的 REST 客户端
 │   └── mockTransport.ts + mockShell.ts
 ├── components/
-│   ├── Sidebar · HostList · TabBar · TerminalPane · Welcome · Dock
+│   ├── TitleBar · TabBar · TerminalPane · Welcome · AssetsPage
+│   ├── SideDock · FilesBrowser · MonitorView · TransfersBar
 │   ├── FilesPanel · MonitorPanel · CommandPalette · HostFormDialog
 │   ├── SettingsPanel · ConfirmDialog
 │   └── ui/               # Button · Field · Modal · Kbd · Icon · Logo · Spinner · Toasts
@@ -145,7 +147,7 @@ src/
 ├── styles/
 │   ├── tokens.css        # 设计令牌：色彩/字号/间距/圆角/动效/终端色
 │   ├── base.css          # reset、滚动条、动效关键帧、无障碍工具类
-│   └── shell.css         # 应用骨架、响应式抽屉
+│   └── shell.css         # 应用骨架（标题栏 / 主视图 / 底部传输条）
 ├── types.ts              # 领域模型（Host / Session / Settings / Toast）
 ├── App.tsx               # 布局装配、全局快捷键
 └── main.tsx              # 探测后端 → 渲染
@@ -208,14 +210,13 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 | `⌘/Ctrl + K` | 命令面板 |
 | `⌘/Ctrl + N` | 新建连接 |
 | `⌘/Ctrl + ,` | 偏好设置 |
-| `⌘/Ctrl + B` | 折叠 / 展开侧栏 |
 | `⌘/Ctrl + 1…9` | 切换到第 n 个会话 |
 | `⌘/Ctrl + Shift + F` | 打开 / 关闭文件传输栏 |
 | `⌘/Ctrl + Shift + M` | 打开 / 关闭主机状态（右侧栏） |
 | `⌘/Ctrl + Shift + C` | 复制选中内容 |
 | `⌘/Ctrl + Shift + V` | 粘贴（与右键菜单同一入口） |
 | `⌘/Ctrl + W` | 关闭当前标签（可在设置中开启二次确认） |
-| `Esc` | 关闭浮层 / 移动端抽屉 |
+| `Esc` | 关闭浮层；在资产页返回终端 |
 
 终端内保留 shell 自身的按键语义（`Ctrl+C`、`Ctrl+L` 等），只有 `⌘/Ctrl + K` 会在输入框之外被应用层接管。
 
@@ -227,7 +228,7 @@ build/                    # 图标：icon.svg · icon.png · icon.ico · icons/
 - **终端尺寸自适应**：FitAddon 量的是单元格容器的内容盒，外层 padding 单独承载留白，避免「最后一行压到底栏」。
 - **右侧常驻栏**：`grid-template-columns: minmax(0, 1fr) auto`，宽度写入设置（280–620 px，双击分隔条复位 372），窄窗口（<1180 px）自动变成悬浮抽屉。
 - **有节制的动效**：180 ms 主节奏、`cubic-bezier(0.16, 1, 0.3, 1)`；尊重 `prefers-reduced-motion`。
-- **响应式**：≥981 px 双栏；<980 px 侧栏变抽屉；<640 px 收紧标签高度。
+- **响应式**：窄窗口下资产卡片自动单列；终端右侧栏 <1180 px 时改为悬浮抽屉；<640 px 收紧标签高度。
 - **可访问性**：语义化标签 + `role="tablist"` 键盘左右切换、对话框焦点陷阱与 `aria-modal`、可见焦点环、`aria-live` 通知、图标按钮均带 `aria-label`。
 
 ## 接口约定

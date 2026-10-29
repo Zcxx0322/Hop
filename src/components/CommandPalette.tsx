@@ -80,13 +80,12 @@ export function CommandPalette() {
           actions.updateSettings({ theme: resolvedTheme === 'dark' ? 'light' : 'dark' }),
       },
       {
-        id: 'action-sidebar',
+        id: 'action-assets',
         group: '操作',
-        label: state.settings.sidebarCollapsed ? '展开侧栏' : '折叠侧栏',
-        hint: '为主机列表腾出空间',
-        icon: 'panel-left',
-        kbd: `${modKey} B`,
-        run: () => actions.toggleSidebar(),
+        label: state.ui.page === 'assets' ? '回到终端' : '打开资产页',
+        hint: '查看、编辑或删除已保存的主机',
+        icon: 'server',
+        run: () => actions.setPage(state.ui.page === 'assets' ? 'terminal' : 'assets'),
       },
     ];
 
@@ -124,7 +123,7 @@ export function CommandPalette() {
     }
 
     return [...sessionItems, ...hostItems, ...actionItems];
-  }, [state.sessions, state.hosts, state.settings.sidebarCollapsed, state.activeSessionId, resolvedTheme, actions]);
+  }, [state.sessions, state.hosts, state.ui.page, state.activeSessionId, resolvedTheme, actions]);
 
   const filtered = useMemo(() => {
     const raw = query.trim();

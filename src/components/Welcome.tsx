@@ -127,7 +127,7 @@ export function Welcome() {
 
         <footer className="welcome__hints">
           <span>
-            <Kbd>{modKey}</Kbd> <Kbd>B</Kbd> 折叠侧栏
+            <Kbd>{modKey}</Kbd> <Kbd>K</Kbd> 命令面板
           </span>
           <span className="welcome__hint-sep" aria-hidden="true" />
           <span>

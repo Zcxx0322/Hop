@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Host } from '../types';
 import {
-  clearTransfers,
   listFiles,
-  listTransfers,
   makeDirectory,
   openRemoteFile,
   removeRemote,
@@ -12,9 +10,9 @@ import {
   startUpload,
   type DirectoryListing,
   type RemoteFile,
-  type Transfer,
 } from '../api/workspace';
 import { useApp } from '../store/AppStore';
+import { refreshTransfers, useTransfers, type TransferRow } from '../store/transfers';
 import { errorMessage } from '../lib/utils';
 import { copyText } from '../lib/clipboard';
 import { Icon } from './ui/Icon';
@@ -22,17 +20,6 @@ import { Spinner } from './ui/Spinner';
 import './FilesPanel.css';
 
 const TRANSFER_POLL_MS = 700;
-
-function formatDuration(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return '—';
-  const total = Math.round(seconds);
-  if (total < 60) return `${total} 秒`;
-  const minutes = Math.floor(total / 60);
-  const rest = total % 60;
-  if (minutes < 60) return rest ? `${minutes} 分 ${rest} 秒` : `${minutes} 分`;
-  const hours = Math.floor(minutes / 60);
-  return `${hours} 小时 ${minutes % 60} 分`;
-}
 
 function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return '—';
@@ -76,15 +63,14 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
   const [path, setPath] = useState('~');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [transfers, setTransfers] = useState<Transfer[]>([]);
   const [busy, setBusy] = useState(false);
   const [renaming, setRenaming] = useState<{ from: string; value: string } | null>(null);
   const [creating, setCreating] = useState<string | null>(null);
   const [menu, setMenu] = useState<{ x: number; y: number; entry: RemoteFile } | null>(null);
   const requestId = useRef(0);
+  const transfers = useTransfers();
   /* 上传结束要自动刷新当前目录，这里用 ref 读取最新的路径与上一轮记录 */
   const pathRef = useRef('~');
-  const transfersRef = useRef<Transfer[]>([]);
 
   const load = useCallback(
     async (target: string) => {
@@ -115,40 +101,20 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
     void load('~');
   }, [hostId, load]);
 
-  /* 传输进度轮询：面板可见期间持续拉取，隐藏即停 */
+  /* 传输在底部全局条里轮询；这里只关心「上传落地后刷新目录」 */
+  const previousTransfers = useRef<TransferRow[]>([]);
+
   useEffect(() => {
-    let disposed = false;
-    let timer = 0;
-    const openedAt = Date.now();
-
-    const tick = async () => {
-      try {
-        const rows = await listTransfers(hostId);
-        if (disposed) return;
-        const previous = transfersRef.current;
-        const justUploaded = rows.some(
-          (row) =>
-            row.direction === 'upload' &&
-            row.status !== 'active' &&
-            row.startedAt >= openedAt - 1000 &&
-            !previous.some((old) => old.id === row.id && old.status === row.status),
-        );
-        setTransfers(rows);
-        transfersRef.current = rows;
-        /* 上传落地后立刻重列目录，避免用户还要手动刷新才看见文件 */
-        if (justUploaded) void load(pathRef.current);
-      } catch {
-        /* 轮询失败不打断主界面，下一轮会自然恢复 */
-      }
-      if (!disposed) timer = window.setTimeout(tick, TRANSFER_POLL_MS);
-    };
-
-    void tick();
-    return () => {
-      disposed = true;
-      window.clearTimeout(timer);
-    };
-  }, [hostId, load]);
+    const previous = previousTransfers.current;
+    const justUploaded = transfers.some(
+      (row) =>
+        row.direction === 'upload' &&
+        row.status !== 'active' &&
+        !previous.some((old) => old.id === row.id && old.status === row.status),
+    );
+    previousTransfers.current = transfers;
+    if (justUploaded) void load(pathRef.current);
+  }, [transfers, load]);
 
   useEffect(() => {
     pathRef.current = path;
@@ -200,8 +166,7 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
     try {
       const { transfer } = await startUpload(hostId, path);
       if (transfer) actions.toast('info', `开始上传 ${transfer.name}`);
-      const rows = await listTransfers(hostId);
-      setTransfers(rows);
+      refreshTransfers();
     } catch (err) {
       setError(errorMessage(err, '上传失败'));
     } finally {
@@ -236,10 +201,6 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
       actions.toast('error', errorMessage(err, '打开文件失败'));
     }
   };
-
-  const activeTransfers = transfers.filter((item) => item.status === 'active');
-  const finishedTransfers = transfers.filter((item) => item.status !== 'active').slice(0, 4);
-  const orderedTransfers = [...activeTransfers, ...finishedTransfers];
 
   return (
     <div className="files">
@@ -304,7 +265,7 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
         <div className="files__row files__row--head" role="row">
           <span role="columnheader">名称</span>
           <span role="columnheader">大小</span>
-          <span role="columnheader">修改日期</span>
+          <span role="columnheader" className="files__col-date">修改日期</span>
           <span aria-hidden="true" />
         </div>
 
@@ -402,7 +363,7 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
                 )}
               </span>
               <span className="files__meta">{entry.type === 'dir' ? '—' : formatBytes(entry.size)}</span>
-              <span className="files__meta">{formatTime(entry.mtime)}</span>
+              <span className="files__meta files__date">{formatTime(entry.mtime)}</span>
               <span className="files__actions">
                 {entry.type !== 'dir' && (
                   <button
@@ -445,94 +406,6 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
           </div>
         )}
       </div>
-
-      {orderedTransfers.length > 0 && (
-        <section className="files__transfers" aria-label="传输进度">
-          <header className="files__transfers-head">
-            <span className="files__transfers-title">
-              传输
-              {activeTransfers.length > 0 && (
-                <span className="files__transfers-badge">{activeTransfers.length}</span>
-              )}
-            </span>
-            <button
-              type="button"
-              className="files__link"
-              onClick={() => {
-                void clearTransfers().then(() => setTransfers([]));
-              }}
-            >
-              清空记录
-            </button>
-          </header>
-          {orderedTransfers.map((transfer) => {
-            const active = transfer.status === 'active';
-            const percent = active
-              ? transfer.total > 0
-                ? Math.min(100, Math.round((transfer.transferred / transfer.total) * 100))
-                : 0
-              : transfer.status === 'done'
-                ? 100
-                : 0;
-            const endAt = transfer.finishedAt ?? Date.now();
-            const seconds = Math.max(0.4, (endAt - transfer.startedAt) / 1000);
-            const speed = transfer.transferred / seconds;
-            const remain = active && speed > 0 && transfer.total > 0
-              ? Math.max(0, Math.round((transfer.total - transfer.transferred) / speed))
-              : null;
-            return (
-              <article key={transfer.id} className="xfer" data-status={transfer.status}>
-                <span className="xfer__icon" data-dir={transfer.direction}>
-                  <Icon name={transfer.direction === 'upload' ? 'arrow-up' : 'download'} size={13} />
-                </span>
-                <div className="xfer__body">
-                  <div className="xfer__top">
-                    <span className="xfer__name truncate" title={transfer.name}>
-                      {transfer.name}
-                    </span>
-                    <span className="xfer__state">
-                      {active ? `${percent}%` : transfer.status === 'done' ? '完成' : '失败'}
-                    </span>
-                  </div>
-                  <div
-                    className="xfer__track"
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={percent}
-                    aria-label={`${transfer.name} 传输进度`}
-                  >
-                    <span className="xfer__fill" style={{ width: `${percent}%` }} />
-                  </div>
-                  <div className="xfer__meta">
-                    <span className="mono">
-                      {formatBytes(transfer.transferred)}
-                      {transfer.total > 0 ? ` / ${formatBytes(transfer.total)}` : ''}
-                    </span>
-                    <span className="xfer__speed mono">
-                      {active ? `${formatBytes(speed)}/s` : transfer.direction === 'upload' ? '已上传' : '已下载'}
-                    </span>
-                    <span className="xfer__eta">
-                      {active
-                        ? remain === null
-                          ? '计算中…'
-                          : remain > 0
-                            ? `剩余 ${formatDuration(remain)}`
-                            : '即将完成'
-                        : formatDuration(Math.round(seconds))}
-                    </span>
-                  </div>
-                </div>
-                {transfer.status === 'error' && transfer.error && (
-                  <p className="xfer__error" title={transfer.error}>
-                    {transfer.error}
-                  </p>
-                )}
-              </article>
-            );
-          })}
-        </section>
-      )}
 
       {menu && (
         <div

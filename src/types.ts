@@ -69,7 +69,6 @@ export interface Settings {
   cursorBlink: boolean;
   scrollback: number;
   confirmOnClose: boolean;
-  sidebarCollapsed: boolean;
   defaultUsername: string;
   defaultPort: number;
   keepAliveSeconds: number;

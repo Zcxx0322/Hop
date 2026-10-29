@@ -20,7 +20,6 @@ import { loadSettings, saveSettings } from './settings';
 interface UiState {
   settingsOpen: boolean;
   paletteOpen: boolean;
-  navOpen: boolean;
   /** null 表示关闭；hostId 为 null 表示「新建」 */
   hostForm: { hostId: string | null } | null;
   pendingCloseSessionId: string | null;
@@ -28,6 +27,8 @@ interface UiState {
   /** 右侧常驻面板：文件 / 主机状态 */
   dockFiles: boolean;
   dockMonitor: boolean;
+  /** 主视图：终端工作区 / 资产页 */
+  page: 'terminal' | 'assets';
 }
 
 export interface AppState {
@@ -65,9 +66,9 @@ function createInitialState(): AppState {
     settings: loadSettings(),
     toasts: [],
     ui: {
+      page: 'terminal',
       settingsOpen: false,
       paletteOpen: false,
-      navOpen: false,
       hostForm: null,
       pendingCloseSessionId: null,
       pendingDeleteHostId: null,
@@ -137,7 +138,7 @@ function reducer(state: AppState, action: Action): AppState {
 
     case 'session/connect': {
       /* 新建会话时把文件传输和主机状态一起展开，开箱即用 */
-      const ui = { ...state.ui, paletteOpen: false, navOpen: false, dockFiles: true, dockMonitor: true };
+      const ui = { ...state.ui, paletteOpen: false, dockFiles: true, dockMonitor: true };
       const session: Session = {
         id: action.sessionId,
         hostId: action.host.id,
@@ -190,7 +191,7 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         activeSessionId: action.id,
-        ui: { ...state.ui, navOpen: false },
+        ui: { ...state.ui },
       };
 
     case 'settings/patch':
@@ -238,9 +239,8 @@ export interface AppActions {
   updateSettings: (patch: Partial<Settings>) => void;
   setSettingsOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
-  setNavOpen: (open: boolean) => void;
-  toggleSidebar: () => void;
   openHostForm: (hostId?: string | null) => void;
+  setPage: (page: 'terminal' | 'assets') => void;
   closeHostForm: () => void;
   /** 右侧常驻面板：开关文件 / 主机状态，以及整体展开 */
   toggleDockFiles: () => void;
@@ -405,6 +405,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       host,
       now: Date.now(),
     });
+    dispatch({ type: 'ui/patch', patch: { page: 'terminal' } });
   }, []);
 
   const updateSession = useCallback((id: string, patch: Partial<Session>) => {
@@ -452,22 +453,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ui/patch', patch: { paletteOpen: open } });
   }, []);
 
-  const setNavOpen = useCallback((open: boolean) => {
-    dispatch({ type: 'ui/patch', patch: { navOpen: open } });
-  }, []);
-
-  const toggleSidebar = useCallback(() => {
-    const isNarrow = window.matchMedia('(max-width: 980px)').matches;
-    if (isNarrow) {
-      dispatch({ type: 'ui/patch', patch: { navOpen: !state.ui.navOpen } });
-      return;
-    }
-    dispatch({
-      type: 'settings/patch',
-      patch: { sidebarCollapsed: !state.settings.sidebarCollapsed },
-    });
-  }, [state.settings.sidebarCollapsed, state.ui.navOpen]);
-
   const openHostForm = useCallback((hostId: string | null = null) => {
     dispatch({ type: 'ui/patch', patch: { hostForm: { hostId } } });
   }, []);
@@ -476,7 +461,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ui/patch', patch: { hostForm: null } });
   }, []);
 
-  /* 文件 / 监控面板互斥，避免两个抽屉叠在一起 */
+  const setPage = useCallback((page: 'terminal' | 'assets') => {
+    dispatch({ type: 'ui/patch', patch: { page } });
+  }, []);
+
   const toggleDockFiles = useCallback(() => {
     dispatch({ type: 'ui/toggle-dock', pane: 'files' });
   }, []);
@@ -516,9 +504,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateSettings,
       setSettingsOpen,
       setPaletteOpen,
-      setNavOpen,
-      toggleSidebar,
       openHostForm,
+      setPage,
       closeHostForm,
       toggleDockFiles,
       toggleDockMonitor,
@@ -546,9 +533,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateSettings,
       setSettingsOpen,
       setPaletteOpen,
-      setNavOpen,
-      toggleSidebar,
       openHostForm,
+      setPage,
       closeHostForm,
       toggleDockFiles,
       toggleDockMonitor,

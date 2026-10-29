@@ -105,17 +105,6 @@ export function SettingsPanel() {
             />
           </div>
 
-          <div className="settings-row">
-            <div className="settings-row__text">
-              <span className="settings-row__label">折叠侧栏</span>
-              <span className="settings-row__desc">只保留主机头像轨道</span>
-            </div>
-            <Switch
-              label="折叠侧栏"
-              checked={settings.sidebarCollapsed}
-              onChange={(checked) => actions.updateSettings({ sidebarCollapsed: checked })}
-            />
-          </div>
         </section>
 
         <section className="settings-group" aria-labelledby="settings-terminal">

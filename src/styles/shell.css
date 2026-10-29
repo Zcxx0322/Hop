@@ -1,89 +1,57 @@
 /* ==========================================================================
-   应用外壳：标题栏 + 侧栏 + 工作区 + 状态栏
+   应用外壳：标题栏 + 主视图（终端 / 资产）+ 底部传输条
    - 无系统边框：整个顶部标题栏就是窗口拖拽区（-webkit-app-region: drag）
    ========================================================================== */
 
 .app-shell {
   position: relative;
   display: grid;
-  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
-  grid-template-rows: var(--titlebar-h) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: var(--titlebar-h) minmax(0, 1fr) auto;
   height: 100dvh;
   overflow: hidden;
   background: var(--bg);
-  transition: grid-template-columns var(--dur-slow) var(--ease-out);
 }
 
-.app-shell[data-collapsed='true'] {
-  grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr);
-}
-
-/* 子项显式落位，避免组件自身的 grid-row 与新版式打架 */
+/* 子项显式落位，避免组件自身的 grid-row 与版式打架 */
 .app-shell > .titlebar {
   grid-column: 1 / -1;
   grid-row: 1;
 }
 
-.app-shell > .sidebar {
+.app-shell > .workspace,
+.app-shell > .assets {
   grid-column: 1;
   grid-row: 2;
-  border-right: 1px solid var(--border);
-  border-top: none;
+  min-width: 0;
+  min-height: 0;
 }
 
-.app-shell > .workspace {
-  grid-column: 2;
-  grid-row: 2;
+/* 底部传输条横跨整页 */
+.app-shell > .transfersbar {
+  grid-column: 1 / -1;
+  grid-row: 3;
 }
 
 .workspace {
   position: relative;
   display: grid;
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   background: var(--term-bg);
   overflow: hidden;
 }
 
-.workspace-scrim {
-  display: none;
+/* 文件传输贴左侧、主机状态贴右侧，中间留给终端 */
+.workspace.with-files {
+  grid-template-columns: auto minmax(0, 1fr);
 }
 
-/* 窄屏：侧栏改为抽屉 */
-@media (max-width: 980px) {
-  .app-shell,
-  .app-shell[data-collapsed='true'] {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.workspace.with-monitor {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
 
-  .app-shell > .sidebar {
-    grid-column: 1;
-    position: fixed;
-    top: var(--titlebar-h);
-    bottom: 0;
-    left: 0;
-    width: var(--sidebar-w);
-    z-index: var(--z-sidebar);
-    transform: translateX(-100%);
-    transition: transform var(--dur) var(--ease-out);
-  }
-
-  .app-shell[data-nav-open='true'] > .sidebar {
-    transform: translateX(0);
-  }
-
-  .app-shell > .workspace {
-    grid-column: 1;
-    border: none;
-  }
-
-  .app-shell[data-nav-open='true'] .workspace-scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: calc(var(--z-sidebar) - 1);
-    background: rgba(0, 0, 0, 0.5);
-    animation: hop-fade-in var(--dur) var(--ease-out);
-  }
+.workspace.with-files.with-monitor {
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
