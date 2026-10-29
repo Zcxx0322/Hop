@@ -11,6 +11,30 @@ const AUTH_LABEL: Record<string, string> = {
   agent: 'Agent',
 };
 
+type HostStatus = 'online' | 'connecting' | 'offline';
+
+const STATE_LABEL: Record<HostStatus, string> = {
+  online: '在线',
+  connecting: '连接中',
+  offline: '离线',
+};
+
+const STATE_HINT: Record<HostStatus, string> = {
+  online: '当前有会话已连上',
+  connecting: '正在建立连接',
+  offline: '当前没有活动会话',
+};
+
+/** 状态点 + 文案：在线 / 连接中 / 离线 */
+function StatePill({ status }: { status: HostStatus }) {
+  return (
+    <span className={`assets__state assets__state--${status}`} title={STATE_HINT[status]}>
+      <i className="assets__state-dot" aria-hidden="true" />
+      {STATE_LABEL[status]}
+    </span>
+  );
+}
+
 /**
  * 资产页：像后台管理列表一样一屏看全所有主机。
  * 每行右侧三个动作：连接 / 编辑 / 删除；图标来自连接成功后自动探测的发行版。
@@ -20,10 +44,14 @@ export function AssetsPage() {
   const { hosts, hostsLoaded, hostsError, sessions } = state;
   const [query, setQuery] = useState('');
 
-  const connected = useMemo(
-    () => new Set(sessions.map((session) => session.hostId)),
-    [sessions],
-  );
+  /** 会话决定状态：有已连接会话=在线，正在建连=连接中，其余=离线 */
+  const statusOf = (hostId: string): HostStatus => {
+    const session = sessions.find((item) => item.hostId === hostId);
+    if (!session) return 'offline';
+    if (session.status === 'connected') return 'online';
+    if (session.status === 'connecting' || session.status === 'reconnecting') return 'connecting';
+    return 'offline';
+  };
 
   const list = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -86,6 +114,9 @@ export function AssetsPage() {
             <span role="columnheader" className="assets__col-tags">
               标签
             </span>
+            <span role="columnheader" className="assets__col-state">
+              状态
+            </span>
             <span role="columnheader" className="assets__col-auth">
               认证
             </span>
@@ -98,7 +129,6 @@ export function AssetsPage() {
           </div>
 
           {list.map((host) => {
-            const live = connected.has(host.id);
             return (
               <div className="assets__row" role="row" key={host.id}>
                 <div className="assets__cell assets__cell--host" role="cell">
@@ -107,7 +137,6 @@ export function AssetsPage() {
                     <span className="assets__host-name truncate" title={host.name}>
                       {host.favorite && <Icon name="star" size={11} />}
                       {host.name}
-                      {live && <i className="assets__live" title="已有会话连接中" />}
                     </span>
                     <span className="assets__host-addr mono truncate">
                       {host.username}@{host.host}:{host.port}
@@ -136,6 +165,10 @@ export function AssetsPage() {
                   ) : (
                     <span className="assets__muted">未分组</span>
                   )}
+                </div>
+
+                <div className="assets__cell assets__col-state" role="cell">
+                  <StatePill status={statusOf(host.id)} />
                 </div>
 
                 <div className="assets__cell assets__col-auth" role="cell">

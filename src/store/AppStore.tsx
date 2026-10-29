@@ -12,6 +12,7 @@ import {
 import { getHostRepository } from '../api/hostRepository';
 import { ensureTransportConfig } from '../api/config';
 import { useSystemTheme, type ResolvedTheme } from '../hooks/useSystemTheme';
+import { paletteById, resolvePalette } from '../lib/themes';
 import type { Host, HostDraft, Session, Settings, Toast } from '../types';
 import { createId, errorMessage } from '../lib/utils';
 import { toHostDraft } from '../lib/host';
@@ -274,19 +275,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const systemTheme = useSystemTheme();
   const toastTimers = useRef<number[]>([]);
 
-  const resolvedTheme: ResolvedTheme =
-    state.settings.theme === 'system' ? systemTheme : state.settings.theme;
+  const palette = resolvePalette(state.settings.palette, systemTheme === 'dark');
+  const resolvedTheme: ResolvedTheme = palette.base;
 
   /* ---------- 主题落到 <html> 上，CSS 变量随之切换 ---------- */
   /* 用 layout effect：子组件的被动 effect（如终端主题）必须读到已切换的 CSS 变量 */
   useLayoutEffect(() => {
     const root = document.documentElement;
     root.dataset.theme = resolvedTheme;
-    root.dataset.accent = state.settings.accent;
+    root.dataset.palette = palette.id;
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', resolvedTheme === 'dark' ? '#000000' : '#ffffff');
-  }, [resolvedTheme, state.settings.accent]);
+      ?.setAttribute('content', paletteById(palette.id).swatch[0]);
+  }, [resolvedTheme, palette.id]);
 
   /* ---------- 偏好持久化 ---------- */
   useEffect(() => {
@@ -470,7 +471,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setPage = useCallback((page: 'terminal' | 'assets' | 'notes') => {
-    dispatch({ type: 'ui/patch', patch: { page } });
+    // 速记浮层只属于终端页：离开时顺手收起，避免按钮亮着却看不到东西
+    dispatch({
+      type: 'ui/patch',
+      patch: page === 'terminal' ? { page } : { page, quickNote: false },
+    });
   }, []);
 
   const toggleQuickNote = useCallback(() => {

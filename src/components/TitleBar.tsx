@@ -116,7 +116,8 @@ export function TitleBar() {
       </div>
 
       <div className="titlebar__actions no-drag">
-        {activeSession && (
+        {/* 会话相关操作只在终端页出现：文件 / 状态 / 速记 / 重连 */}
+        {activeSession && state.ui.page === 'terminal' && (
           <>
             <button
               type="button"
@@ -167,13 +168,13 @@ export function TitleBar() {
         <button
           type="button"
           className="titlebar__ghost"
-          aria-label="新建连接"
-          title="新建连接 （Ctrl N）"
-          onClick={() => actions.openHostForm(null)}
+          data-on={state.ui.settingsOpen}
+          aria-pressed={state.ui.settingsOpen}
+          aria-label="偏好设置"
+          title="偏好设置（Ctrl+,）"
+          onClick={() => actions.setSettingsOpen(!state.ui.settingsOpen)}
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
+          <Icon name="gear" size={15} />
         </button>
       </div>
 

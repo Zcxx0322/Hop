@@ -61,17 +61,15 @@ export interface Session {
   reconnectNonce?: number;
 }
 
-export type ThemeMode = 'dark' | 'light' | 'system';
-
-export type AccentKey = 'green';
-
 export type FontKey = 'jetbrains' | 'cascadia' | 'menlo' | 'system';
 
 export type CursorStyle = 'block' | 'bar' | 'underline';
 
 export interface Settings {
-  theme: ThemeMode;
-  accent: AccentKey;
+  /** 界面主题（外部主题）id，见 src/lib/themes.ts */
+  palette: string;
+  /** 终端主题 id，见 src/lib/terminalThemes.ts；`follow` 表示跟随界面主题 */
+  terminalTheme: string;
   fontSize: number;
   fontFamily: FontKey;
   cursorStyle: CursorStyle;

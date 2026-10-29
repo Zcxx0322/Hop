@@ -16,20 +16,22 @@
 | 终端会话 · 左侧文件传输 + 右侧主机状态 | 多会话标签（同一主机可开多个） |
 | --- | --- |
 | ![终端](docs/screenshots/terminal.png) | ![多会话标签](docs/screenshots/tabs.png) |
-| **资产页：列表式主机管理** | **笔记页：Markdown + 即时渲染** |
+| **资产页：列表 + 在线状态 + 发行版图标** | **笔记页：Markdown + 即时渲染** |
 | ![资产页](docs/screenshots/assets.png) | ![笔记](docs/screenshots/notes.png) |
-| **速记浮层：不离开会话随手记** | **命令面板** |
-| ![速记](docs/screenshots/quicknote.png) | ![命令面板](docs/screenshots/command-palette.png) |
-| **文件右键菜单** | **主机状态：逐行纵向排版** |
-| ![右键菜单](docs/screenshots/dock-menu.png) | ![主机状态](docs/screenshots/monitor-detail.png) |
-| **新建连接** | **偏好设置** |
-| ![新建连接](docs/screenshots/host-form.png) | ![偏好设置](docs/screenshots/settings.png) |
-| **连接动效：握手进行中** | **连接动效：握手完成** |
-| ![连接中](docs/screenshots/connect.png) | ![已连接](docs/screenshots/connect-done.png) |
-| **浅色主题：欢迎页（纯白 + 墨绿）** | **浅色主题：终端** |
-| ![浅色欢迎页](docs/screenshots/welcome-light.png) | ![浅色终端](docs/screenshots/terminal-light.png) |
-| **浅色主题：资产页** | **浅色主题：笔记页** |
-| ![浅色资产页](docs/screenshots/assets-light.png) | ![浅色笔记页](docs/screenshots/notes-light.png) |
+| **速记浮层：不离开会话随手记** | **新建连接** |
+| ![速记](docs/screenshots/quicknote.png) | ![新建连接](docs/screenshots/host-form.png) |
+| **命令面板** | **文件右键菜单** |
+| ![命令面板](docs/screenshots/command-palette.png) | ![右键菜单](docs/screenshots/dock-menu.png) |
+| **主机状态：逐行纵向排版** | **偏好设置：11 套界面主题 + 9 套终端主题** |
+| ![主机状态](docs/screenshots/monitor-detail.png) | ![偏好设置](docs/screenshots/settings.png) |
+| **整窗换肤示例：Dracula** | **连接动效：握手进行中** |
+| ![Dracula 主题](docs/screenshots/theme-dracula.png) | ![连接中](docs/screenshots/connect.png) |
+| **连接动效：握手完成** | **浅色主题：欢迎页（纯白 + 墨绿）** |
+| ![已连接](docs/screenshots/connect-done.png) | ![浅色欢迎页](docs/screenshots/welcome-light.png) |
+| **浅色主题：终端** | **浅色主题：资产页** |
+| ![浅色终端](docs/screenshots/terminal-light.png) | ![浅色资产页](docs/screenshots/assets-light.png) |
+| **浅色主题：笔记页** | **欢迎页（深色）** |
+| ![浅色笔记页](docs/screenshots/notes-light.png) | ![欢迎页](docs/screenshots/welcome.png) |
 
 | 能力 | 说明 |
 | --- | --- |
@@ -38,7 +40,8 @@
 | 🗂️ 多会话标签 | 同一主机可开多个会话（标签带序号）、连接状态点、快捷键切换、中键/⌘W 关闭 |
 | ⌨️ 真终端 | xterm.js + WebGL 渲染 + 自适应尺寸 + 主题跟随 + 断线重连；SSH socket 关闭 Nagle，逐键回显不做多余攒包 |
 | ⌘ 命令面板 | 一个输入框覆盖「连接 / 新建 / 切换 / 设置」，支持 `host:`、`edit:` 前缀 |
-| 🎨 两套主题 | 纯黑 + 荧光绿 / 纯白 + 墨绿，终端配色随主题一起切换 |
+| 🎨 界面主题 | 11 套：纯黑 + 绿、纯白 + 绿、跟随系统，另移植 One Dark / Dracula / Nord / Tokyo Night / Gruvbox / Catppuccin / Solarized 深浅；偏好设置里卡片预览切换，写入 `data-palette` 覆盖设计令牌 |
+| 🖌️ 终端主题 | 9 套，与界面主题**完全独立**：可「跟随界面」，也可固定成 One Dark / Dracula / Nord / Tokyo Night / Gruvbox / Catppuccin / Solarized 深浅，16 色 ANSI、光标与选区整套替换 |
 | 🪟 无边框窗口 | 自绘标题栏（品牌 / 标签 / 会话操作 / 最小化·最大化·关闭）；文件传输、主机状态、重新连接都在右上角，终端从标题栏下一行直通到底，没有多余横条 |
 | 🎬 连接动效 | 连接/重连时覆盖终端：呼吸光环 + 分段文案（建通道 → 协商密钥 → 验证身份 → 启动终端），成功后闪光淡出 |
 | 📁 文件传输 | 连接后常驻**左侧**：30 px 图标工具条（上一级 / 刷新 / 新建文件夹 / 跟随终端目录 / 上传）+ 带描边与路径图标的可输入路径框（`~`、`/`、绝对/相对路径都能跳，`Esc` 还原），工具条上的「跟随终端目录」按钮点亮后随终端 `cd` 自动切换目录；右键打开/下载/重命名/复制路径/删除，目录按名称排序，可拖拽调宽（260–620 px），从主目录能一路退回 `/` |
@@ -48,7 +51,7 @@
 | 📊 传输进度 | 汇总在**整页最下方的一条 39 px 窄栏**：每条传输一行（图标 / 文件名 / 百分比 · 速率 · 剩余），进度线压成 2 px 贴在行底，完成态自动隐藏；失败原因直接写在行内，点 ✕ 收起，新传输开始时自动重新出现 |
 | ✍️ 笔记 | 两种入口：标题栏「笔记」进入完整笔记页；终端页右侧铅笔按钮（或 `Ctrl+Shift+N`）唤出**速记浮层**，不离开会话就能随手记，`Esc` 收起；都兼容常用 Markdown（标题、列表、引用、代码块、表格、链接），笔记页的「即时渲染」开关默认关闭，打开后左右分栏实时预览，内容自动存在本机 |
 | 🧪 演示模式 | 无后端也可完整运行：内置示例主机 + 模拟 shell |
-| 🎛️ 偏好设置 | 即时生效并保存在本机；底部状态栏已移除，版本号与「恢复默认」都收进设置 |
+| 🎛️ 偏好设置 | 标题栏右上角齿轮随时打开；**居中双栏窗口**（左主题、右终端与连接），即时生效并保存在本机，底部保留版本号与「恢复默认」 |
 
 > 复制出来的内容永远是纯文本：ANSI 颜色、行尾多余空白和首尾空行都会在写入剪贴板前剥掉。
 

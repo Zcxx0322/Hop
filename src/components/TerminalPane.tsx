@@ -9,6 +9,7 @@ import { extractOsc7, inferCd, terminalCwd } from '../store/cwd';
 import type { TerminalTransport } from '../api/transport';
 import { useApp } from '../store/AppStore';
 import { FONT_STACKS } from '../store/settings';
+import { terminalThemeById } from '../lib/terminalThemes';
 import { copyText, readClipboardText, toPlainText } from '../lib/clipboard';
 import { ConnectFX } from './ConnectFX';
 import './TerminalPane.css';
@@ -60,6 +61,13 @@ const ANSI_LIGHT = {
   brightCyan: '#1298a3',
   brightWhite: '#0c120e',
 } as const;
+
+/**
+ * 终端主题：设置里选了固定配色就直接用，`follow` 则从界面主题的 CSS 变量取值。
+ */
+function resolveTerminalTheme(themeId: string, light: boolean) {
+  return terminalThemeById(themeId) ?? readTerminalTheme(light);
+}
 
 function readTerminalTheme(light: boolean) {
   const styles = getComputedStyle(document.documentElement);
@@ -134,7 +142,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
       cursorBlink: settings.cursorBlink,
       scrollback: settings.scrollback,
       macOptionIsMeta: true,
-      theme: readTerminalTheme(resolvedTheme === 'light'),
+      theme: resolveTerminalTheme(settings.terminalTheme, resolvedTheme === 'light'),
       allowTransparency: false,
     });
     const fit = new FitAddon();
@@ -328,7 +336,7 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     term.options.cursorStyle = settings.cursorStyle;
     term.options.cursorBlink = settings.cursorBlink;
     term.options.scrollback = settings.scrollback;
-    term.options.theme = readTerminalTheme(resolvedTheme === 'light');
+    term.options.theme = resolveTerminalTheme(settings.terminalTheme, resolvedTheme === 'light');
     try {
       fitRef.current?.fit();
     } catch {
@@ -340,8 +348,8 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
     settings.cursorStyle,
     settings.cursorBlink,
     settings.scrollback,
+    settings.terminalTheme,
     resolvedTheme,
-    settings.accent,
   ]);
 
   /* ---------- 激活时聚焦 ---------- */

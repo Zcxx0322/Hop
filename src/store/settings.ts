@@ -1,10 +1,12 @@
-import type { AccentKey, FontKey, Settings } from '../types';
+import type { FontKey, Settings } from '../types';
+import { isPaletteId } from '../lib/themes';
+import { isTerminalThemeId } from '../lib/terminalThemes';
 
 const STORAGE_KEY = 'hop.settings.v1';
 
 export const DEFAULT_SETTINGS: Settings = {
-  theme: 'dark',
-  accent: 'green',
+  palette: 'hop-black',
+  terminalTheme: 'follow',
   fontSize: 13,
   fontFamily: 'jetbrains',
   cursorStyle: 'bar',
@@ -22,13 +24,6 @@ export const DEFAULT_SETTINGS: Settings = {
   followCwd: false,
   dockWidth: 332,
 };
-
-export const ACCENTS: Array<{
-  key: AccentKey;
-  label: string;
-  swatch: string;
-  swatch2: string;
-}> = [{ key: 'green', label: '翠绿', swatch: '#2ee66b', swatch2: '#7bf5a3' }];
 
 export const FONT_STACKS: Record<FontKey, { label: string; stack: string }> = {
   jetbrains: {
@@ -52,11 +47,20 @@ export const FONT_STACKS: Record<FontKey, { label: string; stack: string }> = {
 
 export const SCROLLBACK_OPTIONS = [1000, 5000, 10_000, 50_000] as const;
 
-const THEMES = ['dark', 'light', 'system'] as const;
-const ACCENT_KEYS = ACCENTS.map((item) => item.key);
 const FONT_KEYS = Object.keys(FONT_STACKS) as FontKey[];
 const CURSORS = ['block', 'bar', 'underline'] as const;
 const COPY_SHORTCUTS = ['ctrl-c', 'ctrl-shift-c'] as const;
+
+/**
+ * 0.0.4 及之前只有 theme: dark/light/system，
+ * 升级时把旧值映射成新的界面主题 id。
+ */
+function migratePalette(input: Partial<Settings> & { theme?: unknown }): string {
+  if (isPaletteId(input.palette)) return input.palette;
+  if (input.theme === 'light') return 'hop-white';
+  if (input.theme === 'dark' || input.theme === 'system') return 'hop-black';
+  return DEFAULT_SETTINGS.palette;
+}
 
 /** 旧版本只有 both / shortcut / context 三种，升级时映射到新的两种模式。 */
 function migratePasteMode(value: unknown): Settings['pasteMode'] {
@@ -74,8 +78,10 @@ export function normalizeSettings(input: Partial<Settings>): Settings {
   const merged = { ...DEFAULT_SETTINGS, ...input };
   return {
     ...merged,
-    theme: THEMES.includes(merged.theme) ? merged.theme : DEFAULT_SETTINGS.theme,
-    accent: ACCENT_KEYS.includes(merged.accent) ? merged.accent : DEFAULT_SETTINGS.accent,
+    palette: migratePalette(input),
+    terminalTheme: isTerminalThemeId(input.terminalTheme)
+      ? input.terminalTheme
+      : DEFAULT_SETTINGS.terminalTheme,
     fontSize: Number.isFinite(merged.fontSize)
       ? clamp(merged.fontSize, 11, 20)
       : DEFAULT_SETTINGS.fontSize,

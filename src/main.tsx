@@ -4,6 +4,7 @@ import App from './App';
 import { AppProvider } from './store/AppStore';
 import { ensureTransportConfig } from './api/config';
 import './styles/tokens.css';
+import './styles/themes.css';
 import './styles/base.css';
 import './styles/shell.css';
 

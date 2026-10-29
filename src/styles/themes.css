@@ -1,0 +1,286 @@
+/* ==========================================================================
+   Hop 界面主题（开源配色移植）
+   - [data-theme] 提供基底：color-scheme、阴影、系统控件颜色
+   - [data-palette] 覆盖配色令牌，因此新增主题只需追加一个块
+   - 终端「跟随界面」读取这里的 --term-* 变量
+   ========================================================================== */
+
+/* ---------------------------- Atom One Dark ---------------------------- */
+[data-palette='one-dark'] {
+  --bg: #282c34;
+  --surface: #2c313a;
+  --surface-2: #353b45;
+  --surface-3: #3e4451;
+  --panel: #282c34;
+  --panel-inset: #24282f;
+
+  --text: #abb2bf;
+  --text-2: #8b93a4;
+  --text-3: #5c6370;
+
+  --border: rgba(171, 178, 191, 0.14);
+  --border-strong: rgba(171, 178, 191, 0.24);
+  --border-focus: rgba(97, 175, 239, 0.6);
+
+  --hover: rgba(171, 178, 191, 0.08);
+  --active: rgba(171, 178, 191, 0.14);
+
+  --success: #98c379;
+  --warning: #e5c07b;
+  --danger: #e06c75;
+  --info: #56b6c2;
+
+  --accent: #61afef;
+  --accent-2: #98c379;
+  --accent-ink: #21252b;
+
+  --term-bg: #282c34;
+  --term-fg: #abb2bf;
+  --term-selection: rgba(97, 175, 239, 0.3);
+  --term-cursor: #61afef;
+}
+
+/* ------------------------------- Dracula ------------------------------- */
+[data-palette='dracula'] {
+  --bg: #282a36;
+  --surface: #2b2d3a;
+  --surface-2: #343746;
+  --surface-3: #3c3f51;
+  --panel: #282a36;
+  --panel-inset: #21222c;
+
+  --text: #f8f8f2;
+  --text-2: #b3b6c8;
+  --text-3: #6272a4;
+
+  --border: rgba(248, 248, 242, 0.12);
+  --border-strong: rgba(248, 248, 242, 0.22);
+  --border-focus: rgba(189, 147, 249, 0.6);
+
+  --hover: rgba(248, 248, 242, 0.07);
+  --active: rgba(248, 248, 242, 0.12);
+
+  --success: #50fa7b;
+  --warning: #f1fa8c;
+  --danger: #ff5555;
+  --info: #8be9fd;
+
+  --accent: #bd93f9;
+  --accent-2: #50fa7b;
+  --accent-ink: #1e1f29;
+
+  --term-bg: #282a36;
+  --term-fg: #f8f8f2;
+  --term-selection: rgba(189, 147, 249, 0.3);
+  --term-cursor: #bd93f9;
+}
+
+/* --------------------------------- Nord --------------------------------- */
+[data-palette='nord'] {
+  --bg: #2e3440;
+  --surface: #323845;
+  --surface-2: #3b4252;
+  --surface-3: #434c5e;
+  --panel: #2e3440;
+  --panel-inset: #2a2f3a;
+
+  --text: #e5e9f0;
+  --text-2: #a7b0c0;
+  --text-3: #7b869b;
+
+  --border: rgba(216, 222, 233, 0.12);
+  --border-strong: rgba(216, 222, 233, 0.22);
+  --border-focus: rgba(136, 192, 208, 0.6);
+
+  --hover: rgba(216, 222, 233, 0.07);
+  --active: rgba(216, 222, 233, 0.12);
+
+  --success: #a3be8c;
+  --warning: #ebcb8b;
+  --danger: #bf616a;
+  --info: #81a1c1;
+
+  --accent: #88c0d0;
+  --accent-2: #a3be8c;
+  --accent-ink: #2e3440;
+
+  --term-bg: #2e3440;
+  --term-fg: #d8dee9;
+  --term-selection: rgba(136, 192, 208, 0.3);
+  --term-cursor: #88c0d0;
+}
+
+/* ------------------------------ Tokyo Night ----------------------------- */
+[data-palette='tokyo-night'] {
+  --bg: #1a1b26;
+  --surface: #1f2335;
+  --surface-2: #24283b;
+  --surface-3: #2f334d;
+  --panel: #1a1b26;
+  --panel-inset: #16161e;
+
+  --text: #c0caf5;
+  --text-2: #9aa5ce;
+  --text-3: #565f89;
+
+  --border: rgba(192, 202, 245, 0.12);
+  --border-strong: rgba(192, 202, 245, 0.22);
+  --border-focus: rgba(122, 162, 247, 0.6);
+
+  --hover: rgba(192, 202, 245, 0.07);
+  --active: rgba(192, 202, 245, 0.12);
+
+  --success: #9ece6a;
+  --warning: #e0af68;
+  --danger: #f7768e;
+  --info: #7dcfff;
+
+  --accent: #7aa2f7;
+  --accent-2: #bb9af7;
+  --accent-ink: #16161e;
+
+  --term-bg: #1a1b26;
+  --term-fg: #c0caf5;
+  --term-selection: rgba(122, 162, 247, 0.3);
+  --term-cursor: #7aa2f7;
+}
+
+/* -------------------------------- Gruvbox ------------------------------- */
+[data-palette='gruvbox-dark'] {
+  --bg: #282828;
+  --surface: #32302f;
+  --surface-2: #3c3836;
+  --surface-3: #504945;
+  --panel: #282828;
+  --panel-inset: #1d2021;
+
+  --text: #ebdbb2;
+  --text-2: #bdae93;
+  --text-3: #928374;
+
+  --border: rgba(235, 219, 178, 0.13);
+  --border-strong: rgba(235, 219, 178, 0.24);
+  --border-focus: rgba(250, 189, 47, 0.6);
+
+  --hover: rgba(235, 219, 178, 0.07);
+  --active: rgba(235, 219, 178, 0.13);
+
+  --success: #b8bb26;
+  --warning: #fabd2f;
+  --danger: #fb4934;
+  --info: #83a598;
+
+  --accent: #fabd2f;
+  --accent-2: #b8bb26;
+  --accent-ink: #282828;
+
+  --term-bg: #282828;
+  --term-fg: #ebdbb2;
+  --term-selection: rgba(250, 189, 47, 0.26);
+  --term-cursor: #fabd2f;
+}
+
+/* ------------------------------- Catppuccin ----------------------------- */
+[data-palette='catppuccin'] {
+  --bg: #1e1e2e;
+  --surface: #232336;
+  --surface-2: #313244;
+  --surface-3: #45475a;
+  --panel: #1e1e2e;
+  --panel-inset: #181825;
+
+  --text: #cdd6f4;
+  --text-2: #a6adc8;
+  --text-3: #6c7086;
+
+  --border: rgba(205, 214, 244, 0.12);
+  --border-strong: rgba(205, 214, 244, 0.22);
+  --border-focus: rgba(203, 166, 247, 0.6);
+
+  --hover: rgba(205, 214, 244, 0.07);
+  --active: rgba(205, 214, 244, 0.12);
+
+  --success: #a6e3a1;
+  --warning: #f9e2af;
+  --danger: #f38ba8;
+  --info: #89dceb;
+
+  --accent: #cba6f7;
+  --accent-2: #89b4fa;
+  --accent-ink: #11111b;
+
+  --term-bg: #1e1e2e;
+  --term-fg: #cdd6f4;
+  --term-selection: rgba(203, 166, 247, 0.28);
+  --term-cursor: #cba6f7;
+}
+
+/* ----------------------------- Solarized Dark --------------------------- */
+[data-palette='solarized-dark'] {
+  --bg: #002b36;
+  --surface: #073642;
+  --surface-2: #0b3f4d;
+  --surface-3: #0f4b5a;
+  --panel: #002b36;
+  --panel-inset: #00252e;
+
+  --text: #93a1a1;
+  --text-2: #839496;
+  --text-3: #657b83;
+
+  --border: rgba(147, 161, 161, 0.16);
+  --border-strong: rgba(147, 161, 161, 0.28);
+  --border-focus: rgba(38, 139, 210, 0.65);
+
+  --hover: rgba(147, 161, 161, 0.08);
+  --active: rgba(147, 161, 161, 0.14);
+
+  --success: #859900;
+  --warning: #b58900;
+  --danger: #dc322f;
+  --info: #2aa198;
+
+  --accent: #268bd2;
+  --accent-2: #2aa198;
+  --accent-ink: #002b36;
+
+  --term-bg: #002b36;
+  --term-fg: #93a1a1;
+  --term-selection: rgba(38, 139, 210, 0.3);
+  --term-cursor: #268bd2;
+}
+
+/* ---------------------------- Solarized Light --------------------------- */
+[data-palette='solarized-light'] {
+  --bg: #fdf6e3;
+  --surface: #fffaf0;
+  --surface-2: #f5efdc;
+  --surface-3: #eee8d5;
+  --panel: #fdf6e3;
+  --panel-inset: #faf3e0;
+
+  --text: #073642;
+  --text-2: #586e75;
+  --text-3: #93a1a1;
+
+  --border: rgba(7, 54, 66, 0.12);
+  --border-strong: rgba(7, 54, 66, 0.22);
+  --border-focus: rgba(38, 139, 210, 0.55);
+
+  --hover: rgba(7, 54, 66, 0.05);
+  --active: rgba(7, 54, 66, 0.09);
+
+  --success: #859900;
+  --warning: #b58900;
+  --danger: #dc322f;
+  --info: #2aa198;
+
+  --accent: #268bd2;
+  --accent-2: #2aa198;
+  --accent-ink: #fdf6e3;
+
+  --term-bg: #fdf6e3;
+  --term-fg: #073642;
+  --term-selection: rgba(38, 139, 210, 0.22);
+  --term-cursor: #268bd2;
+}

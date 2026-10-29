@@ -53,6 +53,11 @@
 .modal--center.modal--xl {
   width: min(920px, 100%);
 }
+
+/* 偏好设置这类信息密度高的面板需要更宽 */
+.modal--center.modal--xl.settings-modal {
+  width: min(1060px, 94vw);
+}
 /* 文件传输 / 主机状态这类表格型抽屉需要更宽的横向空间 */
 .modal--drawer.modal--xl {
   width: min(680px, 100%);

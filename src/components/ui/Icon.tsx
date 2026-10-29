@@ -23,6 +23,14 @@ const ICONS = {
       <circle cx="7" cy="17" r="2" />
     </>
   ),
+  /** 偏好设置：齿轮 */
+  gear: (
+    <>
+      <circle cx="12" cy="12" r="3.1" />
+      <path d="M12 2.6v2.2M12 19.2v2.2M4.4 4.4l1.6 1.6M18 18l1.6 1.6M2.6 12h2.2M19.2 12h2.2M4.4 19.6L6 18M18 6l1.6-1.6" />
+      <circle cx="12" cy="12" r="8.2" strokeDasharray="1.6 3.1" />
+    </>
+  ),
   terminal: (
     <>
       <rect x="3" y="4" width="18" height="16" rx="3" />

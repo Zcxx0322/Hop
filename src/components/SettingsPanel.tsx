@@ -1,19 +1,15 @@
 import type { CSSProperties } from 'react';
 import { useApp } from '../store/AppStore';
-import { ACCENTS, DEFAULT_SETTINGS, FONT_STACKS, SCROLLBACK_OPTIONS } from '../store/settings';
-import type { CursorStyle, FontKey, ThemeMode } from '../types';
+import { DEFAULT_SETTINGS, FONT_STACKS, SCROLLBACK_OPTIONS } from '../store/settings';
+import type { CursorStyle, FontKey } from '../types';
 import type { Settings } from '../types';
+import { UI_PALETTES } from '../lib/themes';
+import { TERMINAL_THEMES } from '../lib/terminalThemes';
 import { Icon } from './ui/Icon';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
 import { Segmented, SelectField, Switch, TextField } from './ui/Field';
 import './SettingsPanel.css';
-
-const THEME_OPTIONS: Array<{ value: ThemeMode; label: string; icon: 'moon' | 'sun' | 'monitor' }> = [
-  { value: 'dark', label: '深色', icon: 'moon' },
-  { value: 'light', label: '浅色', icon: 'sun' },
-  { value: 'system', label: '跟随系统', icon: 'monitor' },
-];
 
 const CURSOR_OPTIONS: Array<{ value: CursorStyle; label: string }> = [
   { value: 'block', label: '方块' },
@@ -45,6 +41,39 @@ const TIMEOUT_OPTIONS = [
   { value: '30000', label: '30 秒' },
 ];
 
+interface ThemeCardProps {
+  active: boolean;
+  name: string;
+  hint: string;
+  swatch: [string, string, string];
+  onSelect: () => void;
+}
+
+function ThemeCard({ active, name, hint, swatch, onSelect }: ThemeCardProps) {
+  return (
+    <button
+      type="button"
+      className={`theme-card${active ? ' is-active' : ''}`}
+      aria-pressed={active}
+      title={`${name} · ${hint}`}
+      onClick={onSelect}
+    >
+      <span className="theme-card__preview" aria-hidden="true">
+        <span className="theme-card__bg" style={{ background: swatch[0] }}>
+          <span className="theme-card__line" style={{ background: swatch[1] }} />
+          <span className="theme-card__line theme-card__line--short" style={{ background: swatch[1] }} />
+          <span className="theme-card__dot" style={{ background: swatch[2] }} />
+        </span>
+      </span>
+      <span className="theme-card__meta">
+        <span className="theme-card__name">{name}</span>
+        <span className="theme-card__hint">{hint}</span>
+      </span>
+      {active && <Icon name="check" size={12} className="theme-card__check" />}
+    </button>
+  );
+}
+
 export function SettingsPanel() {
   const { state, actions } = useApp();
   const { settings } = state;
@@ -59,8 +88,8 @@ export function SettingsPanel() {
       onClose={() => actions.setSettingsOpen(false)}
       title="偏好设置"
       description="所有改动都会即时生效，并保存在本机。"
-      size="lg"
-      variant="drawer"
+      size="xl"
+      panelClassName="settings-modal"
       footer={
         <div className="settings-panel__footer">
           <span className="settings-panel__saved">
@@ -86,23 +115,39 @@ export function SettingsPanel() {
       }
     >
       <div className="settings-panel">
+        <div className="settings-panel__column">
         <section className="settings-group" aria-labelledby="settings-appearance">
           <h3 className="settings-group__title" id="settings-appearance">
             外观
           </h3>
 
-          <div className="settings-row">
-            <div className="settings-row__text">
-              <span className="settings-row__label">主题</span>
-              <span className="settings-row__desc">界面明暗模式</span>
-            </div>
-            <Segmented
-              label="主题"
-              size="sm"
-              value={settings.theme}
-              options={THEME_OPTIONS}
-              onChange={(value) => actions.updateSettings({ theme: value })}
-            />
+          <p className="settings-group__hint">影响窗口、面板与列表；终端配色可单独设置。</p>
+          <div className="theme-grid" role="radiogroup" aria-label="界面主题">
+            {UI_PALETTES.map((palette) => (
+              <ThemeCard
+                key={palette.id}
+                active={settings.palette === palette.id}
+                name={palette.name}
+                hint={palette.hint}
+                swatch={palette.swatch}
+                onSelect={() => actions.updateSettings({ palette: palette.id })}
+              />
+            ))}
+          </div>
+
+          <h4 className="settings-subtitle" id="settings-term-theme">终端主题</h4>
+          <p className="settings-group__hint">与界面主题独立，可自由搭配。</p>
+          <div className="theme-grid theme-grid--terminal" role="radiogroup" aria-label="终端主题">
+            {TERMINAL_THEMES.map((theme) => (
+              <ThemeCard
+                key={theme.id}
+                active={settings.terminalTheme === theme.id}
+                name={theme.name}
+                hint={theme.hint}
+                swatch={theme.swatch}
+                onSelect={() => actions.updateSettings({ terminalTheme: theme.id })}
+              />
+            ))}
           </div>
 
         </section>
@@ -215,7 +260,9 @@ export function SettingsPanel() {
             />
           </div>
         </section>
+        </div>
 
+        <div className="settings-panel__column">
         <section className="settings-group" aria-labelledby="settings-clipboard">
           <h3 className="settings-group__title" id="settings-clipboard">
             复制与粘贴
@@ -341,6 +388,7 @@ export function SettingsPanel() {
             />
           </div>
         </section>
+        </div>
       </div>
     </Modal>
   );

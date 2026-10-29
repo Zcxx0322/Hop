@@ -166,7 +166,8 @@ export default function App() {
 
         <SideDock side="monitor" />
 
-        {ui.quickNote && <QuickNotes />}
+        {/* 速记只属于终端页：切到资产 / 笔记页时自动收起 */}
+        {ui.page === 'terminal' && ui.quickNote && <QuickNotes />}
       </main>
       )}
 

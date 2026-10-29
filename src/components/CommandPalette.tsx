@@ -77,7 +77,9 @@ export function CommandPalette() {
         hint: '立即切换界面配色',
         icon: resolvedTheme === 'dark' ? 'sun' : 'moon',
         run: () =>
-          actions.updateSettings({ theme: resolvedTheme === 'dark' ? 'light' : 'dark' }),
+          actions.updateSettings({
+            palette: resolvedTheme === 'dark' ? 'hop-white' : 'hop-black',
+          }),
       },
       {
         id: 'action-assets',
