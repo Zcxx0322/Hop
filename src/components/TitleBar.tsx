@@ -95,6 +95,17 @@ export function TitleBar() {
             <Icon name="server" size={13} />
             资产
           </button>
+          <button
+            type="button"
+            className="titlebar__nav-btn"
+            data-on={state.ui.page === 'notes'}
+            aria-pressed={state.ui.page === 'notes'}
+            title="笔记（Ctrl+Shift+N）"
+            onClick={() => actions.setPage('notes')}
+          >
+            <Icon name="pencil" size={13} />
+            笔记
+          </button>
         </nav>
       </div>
 
@@ -128,6 +139,15 @@ export function TitleBar() {
               onClick={actions.toggleDockMonitor}
             >
               <Icon name="monitor" size={14} />
+            </button>
+            <button
+              type="button"
+              className="titlebar__ghost"
+              aria-label="打开笔记"
+              title="笔记（Ctrl+Shift+N）"
+              onClick={() => actions.setPage('notes')}
+            >
+              <Icon name="pencil" size={14} />
             </button>
             <button
               type="button"

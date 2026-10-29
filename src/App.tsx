@@ -4,6 +4,7 @@ import { TitleBar } from './components/TitleBar';
 import { TerminalPane } from './components/TerminalPane';
 import { Welcome } from './components/Welcome';
 import { AssetsPage } from './components/AssetsPage';
+import { NotesPage } from './components/NotesPage';
 import { SideDock } from './components/SideDock';
 import { TransfersBar } from './components/TransfersBar';
 import { useTransferHost } from './store/transfers';
@@ -74,6 +75,13 @@ export default function App() {
         return;
       }
 
+      /* 笔记：Ctrl+Shift+N 从终端页唤醒 */
+      if (mod && event.shiftKey && event.key.toLowerCase() === 'n') {
+        event.preventDefault();
+        actions.setPage(ui.page === 'notes' ? 'terminal' : 'notes');
+        return;
+      }
+
       /* 文件传输 / 主机状态：作用于当前会话对应的主机，终端聚焦时也可用 */
       if (
         mod &&
@@ -128,6 +136,8 @@ export default function App() {
 
       {ui.page === 'assets' ? (
         <AssetsPage />
+      ) : ui.page === 'notes' ? (
+        <NotesPage />
       ) : (
       <main
         className={`workspace${hasSessions ? '' : ' workspace--empty'}${

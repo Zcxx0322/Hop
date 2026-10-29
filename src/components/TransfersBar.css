@@ -1,50 +1,47 @@
-/* 底部全局传输条：文件传输/下载进度都汇总到这里 */
+/* 底部全局传输条：贴着工作区底部的窄条，每条传输只占一行 */
 
 .transfersbar {
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
-  min-height: 92px;
-  padding: 10px 14px 10px 12px;
+  flex: none;
   border-top: 1px solid var(--border);
   background: var(--surface-2);
   overflow: hidden;
 }
 
-.transfersbar__head {
-  flex: none;
+.transfersbar__rail {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
-  min-width: 104px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px 0 12px;
+  height: 38px;
+  min-width: 0;
 }
 
-.transfersbar__title {
+.transfersbar__label {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  color: var(--text);
+  color: var(--text-3);
+  font-size: var(--text-xs);
+  white-space: nowrap;
 }
 
 .transfersbar__badge {
-  min-width: 18px;
-  height: 18px;
+  min-width: 16px;
+  height: 16px;
   padding: 0 5px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  line-height: 18px;
+  line-height: 16px;
   text-align: center;
 }
 
 .transfersbar__link {
-  align-self: flex-start;
-  padding: 0;
+  flex: none;
+  padding: 2px 4px;
   border: none;
   background: none;
   color: var(--text-3);
@@ -61,24 +58,26 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: stretch;
-  gap: 10px;
+  align-items: center;
+  gap: 14px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+}
+
+.transfersbar__list::-webkit-scrollbar {
+  display: none;
 }
 
 .transfersbar__close {
   flex: none;
-  align-self: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-xs);
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
   background: none;
   color: var(--text-3);
   cursor: pointer;
@@ -94,80 +93,73 @@
   border-color: var(--border);
 }
 
-/* ---- 单条传输 -------------------------------------------------------- */
+/* ---- 单条传输：一行文字 + 贴底 2px 进度线 ----------------------------- */
 
 .xfer {
-  flex: 0 0 292px;
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  gap: 4px 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--panel);
+  position: relative;
+  flex: 0 0 300px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.xfer:hover {
+  background: var(--hover);
 }
 
 .xfer__icon {
+  flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  margin-top: 1px;
-  border-radius: var(--radius-xs);
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.xfer[data-status='done'] .xfer__icon {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  width: 16px;
+  height: 16px;
   color: var(--accent);
 }
 
 .xfer[data-status='error'] .xfer__icon {
-  background: color-mix(in srgb, var(--danger) 14%, transparent);
   color: var(--danger);
 }
 
-.xfer__body {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.xfer__top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+.xfer[data-status='done'] .xfer__icon {
+  color: var(--text-3);
 }
 
 .xfer__name {
   min-width: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  color: var(--text-2);
+}
+
+.xfer[data-status='active'] .xfer__name {
   color: var(--text);
 }
 
-.xfer__state {
+.xfer__meta {
   flex: none;
+  margin-left: auto;
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  color: var(--accent);
-}
-
-.xfer[data-status='done'] .xfer__state {
+  font-size: 10px;
   color: var(--text-3);
+  max-width: 148px;
 }
 
-.xfer[data-status='error'] .xfer__state {
+.xfer[data-status='error'] .xfer__meta {
   color: var(--danger);
 }
 
 .xfer__track {
-  height: 6px;
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 0;
+  height: 2px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+  background: color-mix(in srgb, var(--text) 9%, transparent);
   overflow: hidden;
 }
 
@@ -179,54 +171,31 @@
   transition: width 240ms var(--ease-out);
 }
 
-.xfer[data-status='done'] .xfer__fill {
-  background: var(--accent);
-}
-
 .xfer[data-status='error'] .xfer__fill {
   background: var(--danger);
 }
 
+.xfer[data-status='done'] .xfer__track {
+  opacity: 0;
+}
+
+@keyframes xfer-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 .xfer[data-status='active'] .xfer__fill {
-  background-image: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--accent) 60%, transparent),
-    var(--accent)
-  );
-}
-
-.xfer__meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-3);
-}
-
-.xfer__speed,
-.xfer__eta {
-  flex: none;
-}
-
-.xfer__eta {
-  color: var(--text-2);
-}
-
-.xfer__error {
-  grid-column: 1 / -1;
-  margin: 2px 0 0;
-  font-size: 11px;
-  color: var(--danger);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  animation: xfer-pulse 1.6s var(--ease-out) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .xfer__fill {
     transition: none;
+    animation: none;
   }
 }

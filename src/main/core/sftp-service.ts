@@ -188,7 +188,9 @@ export class SftpService {
             if (b.type === 'dir' && a.type !== 'dir') return 1;
             return a.name.localeCompare(b.name, 'zh-Hans-CN');
           });
-        return { path: target, parent: parentPath(target), home, entries };
+        /* 主目录的上一层要按解析后的绝对路径算，否则用户在 `~` 处永远退不到 `/` */
+        const parent = target === '~' ? parentPath(home) : parentPath(target);
+        return { path: target, parent, home, entries };
       }),
     );
   }

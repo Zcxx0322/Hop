@@ -86,9 +86,6 @@ export function SideDock({ side }: Props) {
         <span className="sidedock__title-wrap">
           <Icon name={isFiles ? 'folder' : 'monitor'} size={13} />
           <span className="sidedock__title">{title}</span>
-          <span className="sidedock__host truncate" title={host.name}>
-            {host.name}
-          </span>
         </span>
         <button
           type="button"

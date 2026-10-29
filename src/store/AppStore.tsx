@@ -28,7 +28,7 @@ interface UiState {
   dockFiles: boolean;
   dockMonitor: boolean;
   /** 主视图：终端工作区 / 资产页 */
-  page: 'terminal' | 'assets';
+  page: 'terminal' | 'assets' | 'notes';
 }
 
 export interface AppState {
@@ -240,7 +240,7 @@ export interface AppActions {
   setSettingsOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
   openHostForm: (hostId?: string | null) => void;
-  setPage: (page: 'terminal' | 'assets') => void;
+  setPage: (page: 'terminal' | 'assets' | 'notes') => void;
   closeHostForm: () => void;
   /** 右侧常驻面板：开关文件 / 主机状态，以及整体展开 */
   toggleDockFiles: () => void;
@@ -461,7 +461,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ui/patch', patch: { hostForm: null } });
   }, []);
 
-  const setPage = useCallback((page: 'terminal' | 'assets') => {
+  const setPage = useCallback((page: 'terminal' | 'assets' | 'notes') => {
     dispatch({ type: 'ui/patch', patch: { page } });
   }, []);
 

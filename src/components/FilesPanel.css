@@ -67,48 +67,62 @@
   background: var(--border);
 }
 
-/* 路径面包屑：每段可点，最后一段为当前位置 */
-.files__crumbs {
+/* 路径框：可直接输入回车跳转，右侧是「跟随终端目录」开关 */
+.files__pathbar {
   display: flex;
   align-items: center;
-  gap: 2px;
-  min-height: 22px;
-  padding: 0 4px;
-  min-width: 0;
-  overflow: hidden;
+  gap: 6px;
+  padding: 0 2px;
 }
 
-.files__crumb-wrap {
-  display: inline-flex;
-  align-items: center;
+.files__path {
+  flex: 1;
   min-width: 0;
-}
-
-.files__crumb {
-  max-width: 140px;
-  padding: 2px 6px;
+  height: 26px;
+  padding: 0 8px;
   border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text-2);
   font-size: var(--text-sm);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  transition: background 120ms var(--ease-out), border-color 120ms var(--ease-out);
 }
 
-.files__crumb:hover:not(:disabled) {
+.files__path:hover {
   background: var(--hover);
   color: var(--text);
 }
 
-.files__crumb:disabled {
+.files__path:focus {
+  outline: none;
+  background: var(--panel-inset);
+  border-color: var(--accent-border);
   color: var(--text);
-  opacity: 1;
-  cursor: default;
 }
 
-.files__crumb-sep {
+.files__follow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border);
   color: var(--text-3);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.files__follow:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.files__follow.is-on {
+  color: var(--accent);
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
 }
 
 .files__error {

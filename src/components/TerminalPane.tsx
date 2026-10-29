@@ -5,6 +5,7 @@ import { WebglAddon } from '@xterm/addon-webgl';
 import '@xterm/xterm/css/xterm.css';
 import type { Host, Session } from '../types';
 import { createTransport } from '../api/createTransport';
+import { extractOsc7, inferCd, terminalCwd } from '../store/cwd';
 import type { TerminalTransport } from '../api/transport';
 import { useApp } from '../store/AppStore';
 import { FONT_STACKS } from '../store/settings';
@@ -186,6 +187,17 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
 
     term.attachCustomKeyEventHandler((event) => {
       if (event.type !== 'keydown') return true;
+
+      /* 回车前从输入行里认出 cd，用于「文件栏跟随终端目录」 */
+      if (event.key === 'Enter' && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+        const buffer = term.buffer.active;
+        const line = buffer.getLine(buffer.baseY + buffer.cursorY)?.translateToString(true) ?? '';
+        const typed = line.slice(0, buffer.cursorX);
+        const current = (hostRef.current && terminalCwd.get(hostRef.current.id)) || '~';
+        const next = inferCd(current, typed);
+        if (next && hostRef.current) terminalCwd.set(hostRef.current.id, next);
+      }
+
       const mod = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
       const { pasteMode, copyShortcut } = settingsRef.current;
@@ -260,6 +272,8 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
 
     const offData = transport.onData((chunk) => {
       terminalRef.current?.write(chunk);
+      const cwd = extractOsc7(chunk);
+      if (cwd) terminalCwd.set(target.id, cwd);
     });
     const offStatus = transport.onStatus((status, detail) => {
       actions.updateSession(session.id, { status, detail });

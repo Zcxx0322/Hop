@@ -13,6 +13,7 @@ import {
 } from '../api/workspace';
 import { useApp } from '../store/AppStore';
 import { refreshTransfers, useTransfers, type TransferRow } from '../store/transfers';
+import { terminalCwd } from '../store/cwd';
 import { errorMessage } from '../lib/utils';
 import { copyText } from '../lib/clipboard';
 import { Icon } from './ui/Icon';
@@ -56,33 +57,10 @@ interface FilesBrowserProps {
  * 文件浏览主体（不含外框）：常驻面板复用，命令面板/快捷键也走同一套状态。
  */
 
-interface Crumb {
-  label: string;
-  path: string;
-}
-
-const HOME_LABEL = '主目录';
-
-/** 把绝对路径拆成可点击的面包屑；主目录前缀折叠成一段。 */
-function buildCrumbs(path: string, home: string | null): Crumb[] {
-  if (!path || path === '~') return [{ label: HOME_LABEL, path: '~' }];
-  const homePrefix = home && home !== '/' && path.startsWith(home) ? home : null;
-  const rest = homePrefix ? path.slice(homePrefix.length) : path;
-  const parts = rest.split('/').filter(Boolean);
-  const basePath = homePrefix ? '' : '';
-  const crumbs: Crumb[] = homePrefix
-    ? [{ label: HOME_LABEL, path: homePrefix }]
-    : [{ label: '/', path: '/' }];
-  let acc = basePath;
-  for (const part of parts) {
-    acc = `${acc}/${part}`;
-    crumbs.push({ label: part, path: `${homePrefix ?? ''}${acc}` });
-  }
-  return crumbs;
-}
-
+/** 远程目录浏览：路径框可直接输入，开启跟随后跟着终端 cd 走。 */
 export function FilesBrowser({ host }: FilesBrowserProps) {
-  const { actions } = useApp();
+  const { state, actions } = useApp();
+  const { settings } = state;
   const hostId = host.id;
 
   const [listing, setListing] = useState<DirectoryListing | null>(null);
@@ -228,7 +206,20 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
     }
   };
 
-  const crumbs = useMemo(() => buildCrumbs(path, listing?.home ?? null), [path, listing?.home]);
+  /* 路径输入框：跟随点击变化，也允许手动输入后回车跳转 */
+  const pathInputRef = useRef<HTMLInputElement>(null);
+  const [draft, setDraft] = useState(path);
+  useEffect(() => setDraft(path), [path]);
+
+  /* 跟随终端目录：订阅终端上报的 cwd，变化时自动跳转 */
+  useEffect(() => {
+    if (!settings.followCwd) return;
+    const current = terminalCwd.get(hostId);
+    if (current && current !== path) void load(current);
+    return terminalCwd.subscribe(hostId, (next) => {
+      if (next && next !== path) void load(next);
+    });
+  }, [settings.followCwd, hostId, path, load]);
 
   return (
     <div className="files">
@@ -278,22 +269,43 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
         </button>
       </div>
 
-      <div className="files__crumbs" aria-label="当前路径">
-        {crumbs.map((crumb, index) => (
-          <span className="files__crumb-wrap" key={`${crumb.path}-${index}`}>
-            {index > 0 && <span className="files__crumb-sep">/</span>}
-            <button
-              type="button"
-              className="files__crumb mono"
-              title={crumb.path}
-              disabled={index === crumbs.length - 1}
-              onClick={() => void load(crumb.path)}
-            >
-              {crumb.label}
-            </button>
-          </span>
-        ))}
+      <div className="files__pathbar">
+        <input
+          ref={pathInputRef}
+          className="files__path mono"
+          value={draft}
+          spellCheck={false}
+          autoComplete="off"
+          aria-label="远程路径"
+          placeholder="输入路径，回车跳转"
+          onChange={(event) => setDraft(event.target.value)}
+          onFocus={(event) => event.currentTarget.select()}
+          onBlur={() => setDraft(path)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              const next = draft.trim();
+              if (next && next !== path) void load(next);
+              else setDraft(path);
+              event.currentTarget.blur();
+            } else if (event.key === 'Escape') {
+              event.preventDefault();
+              setDraft(path);
+              event.currentTarget.blur();
+            }
+          }}
+        />
         {loading && <Spinner size={12} />}
+        <button
+          type="button"
+          className={`files__follow${settings.followCwd ? ' is-on' : ''}`}
+          aria-pressed={settings.followCwd}
+          title={settings.followCwd ? '跟随终端目录：开' : '跟随终端目录：关'}
+          onClick={() => actions.updateSettings({ followCwd: !settings.followCwd })}
+        >
+          <Icon name="link" size={13} />
+          跟随
+        </button>
       </div>
 
       {error && (

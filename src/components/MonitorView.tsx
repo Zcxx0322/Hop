@@ -67,17 +67,30 @@ interface RowProps {
 
 /** 一行一个信息：左边名称，右边数值，进度条独占下一行 */
 function Row({ label, value, mono, title, bar, tone }: RowProps) {
+  /* 带进度条的量单独成块：上面一行「名称 — 数值」，下面一条细进度条，
+     避免进度条和文字挤在同一行里互相干扰。 */
+  if (bar !== undefined) {
+    return (
+      <div className="monitor__meter">
+        <div className="monitor__line">
+          <span className="monitor__label">{label}</span>
+          <span className={`monitor__value${mono ? ' mono' : ''}`} title={title}>
+            {value}
+          </span>
+        </div>
+        <div className="monitor__bar" data-tone={tone ?? toneFor(bar)}>
+          <span style={{ width: `${bar}%` }} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="monitor__row">
       <span className="monitor__label">{label}</span>
       <span className={`monitor__value${mono ? ' mono' : ''}`} title={title}>
         {value}
       </span>
-      {bar !== undefined && (
-        <div className="monitor__bar monitor__bar--inline" data-tone={tone ?? toneFor(bar)}>
-          <span style={{ width: `${bar}%` }} />
-        </div>
-      )}
     </div>
   );
 }

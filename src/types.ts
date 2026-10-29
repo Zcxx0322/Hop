@@ -90,6 +90,8 @@ export interface Settings {
   copyToast: boolean;
   /** 粘贴触发方式：Ctrl+V 直接粘贴 / 右键直接粘贴 */
   pasteMode: 'ctrl-v' | 'right-click';
+  /** 文件栏是否跟随终端当前目录 */
+  followCwd: boolean;
   /** 右侧常驻面板宽度（像素） */
   dockWidth: number;
 }

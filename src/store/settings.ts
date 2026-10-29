@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS: Settings = {
   copyShortcut: 'ctrl-c',
   copyToast: true,
   pasteMode: 'ctrl-v',
+  followCwd: false,
   dockWidth: 332,
 };
 
@@ -105,6 +106,7 @@ export function normalizeSettings(input: Partial<Settings>): Settings {
       : DEFAULT_SETTINGS.copyShortcut,
     copyToast: merged.copyToast === undefined ? true : Boolean(merged.copyToast),
     pasteMode: migratePasteMode(merged.pasteMode),
+    followCwd: typeof merged.followCwd === 'boolean' ? merged.followCwd : DEFAULT_SETTINGS.followCwd,
     dockWidth: Number.isFinite(merged.dockWidth)
       ? clamp(merged.dockWidth, 260, 620)
       : DEFAULT_SETTINGS.dockWidth,

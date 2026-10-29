@@ -39,12 +39,31 @@
 
 .monitor__row {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 3px 12px;
-  padding: 6px 0;
+  padding: 7px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+/* 带进度条的指标：上下两行，行距更松，数值与条分开 */
+.monitor__meter {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.monitor__meter:last-child {
+  border-bottom: none;
+}
+
+.monitor__line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .monitor__row:last-child {
@@ -73,17 +92,10 @@
 }
 
 .monitor__bar {
-  height: 6px;
+  height: 4px;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--text) 10%, transparent);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   overflow: hidden;
-}
-
-/* 行内进度条独占整行、贴在数值下方 */
-.monitor__bar--inline {
-  flex: 1 1 100%;
-  width: 100%;
-  margin-top: 3px;
 }
 
 .monitor__bar > span {
