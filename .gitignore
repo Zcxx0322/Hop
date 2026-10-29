@@ -28,3 +28,6 @@ release5
 release-notes.md
 release6
 release7
+
+# 打包中间目录
+release*/
