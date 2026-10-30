@@ -139,6 +139,8 @@ export interface ConnectionProfile {
   keepAliveMs: number;
   color: string | null;
   tags: string[];
+  /** 资产分组名，未分组时为 null */
+  group?: string | null;
   note: string;
   favorite: boolean;
   /** Sort index in the sidebar (0-based, dense). */

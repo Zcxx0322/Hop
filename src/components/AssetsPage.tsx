@@ -47,8 +47,10 @@ function StatePill({ status }: { status: HostStatus }) {
  */
 export function AssetsPage() {
   const { state, actions } = useApp();
-  const { hosts, hostsLoaded, hostsError, sessions } = state;
+  const { hosts, hostsLoaded, hostsError, sessions, settings } = state;
   const [query, setQuery] = useState('');
+  const [groupFilter, setGroupFilter] = useState<string>('all');
+  const [groupDraft, setGroupDraft] = useState<string | null>(null);
   /** 端口探测结果：在线 / 离线；还没有结果时为 undefined */
   const [reach, setReach] = useState<Record<string, boolean>>({});
 
@@ -93,6 +95,14 @@ export function AssetsPage() {
     };
   }, [hosts]);
 
+  const groups = useMemo(
+    () =>
+      [...new Set([...(settings.groups ?? []), ...hosts.map((host) => host.group).filter(Boolean) as string[]])].sort(
+        (a, b) => a.localeCompare(b, 'zh-Hans-CN'),
+      ),
+    [settings.groups, hosts],
+  );
+
   const list = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     const sorted = [...hosts].sort(
@@ -101,14 +111,29 @@ export function AssetsPage() {
         (b.lastConnectedAt ?? 0) - (a.lastConnectedAt ?? 0) ||
         a.name.localeCompare(b.name, 'zh-Hans-CN'),
     );
-    if (!keyword) return sorted;
-    return sorted.filter((host) =>
-      [host.name, host.host, host.username, ...(host.tags ?? [])]
+    const scoped =
+      groupFilter === 'all'
+        ? sorted
+        : groupFilter === 'ungrouped'
+          ? sorted.filter((host) => !host.group)
+          : sorted.filter((host) => host.group === groupFilter);
+    if (!keyword) return scoped;
+    return scoped.filter((host) =>
+      [host.name, host.host, host.username, host.group ?? '', ...(host.tags ?? [])]
         .join(' ')
         .toLowerCase()
         .includes(keyword),
     );
-  }, [hosts, query]);
+  }, [hosts, query, groupFilter]);
+
+
+  const commitGroup = (raw: string) => {
+    const name = raw.trim().slice(0, 32);
+    setGroupDraft(null);
+    if (!name) return;
+    if (!groups.includes(name)) actions.updateSettings({ groups: [...groups, name] });
+    setGroupFilter(name);
+  };
 
   return (
     <section className="assets" aria-label="资产">
@@ -141,6 +166,81 @@ export function AssetsPage() {
             </button>
           </div>
         </header>
+
+        <div className="assets__groups" role="tablist" aria-label="资产分组">
+          <button
+            type="button"
+            role="tab"
+            className="assets__group"
+            aria-selected={groupFilter === 'all'}
+            data-on={groupFilter === 'all'}
+            onClick={() => setGroupFilter('all')}
+          >
+            全部
+            <span className="assets__group-count mono">{hosts.length}</span>
+          </button>
+          {groups.map((group) => {
+            const count = hosts.filter((host) => host.group === group).length;
+            return (
+              <button
+                key={group}
+                type="button"
+                role="tab"
+                className="assets__group"
+                aria-selected={groupFilter === group}
+                data-on={groupFilter === group}
+                onClick={() => setGroupFilter(group)}
+              >
+                {group}
+                <span className="assets__group-count mono">{count}</span>
+              </button>
+            );
+          })}
+          {hosts.some((host) => !host.group) && (
+            <button
+              type="button"
+              role="tab"
+              className="assets__group"
+              aria-selected={groupFilter === 'ungrouped'}
+              data-on={groupFilter === 'ungrouped'}
+              onClick={() => setGroupFilter('ungrouped')}
+            >
+              未分组
+            </button>
+          )}
+          {groupDraft === null ? (
+            <button
+              type="button"
+              className="assets__group assets__group--add"
+              title="新建分组"
+              onClick={() => setGroupDraft('')}
+            >
+              <Icon name="plus" size={12} />
+              分组
+            </button>
+          ) : (
+            <form
+              className="assets__group-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                commitGroup(groupDraft);
+              }}
+            >
+              <input
+                autoFocus
+                value={groupDraft}
+                maxLength={32}
+                placeholder="分组名，回车创建"
+                aria-label="新建分组"
+                onChange={(event) => setGroupDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') setGroupDraft(null);
+                }}
+                onBlur={() => setGroupDraft(null)}
+              />
+            </form>
+          )}
+        </div>
 
         {hostsError && (
           <p className="assets__error" role="alert">
@@ -185,6 +285,7 @@ export function AssetsPage() {
                 </div>
 
                 <div className="assets__cell assets__col-tags" role="cell">
+                  {host.group && <span className="assets__tag assets__tag--group">{host.group}</span>}
                   {host.distro && (
                     <span className="assets__tag assets__tag--distro" title={host.distro.name}>
                       {host.distro.name.split(' ')[0]}

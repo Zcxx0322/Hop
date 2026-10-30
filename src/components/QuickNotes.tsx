@@ -3,6 +3,7 @@ import { noteStore, type Note } from '../store/notes';
 import { useApp } from '../store/AppStore';
 import { pushOverlay, isTopOverlay } from '../lib/overlayStack';
 import { Icon } from './ui/Icon';
+import { Select } from './ui/Select';
 import './QuickNotes.css';
 
 const OVERLAY_ID = 'quick-note';
@@ -49,18 +50,17 @@ export function QuickNotes() {
         <Icon name="pencil" size={14} />
         <span>速记</span>
         {notes.length > 1 && (
-          <select
+          <Select
             className="quicknote__switch"
-            aria-label="切换笔记"
+            size="sm"
+            ariaLabel="切换笔记"
             value={activeId ?? ''}
-            onChange={(event) => setActiveId(event.target.value)}
-          >
-            {notes.map((note) => (
-              <option key={note.id} value={note.id}>
-                {note.title.trim() || '未命名笔记'}
-              </option>
-            ))}
-          </select>
+            options={notes.map((note) => ({
+              value: note.id,
+              label: note.title.trim() || '未命名笔记',
+            }))}
+            onChange={(next) => setActiveId(next)}
+          />
         )}
         <button type="button" className="quicknote__ghost" aria-label="新建笔记" title="新建笔记" onClick={createNote}>
           <Icon name="plus" size={14} />

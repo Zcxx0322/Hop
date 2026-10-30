@@ -13,5 +13,6 @@ export function toHostDraft(host: Host): HostDraft {
     color: host.color ?? '',
     note: host.note ?? '',
     favorite: Boolean(host.favorite),
+    group: host.group ?? undefined,
   };
 }

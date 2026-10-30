@@ -4,6 +4,7 @@ import { isMock } from '../api/config';
 import { useApp } from '../store/AppStore';
 import { hostAccent, hostInitials, formatAddress, relativeTime } from '../lib/visual';
 import { modKey } from '../lib/utils';
+import { DistroIcon } from './ui/DistroIcon';
 import { Icon } from './ui/Icon';
 import { Kbd, KbdGroup } from './ui/Kbd';
 import './Welcome.css';
@@ -278,7 +279,11 @@ export function Welcome() {
                     style={{ '--host-color': hostAccent(host) } as CSSProperties}
                     aria-hidden="true"
                   >
-                    {hostInitials(host.name)}
+                    {host.distro ? (
+                      <DistroIcon distro={host.distro} fallbackText={host.name} size={16} />
+                    ) : (
+                      hostInitials(host.name)
+                    )}
                   </span>
                   <span className="welcome__chip-main">
                     <span className="welcome__chip-name truncate">{host.name}</span>

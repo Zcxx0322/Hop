@@ -5,6 +5,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from 'react';
+import { Select } from './Select';
 import { Icon, type IconName } from './Icon';
 import './Field.css';
 
@@ -58,10 +59,16 @@ export function TextField({
 
 export interface SelectFieldProps
   extends FieldExtras,
-    Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children' | 'prefix'> {
+    Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children' | 'prefix' | 'value' | 'onChange'> {
   options: Array<{ value: string; label: string }>;
+  value: string;
+  onChange?: (event: { target: { value: string } }) => void;
 }
 
+/**
+ * 下拉选择：底层用自绘的 `Select`（原生 select 的弹层是系统样式，和主题不搭），
+ * 对外仍保留 select 风格的 value / onChange 约定，调用方不用改。
+ */
 export function SelectField({
   label,
   hint,
@@ -71,6 +78,10 @@ export function SelectField({
   suffix: _suffix,
   id,
   className = '',
+  value,
+  onChange,
+  disabled,
+  name,
   ...rest
 }: SelectFieldProps) {
   const autoId = useId();
@@ -80,16 +91,19 @@ export function SelectField({
       <label className="field__label" htmlFor={selectId}>
         {label}
       </label>
-      <div className={`field__control field__control--select${error ? ' is-invalid' : ''}`}>
-        <select id={selectId} className="field__input field__select" {...rest}>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <Icon name="chevron-down" size={14} className="field__chevron" />
-      </div>
+      <Select
+        id={selectId}
+        value={value}
+        options={options}
+        disabled={disabled}
+        ariaLabel={typeof rest['aria-label'] === 'string' ? rest['aria-label'] : label}
+        title={typeof rest.title === 'string' ? rest.title : undefined}
+        className={error ? 'is-invalid' : ''}
+        onChange={(next) => {
+          if (name) void name;
+          onChange?.({ target: { value: next } });
+        }}
+      />
       {(error || hint) && (
         <p className={`field__hint${error ? ' is-error' : ''}`}>{error ?? hint}</p>
       )}

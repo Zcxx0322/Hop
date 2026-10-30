@@ -18,6 +18,7 @@ import type { ProfileStore } from '../core/profile-store';
 import { SessionManager } from '../core/session-manager';
 import type { SftpService } from '../core/sftp-service';
 import type { MonitorService } from '../core/monitor-service';
+import type { NoteService } from '../core/note-service';
 
 const log = createLogger('gateway');
 
@@ -46,6 +47,7 @@ interface HostDto {
   authMethod: FrontendAuthMethod;
   privateKeyPath: string;
   tags: string[];
+  group: string | null;
   color: string;
   note: string;
   favorite: boolean;
@@ -80,6 +82,8 @@ export interface GatewayDeps {
   sftp?: SftpService;
   /** 主机资源采样；缺省时不注册 /hosts/:id/monitor */
   monitor?: MonitorService;
+  /** 笔记文件存储；缺省时不注册 /notes* */
+  notes?: NoteService;
   /** 会话建立后回调（发行版探测等），失败不影响终端 */
   onSessionReady?: (profileId: string) => void;
 }
@@ -112,6 +116,7 @@ function toHost(profile: ConnectionProfile): HostDto {
     authMethod: authMethodOf(profile),
     privateKeyPath: profile.auth.privateKeyPath ?? '',
     tags: profile.tags,
+    group: profile.group ?? null,
     color: profile.color ?? '',
     note: profile.note ?? '',
     favorite: Boolean(profile.favorite),
@@ -231,6 +236,10 @@ function toProfileInput(body: Record<string, unknown>, existing: ConnectionProfi
       : existing?.tags ?? [],
     note: typeof body.note === 'string' ? body.note : existing?.note ?? '',
     favorite: typeof body.favorite === 'boolean' ? body.favorite : Boolean(existing?.favorite),
+    group:
+      typeof body.group === 'string' && body.group.trim()
+        ? body.group.trim().slice(0, 32)
+        : existing?.group ?? null,
     jump: existing?.jump
       ? {
           host: existing.jump.host,
@@ -576,6 +585,36 @@ export async function startGateway(deps: GatewayDeps): Promise<GatewayHandle | n
       throw new BadRequest(`未知接口 ${method} ${path}`, 404, 'UNSUPPORTED');
     }
 
+    if (path === '/notes' && method === 'GET' && deps.notes) {
+      sendJson(res, 200, { dir: deps.notes.getDir(), notes: deps.notes.list() });
+      return;
+    }
+
+    if (path === '/notes' && method === 'PUT' && deps.notes) {
+      const body = (await readJson(req)) as { id?: string; title?: string; body?: string };
+      const note = deps.notes.save({
+        id: sanitizeNoteId(body.id) ?? `n_${Date.now().toString(36)}`,
+        title: typeof body.title === 'string' ? body.title : '',
+        body: typeof body.body === 'string' ? body.body : '',
+      });
+      sendJson(res, 200, { note });
+      return;
+    }
+
+    if (path === '/notes/dir' && method === 'PUT' && deps.notes) {
+      const body = (await readJson(req)) as { dir?: string };
+      const dir = deps.notes.setDir(String(body.dir ?? ''));
+      sendJson(res, 200, { dir, notes: deps.notes.list() });
+      return;
+    }
+
+    const noteDelete = /^\/notes\/([A-Za-z0-9_-]+)$/.exec(path);
+    if (noteDelete && method === 'DELETE' && deps.notes) {
+      deps.notes.remove(noteDelete[1]);
+      sendJson(res, 200, { removed: true });
+      return;
+    }
+
     if (path === '/transfers' && method === 'GET' && deps.sftp) {
       const hostId = url.searchParams.get('hostId') ?? undefined;
       sendJson(res, 200, deps.sftp.listTransfers(hostId));
@@ -861,6 +900,12 @@ function isAllowedHostHeader(host: string | undefined): boolean {
   if (!host) return false;
   const name = host.replace(/:\d+$/, '').toLowerCase();
   return name === '127.0.0.1' || name === 'localhost' || name === '[::1]' || name === '::1';
+}
+
+function sanitizeNoteId(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const id = raw.replace(/[^a-zA-Z0-9_-]/g, '');
+  return id || null;
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {

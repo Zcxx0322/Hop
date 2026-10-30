@@ -1,9 +1,10 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { useApp } from '../store/AppStore';
 import { DEFAULT_SETTINGS, FONT_STACKS, SCROLLBACK_OPTIONS } from '../store/settings';
 import type { CursorStyle, FontKey } from '../types';
 import type { Settings } from '../types';
 import { UI_PALETTES } from '../lib/themes';
+import { hydrateNotes, noteStore } from '../store/notes';
 import { TERMINAL_THEMES } from '../lib/terminalThemes';
 import { Icon } from './ui/Icon';
 import { Button } from './ui/Button';
@@ -77,6 +78,13 @@ function ThemeCard({ active, name, hint, swatch, onSelect }: ThemeCardProps) {
 export function SettingsPanel() {
   const { state, actions } = useApp();
   const { settings } = state;
+  const [notesDir, setNotesDir] = useState(() => noteStore.dir());
+  const [pathHint, setPathHint] = useState('');
+
+  useEffect(() => {
+    void hydrateNotes();
+    return noteStore.subscribeDir(setNotesDir);
+  }, []);
 
   if (!state.ui.settingsOpen) return null;
 
@@ -331,6 +339,45 @@ export function SettingsPanel() {
           <p className="settings-hint">
             复制始终输出纯文本；<kbd>Ctrl+Shift+C</kbd> 在任何设置下都能复制。
           </p>
+        </section>
+
+        <section className="settings-group" aria-labelledby="settings-notes">
+          <h3 className="settings-group__title" id="settings-notes">
+            笔记
+          </h3>
+          <p className="settings-group__hint">
+            每条笔记存成一个 Markdown 文件，可以直接用别的编辑器打开。
+          </p>
+
+          <div className="settings-path">
+            <span className="settings-path__value" title={notesDir || '读取中…'}>
+              {notesDir || '读取中…'}
+            </span>
+            <button
+              type="button"
+              className="settings-path__btn"
+              onClick={async () => {
+                const picked = await window.hop?.pickDirectory?.('选择笔记存放目录');
+                if (!picked) return;
+                const result = await noteStore.setDir(picked);
+                if (!result.ok) setPathHint(result.message ?? '切换失败');
+                else setPathHint('已切换，现有笔记仍留在原目录');
+              }}
+            >
+              修改…
+            </button>
+            <button
+              type="button"
+              className="settings-path__btn"
+              disabled={!notesDir}
+              onClick={() => {
+                if (notesDir) void window.hop?.openPath?.(notesDir);
+              }}
+            >
+              打开文件夹
+            </button>
+          </div>
+          {pathHint && <p className="settings-hint">{pathHint}</p>}
         </section>
 
         <section className="settings-group" aria-labelledby="settings-connection">

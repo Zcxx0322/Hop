@@ -241,6 +241,8 @@ export interface AppActions {
   connectHost: (host: Host) => void;
   updateSession: (id: string, patch: Partial<Session>) => void;
   activateSession: (id: string) => void;
+  duplicateSession: (id: string) => void;
+  reconnectSession: (id: string) => void;
   requestCloseSession: (id: string) => void;
   confirmCloseSession: () => void;
   cancelCloseSession: () => void;
@@ -274,6 +276,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const repository = useMemo(() => getHostRepository(), []);
   const systemTheme = useSystemTheme();
   const toastTimers = useRef<number[]>([]);
+  /* 每个会话只触发一次「连上后刷新主机列表」 */
+  const distroRefresh = useRef<Set<string>>(new Set());
 
   const palette = resolvePalette(state.settings.palette, systemTheme === 'dark');
   const resolvedTheme: ResolvedTheme = palette.base;
@@ -417,13 +421,57 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'ui/patch', patch: { page: 'terminal' } });
   }, []);
 
-  const updateSession = useCallback((id: string, patch: Partial<Session>) => {
-    dispatch({ type: 'session/update', id, patch });
-  }, []);
+  const updateSession = useCallback(
+    (id: string, patch: Partial<Session>) => {
+      dispatch({ type: 'session/update', id, patch });
+      /* 首次连上后后端会探测发行版写回 profile：稍等一拍再拉一次列表，
+         新加的资产就能立刻显示发行版图标，不用重启。 */
+      if (patch.status === 'connected' && !distroRefresh.current.has(id)) {
+        distroRefresh.current.add(id);
+        window.setTimeout(() => void refreshHosts(), 2400);
+      }
+    },
+    [refreshHosts],
+  );
 
   const activateSession = useCallback((id: string) => {
     dispatch({ type: 'session/activate', id });
   }, []);
+
+  /** 复制连接：同一台主机再开一个会话（服务端会当成独立连接）。 */
+  const duplicateSession = useCallback(
+    (id: string) => {
+      const session = state.sessions.find((item) => item.id === id);
+      if (!session) return;
+      const host = state.hosts.find((item) => item.id === session.hostId);
+      if (!host) {
+        toast('error', '主机已被删除，无法复制连接');
+        return;
+      }
+      connectHost(host);
+    },
+    [state.sessions, state.hosts, connectHost, toast],
+  );
+
+  /** 重新连接：清掉状态并递增 nonce，终端页据此重建会话。 */
+  const reconnectSession = useCallback(
+    (id: string) => {
+      const session = state.sessions.find((item) => item.id === id);
+      if (!session) return;
+      dispatch({ type: 'session/activate', id });
+      dispatch({
+        type: 'session/update',
+        id,
+        patch: {
+          status: 'connecting',
+          detail: undefined,
+          reconnectNonce: (session.reconnectNonce ?? 0) + 1,
+        },
+      });
+      dispatch({ type: 'ui/patch', patch: { page: 'terminal' } });
+    },
+    [state.sessions],
+  );
 
   const requestCloseSession = useCallback(
     (id: string) => {
@@ -515,6 +563,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       connectHost,
       updateSession,
       activateSession,
+      duplicateSession,
+      reconnectSession,
       requestCloseSession,
       confirmCloseSession,
       cancelCloseSession,
@@ -545,6 +595,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       connectHost,
       updateSession,
       activateSession,
+      duplicateSession,
+      reconnectSession,
       requestCloseSession,
       confirmCloseSession,
       cancelCloseSession,

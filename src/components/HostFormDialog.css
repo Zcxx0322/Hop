@@ -270,3 +270,27 @@
     display: none;
   }
 }
+
+/* 分组：左边选已有分组，右边直接回车新建 */
+.hostform__group {
+  margin-top: 12px;
+}
+
+.hostform__group-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.hostform__group-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+@media (max-width: 720px) {
+  .hostform__group-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

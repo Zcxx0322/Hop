@@ -13,6 +13,39 @@ type Listener = (path: string) => void;
 const paths = new Map<string, string>();
 const listeners = new Map<string, Set<Listener>>();
 
+/**
+ * 归一化远端路径：处理 `~`、相对路径、`.`、`..`、重复斜杠与结尾斜杠。
+ *
+ * 必须做这一步的原因：在 `/` 下敲 `cd ..` 会推出 `/..`，原样交给 SFTP 会报
+ * 「No such file」，并且这个坏路径会被记成当前目录，之后每一次相对 `cd`
+ * 都基于它拼接、连环失败。归一化后 `/..` 稳定退回 `/`。
+ */
+export function normalizeRemotePath(input: string, base = '~'): string {
+  const raw = (input ?? '').trim();
+  if (!raw) return base;
+
+  const fromHome = raw === '~' || raw.startsWith('~/');
+  const absolute = raw.startsWith('/');
+  const seed = fromHome || absolute ? '' : base;
+  const combined = seed ? `${seed}/${raw}` : raw;
+
+  const homeLike = combined === '~' || combined.startsWith('~/');
+  const body = homeLike ? combined.slice(1) : combined;
+  const stack: string[] = [];
+  for (const part of body.split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') {
+      stack.pop();
+      continue;
+    }
+    stack.push(part);
+  }
+
+  const joined = stack.join('/');
+  if (homeLike) return joined ? `~/${joined}` : '~';
+  return joined ? `/${joined}` : '/';
+}
+
 export const terminalCwd = {
   get(hostId: string): string | undefined {
     return paths.get(hostId);
@@ -20,7 +53,7 @@ export const terminalCwd = {
 
   set(hostId: string, path: string): void {
     if (!path) return;
-    const clean = path.replace(/\/+$/, '') || '/';
+    const clean = normalizeRemotePath(path);
     if (paths.get(hostId) === clean) return;
     paths.set(hostId, clean);
     listeners.get(hostId)?.forEach((listener) => listener(clean));
@@ -71,9 +104,7 @@ export function inferCd(current: string, line: string): string | null {
   target = target.replace(/^["']|["']$/g, '');
   if (/\s/.test(target) || target.startsWith('$') || target.includes('`')) return null;
 
-  if (target.startsWith('/')) return target;
-  if (target.startsWith('~/')) return `~/${target.slice(2)}`;
-  const base = (current || '~').replace(/\/+$/, '') || '/';
-  if (base === '/') return `/${target}`;
-  return `${base}/${target}`;
+  if (target.startsWith('/')) return normalizeRemotePath(target, current);
+  if (target.startsWith('~/')) return normalizeRemotePath(target, current);
+  return normalizeRemotePath(target, current);
 }

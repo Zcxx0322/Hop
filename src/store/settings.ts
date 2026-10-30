@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   pasteMode: 'ctrl-v',
   followCwd: false,
   dockWidth: 332,
+  groups: [],
 };
 
 export const FONT_STACKS: Record<FontKey, { label: string; stack: string }> = {
@@ -116,6 +117,15 @@ export function normalizeSettings(input: Partial<Settings>): Settings {
     dockWidth: Number.isFinite(merged.dockWidth)
       ? clamp(merged.dockWidth, 260, 620)
       : DEFAULT_SETTINGS.dockWidth,
+    groups: Array.isArray(merged.groups)
+      ? [
+          ...new Set(
+            merged.groups
+              .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+              .map((item) => item.trim().slice(0, 32)),
+          ),
+        ].slice(0, 50)
+      : DEFAULT_SETTINGS.groups,
   };
 }
 

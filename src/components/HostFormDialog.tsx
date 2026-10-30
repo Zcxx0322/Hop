@@ -4,6 +4,7 @@ import { useApp } from '../store/AppStore';
 import { HOST_COLORS, hostAccent, hostInitials } from '../lib/visual';
 import type { IconName } from './ui/Icon';
 import { Icon } from './ui/Icon';
+import { Select } from './ui/Select';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
 import { Segmented, Switch, TextareaField, TextField } from './ui/Field';
@@ -23,6 +24,8 @@ interface FormValues {
   color: string;
   note: string;
   favorite: boolean;
+  /** 资产分组：'' 表示不分组，NEW_GROUP 表示新建 */
+  group: string;
 }
 
 type FieldErrors = Partial<
@@ -47,13 +50,16 @@ function parseTags(raw: string): string[] {
   return Array.from(unique);
 }
 
-function toFormValues(host: Host | null, defaults: { username: string; port: number }): FormValues {
+function toFormValues(
+  host: Host | null,
+  defaults: { username: string; port: number; group?: string },
+): FormValues {
   if (!host) {
     return {
       name: '',
       host: '',
       port: String(defaults.port),
-      username: defaults.username,
+      username: defaults.username || 'root',
       authMethod: 'key',
       privateKeyPath: '',
       password: '',
@@ -62,6 +68,7 @@ function toFormValues(host: Host | null, defaults: { username: string; port: num
       color: '',
       note: '',
       favorite: false,
+      group: defaults.group ?? '',
     };
   }
   return {
@@ -77,6 +84,7 @@ function toFormValues(host: Host | null, defaults: { username: string; port: num
     color: host.color ?? '',
     note: host.note ?? '',
     favorite: Boolean(host.favorite),
+    group: host.group ?? '',
   };
 }
 
@@ -104,6 +112,7 @@ function HostFormInner({ hostId }: { hostId: string | null }) {
   );
   const [errors, setErrors] = useState<FieldErrors>({});
   const [saving, setSaving] = useState(false);
+  const [groupDraft, setGroupDraft] = useState('');
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -168,6 +177,7 @@ function HostFormInner({ hostId }: { hostId: string | null }) {
       color: form.color,
       note: form.note.trim(),
       favorite: form.favorite,
+      group: form.group.trim() || undefined,
     };
 
     setSaving(true);
@@ -279,6 +289,46 @@ function HostFormInner({ hostId }: { hostId: string | null }) {
               ))}
             </div>
           )}
+
+          <div className="hostform__group">
+            <div className="hostform__group-row">
+              <div className="hostform__group-col">
+                <label className="field__label" htmlFor="host-group">
+                  分组
+                </label>
+                <Select
+                id="host-group"
+                value={form.group}
+                ariaLabel="分组"
+                options={[
+                  { value: '', label: '不分组' },
+                  ...state.settings.groups.map((group) => ({ value: group, label: group })),
+                ]}
+                  onChange={(next) => patch('group', next)}
+                />
+              </div>
+              <TextField
+                label="新建分组"
+                placeholder="输入后回车即创建"
+                value={groupDraft}
+                autoComplete="off"
+                maxLength={32}
+                onChange={(event) => setGroupDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter') return;
+                  event.preventDefault();
+                  const name = groupDraft.trim().slice(0, 32);
+                  if (!name) return;
+                  if (!state.settings.groups.includes(name)) {
+                    actions.updateSettings({ groups: [...state.settings.groups, name] });
+                  }
+                  patch('group', name);
+                  setGroupDraft('');
+                }}
+                hint="创建后自动选中"
+              />
+            </div>
+          </div>
         </fieldset>
 
         <fieldset className="hostform__section">

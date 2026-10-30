@@ -12,6 +12,7 @@ import { SessionManager } from './core/session-manager';
 import { detectDistro } from './core/distro';
 import { SftpService } from './core/sftp-service';
 import { MonitorService } from './core/monitor-service';
+import { NoteService } from './core/note-service';
 import { registerIpc } from './ipc/register';
 import { startGateway, type GatewayHandle } from './server/gateway';
 import { broadcast, createMainWindow, focusMainWindow, getMainWindow } from './window';
@@ -126,6 +127,7 @@ async function bootstrap(): Promise<void> {
 
   const sftp = new SftpService({ profiles, knownHosts }, remotePool);
   const monitor = new MonitorService({ profiles, knownHosts }, remotePool);
+  const notes = new NoteService();
 
   // The renderer talks REST + WebSocket over loopback (see docs/API-CONTRACT.md).
   // Both transports share the same stores, so credentials and known hosts are
@@ -139,6 +141,7 @@ async function bootstrap(): Promise<void> {
       preferredPort: gatewayPort(),
       sftp,
       monitor,
+      notes,
       onSessionReady: detectAndStore,
     });
     if (gateway) log.info('gateway ready', { origin: gateway.origin });

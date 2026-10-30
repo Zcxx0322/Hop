@@ -11,6 +11,8 @@ export const CH = {
   pickPrivateKey: 'hop:app:pick-private-key',
   clipboardWrite: 'hop:app:clipboard-write',
   clipboardRead: 'hop:app:clipboard-read',
+  pickDirectory: 'hop:app:pick-directory',
+  openPath: 'hop:app:open-path',
 
   profilesList: 'hop:profiles:list',
   profilesSave: 'hop:profiles:save',

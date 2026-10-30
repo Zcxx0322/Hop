@@ -53,6 +53,9 @@ interface FilesBrowserProps {
   host: Host;
 }
 
+/** 记住每台主机上次停留的目录：切标签再回来时不会退回主目录。 */
+const lastPathByHost = new Map<string, string>();
+
 /**
  * 文件浏览主体（不含外框）：常驻面板复用，命令面板/快捷键也走同一套状态。
  */
@@ -64,7 +67,7 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
   const hostId = host.id;
 
   const [listing, setListing] = useState<DirectoryListing | null>(null);
-  const [path, setPath] = useState('~');
+  const [path, setPath] = useState(() => lastPathByHost.get(host.id) || '~');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -87,6 +90,7 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
         if (ticket !== requestId.current) return;
         setListing(next);
         setPath(next.path);
+        lastPathByHost.set(hostId, next.path);
       } catch (err) {
         if (ticket !== requestId.current) return;
         setError(errorMessage(err, '读取目录失败'));
@@ -97,12 +101,12 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
     [hostId],
   );
 
-  /* 切换主机时回到主目录 */
+  /* 打开（或切回）这台主机时，回到上次停留的目录 */
   useEffect(() => {
     setListing(null);
     setRenaming(null);
     setCreating(null);
-    void load('~');
+    void load(lastPathByHost.get(hostId) || '~');
   }, [hostId, load]);
 
   /* 传输在底部全局条里轮询；这里只关心「上传落地后刷新目录」 */

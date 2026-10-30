@@ -1,4 +1,4 @@
-import { app, clipboard, dialog, ipcMain } from 'electron';
+import { app, clipboard, dialog, ipcMain, shell } from 'electron';
 import { CH } from '../../shared/channels';
 import type {
   AppInfo,
@@ -60,6 +60,20 @@ export function registerIpc(ctx: IpcContext): () => void {
     return true;
   });
   handle(CH.clipboardRead, () => clipboard.readText());
+  handle(CH.pickDirectory, async (payload: { title?: string } | undefined) => {
+    const result = await dialog.showOpenDialog({
+      title: payload?.title ?? '选择文件夹',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    return result.canceled || !result.filePaths[0] ? null : result.filePaths[0];
+  });
+  handle(CH.openPath, async (payload: { target?: string } | undefined) => {
+    const target = payload?.target;
+    if (typeof target !== 'string' || !target.trim()) throw fail('CONFIG_INVALID', 'target 必须是路径');
+    const error = await shell.openPath(target);
+    if (error) throw fail('UNKNOWN', error);
+    return true;
+  });
   handle(CH.pickPrivateKey, async () => {
     const result = await dialog.showOpenDialog({
       title: '选择私钥文件',

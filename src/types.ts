@@ -21,6 +21,8 @@ export interface Host {
   authMethod: AuthMethod;
   privateKeyPath?: string;
   tags: string[];
+  /** 资产分组名（可选，空表示未分组） */
+  group?: string;
   color?: string;
   note?: string;
   favorite?: boolean;
@@ -92,6 +94,8 @@ export interface Settings {
   followCwd: boolean;
   /** 右侧常驻面板宽度（像素） */
   dockWidth: number;
+  /** 资产分组名（用于在资产页建组、在新建表单里选择） */
+  groups: string[];
 }
 
 export type ToastTone = 'success' | 'error' | 'info';

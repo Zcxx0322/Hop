@@ -89,6 +89,10 @@ const api = {
     readText: () => invoke<string>(CH.clipboardRead),
   },
 
+  /** 原生目录选择 / 用系统文件管理器打开某个路径。 */
+  pickDirectory: (title?: string) => invoke<string | null>(CH.pickDirectory, { title }),
+  openPath: (target: string) => invoke<boolean>(CH.openPath, { target }),
+
   profiles: {
     list: () => invoke<ConnectionProfile[]>(CH.profilesList),
     save: (profile: ProfileInput) => invoke<ConnectionProfile>(CH.profilesSave, profile),

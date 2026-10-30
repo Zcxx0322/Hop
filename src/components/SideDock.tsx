@@ -99,7 +99,11 @@ export function SideDock({ side }: Props) {
       </div>
 
       <div className="sidedock__body">
-        {isFiles ? <FilesBrowser host={host} /> : <MonitorView host={host} />}
+        {isFiles ? (
+          <FilesBrowser key={host.id} host={host} />
+        ) : (
+          <MonitorView key={host.id} host={host} />
+        )}
       </div>
     </aside>
   );

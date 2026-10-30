@@ -51,6 +51,7 @@ interface StoredProfile {
   keepAliveMs: number;
   color: string | null;
   tags: string[];
+  group?: string | null;
   note: string;
   favorite: boolean;
   order: number;
@@ -247,6 +248,7 @@ export class ProfileStore {
       keepAliveMs: normalised.keepAliveMs ?? existing?.keepAliveMs ?? DEFAULT_KEEPALIVE,
       color: normalised.color ?? existing?.color ?? null,
       tags: normalised.tags ?? existing?.tags ?? [],
+      group: normalised.group ?? existing?.group ?? null,
       note: normalised.note ?? existing?.note ?? '',
       favorite: normalised.favorite ?? existing?.favorite ?? false,
       order: existing?.order ?? this.store.read().length,
@@ -449,6 +451,7 @@ export class ProfileStore {
       keepAliveMs: p.keepAliveMs,
       color: p.color,
       tags: p.tags,
+      group: p.group ?? null,
       note: p.note ?? '',
       favorite: Boolean(p.favorite),
       order: p.order,
@@ -527,6 +530,10 @@ function validateInput(input: ProfileInput): ProfileInput {
     keepAliveMs,
     term: input.term?.trim() || DEFAULT_TERM,
     tags: Array.isArray(input.tags) ? input.tags.filter((t) => typeof t === 'string' && t.trim()).slice(0, 12) : [],
+    group:
+      typeof input.group === 'string' && input.group.trim()
+        ? input.group.trim().slice(0, 32)
+        : null,
     color: input.color ?? undefined,
     note: typeof input.note === 'string' ? input.note.slice(0, 500) : '',
     favorite: Boolean(input.favorite),
