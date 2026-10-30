@@ -13,7 +13,7 @@ import {
 } from '../api/workspace';
 import { useApp } from '../store/AppStore';
 import { refreshTransfers, useTransfers, type TransferRow } from '../store/transfers';
-import { terminalCwd } from '../store/cwd';
+import { normalizeRemotePath, terminalCwd } from '../store/cwd';
 import { errorMessage } from '../lib/utils';
 import { copyText } from '../lib/clipboard';
 import { Icon } from './ui/Icon';
@@ -93,7 +93,7 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
         lastPathByHost.set(hostId, next.path);
       } catch (err) {
         if (ticket !== requestId.current) return;
-        setError(errorMessage(err, '读取目录失败'));
+        setError(`${errorMessage(err, '读取目录失败')}（${target}）`);
       } finally {
         if (ticket === requestId.current) setLoading(false);
       }
@@ -108,6 +108,23 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
     setCreating(null);
     void load(lastPathByHost.get(hostId) || '~');
   }, [hostId, load]);
+
+  /* 跟随用：终端那边的路径可能瞬时不存在（补全中间态、目录被删），失败就原地不动、不弹错 */
+  const followTo = useCallback(
+    async (target: string) => {
+      if (!hostId) return;
+      try {
+        const next = await listFiles(hostId, target);
+        setListing(next);
+        setPath(next.path);
+        setError(null);
+        lastPathByHost.set(hostId, next.path);
+      } catch {
+        /* 静默：下一次 cd 会带来新路径 */
+      }
+    },
+    [hostId],
+  );
 
   /* 传输在底部全局条里轮询；这里只关心「上传落地后刷新目录」 */
   const previousTransfers = useRef<TransferRow[]>([]);
@@ -219,11 +236,11 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
   useEffect(() => {
     if (!settings.followCwd) return;
     const current = terminalCwd.get(hostId);
-    if (current && current !== path) void load(current);
+    if (current && current !== path) void followTo(current);
     return terminalCwd.subscribe(hostId, (next) => {
-      if (next && next !== path) void load(next);
+      if (next && next !== path) void followTo(next);
     });
-  }, [settings.followCwd, hostId, path, load]);
+  }, [settings.followCwd, hostId, path, followTo]);
 
   return (
     <div className="files">
@@ -300,9 +317,15 @@ export function FilesBrowser({ host }: FilesBrowserProps) {
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault();
-              const next = draft.trim();
-              if (next && next !== path) void load(next);
-              else setDraft(path);
+              const typed = draft.trim();
+              if (!typed) {
+                setDraft(path);
+              } else {
+                // 允许相对写法（root/、../etc），统一按当前目录解析后再请求
+                const next = normalizeRemotePath(typed, path);
+                if (next !== path) void load(next);
+                else setDraft(path);
+              }
               event.currentTarget.blur();
             } else if (event.key === 'Escape') {
               event.preventDefault();

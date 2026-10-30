@@ -197,6 +197,9 @@ export function TerminalPane({ session, host, active }: TerminalPaneProps) {
           typedBuf = '';
         } else if (ch === '\u007f' || ch === '\b') {
           typedBuf = typedBuf.slice(0, -1);
+        } else if (ch === '\t') {
+          /* Tab 补全会把行内容改写成前端看不到的样子，这一行不再可信 */
+          typedBuf = '';
         } else if (ch === '\u0003' || ch === '\u0015' || ch === '\u001b') {
           /* Ctrl+C / Ctrl+U / 控制序列：整行作废 */
           typedBuf = '';
