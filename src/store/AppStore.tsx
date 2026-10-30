@@ -435,7 +435,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const activateSession = useCallback((id: string) => {
+    // 点标签 / 命令面板切换会话时，如果正停在资产或笔记页，顺手切回终端
     dispatch({ type: 'session/activate', id });
+    dispatch({ type: 'ui/patch', patch: { page: 'terminal' } });
   }, []);
 
   /** 复制连接：同一台主机再开一个会话（服务端会当成独立连接）。 */

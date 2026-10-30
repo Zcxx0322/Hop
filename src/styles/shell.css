@@ -27,6 +27,25 @@
   min-height: 0;
 }
 
+/* 资产 / 笔记页：铺在终端之上的一层，终端保持挂载与连接 */
+.app-shell > .app-page {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg);
+}
+
+.app-page > .assets,
+.app-page > .notes {
+  flex: 1;
+  min-height: 0;
+}
+
 /* 底部传输条横跨整页 */
 .app-shell > .transfersbar {
   grid-column: 1 / -1;

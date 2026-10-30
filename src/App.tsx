@@ -136,16 +136,14 @@ export default function App() {
     >
       <TitleBar />
 
-      {ui.page === 'assets' ? (
-        <AssetsPage />
-      ) : ui.page === 'notes' ? (
-        <NotesPage />
-      ) : (
       <main
         className={`workspace${hasSessions ? '' : ' workspace--empty'}${
           withFiles ? ' with-files' : ''
         }${withMonitor ? ' with-monitor' : ''}`}
         aria-label="终端工作区"
+        aria-hidden={ui.page !== 'terminal'}
+        inert={ui.page !== 'terminal'}
+        data-covered={ui.page !== 'terminal'}
       >
         <SideDock side="files" />
 
@@ -169,6 +167,12 @@ export default function App() {
         {/* 速记只属于终端页：切到资产 / 笔记页时自动收起 */}
         {ui.page === 'terminal' && ui.quickNote && <QuickNotes />}
       </main>
+
+      {/* 资产 / 笔记页盖在终端之上：终端保持挂载，切回来不会重连 */}
+      {ui.page !== 'terminal' && (
+        <div className="app-page">
+          {ui.page === 'assets' ? <AssetsPage /> : <NotesPage />}
+        </div>
       )}
 
       <TransfersBar />
