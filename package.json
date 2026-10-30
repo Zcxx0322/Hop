@@ -1,7 +1,7 @@
 {
   "name": "hop",
   "private": true,
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
   "description": "Hop — a calm, modern SSH workspace",
   "main": "dist/main/index.cjs",
